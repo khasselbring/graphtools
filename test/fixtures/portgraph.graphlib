@@ -1,0 +1,106 @@
+{
+  "options": {
+    "directed": true,
+    "multigraph": true,
+    "compound": true
+  },
+  "nodes": [
+    {
+      "v": "EXAMPLE1",
+      "value": {
+      }
+    },
+    {
+      "v": "0_STDIN",
+      "value": {
+        "nodeType": "process",
+        "meta": "io/stdin",
+        "type": "atomic",
+        "parent": "EXAMPLE1"
+      },
+      "parent": "EXAMPLE1"
+    },
+    {
+      "v": "1_INC",
+      "value": {
+        "nodeType": "process",
+        "meta": "math/inc",
+        "type": "composite",
+        "parent": "EXAMPLE1"
+      },
+      "parent": "EXAMPLE1"
+    },
+    {
+      "v": "2_STDOUT",
+      "value": {
+        "nodeType": "process",
+        "meta": "io/stdout",
+        "type": "atomic",
+        "parent": "EXAMPLE1"
+      },
+      "parent": "EXAMPLE1"
+    },
+    {
+      "v": "3_ADD",
+      "value": {
+        "nodeType": "process",
+        "meta": "math/add",
+        "type": "atomic",
+        "parent": "1_INC"
+      },
+      "parent": "1_INC"
+    },
+    {
+      "v": "4_CONST1",
+      "value": {
+        "nodeType": "process",
+        "meta": "math/const1",
+        "type": "atomic",
+        "parent": "1_INC"
+      },
+      "parent": "1_INC"
+    }
+  ],
+  "edges": [
+    {
+      "v": "0_STDIN",
+      "w": "1_INC",
+      "value": {
+        "outPort": "output",
+        "inPort": "i"
+      }
+    },
+    {
+      "v": "1_INC",
+      "w": "2_STDOUT",
+      "value": {
+        "outPort": "inc",
+        "inPort": "input"
+      }
+    },
+    {
+      "v": "1_INC",
+      "w": "3_ADD",
+      "value": {
+        "outPort": "i",
+        "inPort": "s1"
+      }
+    },
+    {
+      "v": "4_CONST1",
+      "w": "3_ADD",
+      "value": {
+        "outPort": "const1",
+        "inPort": "s2"
+      }
+    },
+    {
+      "v": "3_ADD",
+      "w": "1_INC",
+      "value": {
+        "outPort": "sum",
+        "inPort": "inc"
+      }
+    }
+  ]
+}
