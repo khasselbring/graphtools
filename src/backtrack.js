@@ -21,16 +21,26 @@ export function backtrackNetworkGraph (graph, node, fn) {
 
 function backtrack (graph, node, fn, predecessor) {
   // inPorts [ {port: name, payload: ?}]
-  var inPorts = fn(graph.node(node), undefined)
-  var callStack = _.map(inPorts, (portData) => ({node: node, port: portData.port, payload: portData.payload}))
+  var inPorts = fn(node, graph.node(node), undefined)
+  var callStack = _.map(inPorts, (portData) => ({node: node, port: portData.port, payload: portData.payload, path: [node]}))
+  var endPoints = []
   while (callStack.length !== 0) {
     var cur = callStack.pop()
+    console.log(cur)
     var inEdges = graph.inEdges(cur.node)
     var inNodes = predecessor(cur).plant(inEdges).value()
-    var newCallStackElements = _.map(inNodes, (n) => {
-      var result = fn(graph.node(n), cur.payload)
-      return _.map(result, (res) => ({node: n, port: res.port, payload: res.payload}))
-    })
-    callStack = _.concat(callStack, _.flatten(newCallStackElements))
+    var newCallStackElements = _(inNodes)
+      .map((n) => {
+        var result = fn(n, graph.node(n), cur.payload)
+        console.log(result)
+        return _.map(result, (res) => ({node: n, port: res.port, payload: res.payload, path: _.concat(cur.path, n)}))
+      })
+      .flatten()
+      .value()
+    if (newCallStackElements.length === 0) {
+      endPoints.push(cur)
+    }
+    callStack = _.concat(callStack, newCallStackElements)
   }
+  return endPoints
 }
