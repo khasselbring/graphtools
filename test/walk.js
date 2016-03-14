@@ -34,11 +34,30 @@ describe('Graph walks', () => {
     expect(path).to.deep.equal(['0_STDIN', '1_INC', '3_ADD'])
   })
 
+  it('returns undefined if the path does not exist', () => {
+    var path = walk(pGraph2, '0_STDIN', ['a'])
+    expect(path).to.be.undefined
+  })
+
   it('can follow a path given by a function', () => {
     var cb = sinon.stub()
     cb.onCall(0).returns('output')
     cb.onCall(1).returns('inc')
     var path = walk(pGraph1, '0_STDIN', cb)
     expect(path).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
+  })
+
+  it('returns undefined if the path given by a function does not exist', () => {
+    var cb = sinon.stub()
+    cb.onCall(0).returns('a')
+    var path = walk(pGraph1, '0_STDIN', cb)
+    expect(path).to.be.undefined
+  })
+
+  it('gives a valid node object to the path function', () => {
+    walk(pGraph1, '0_STDIN', (graph, node) => {
+      expect(graph).to.be.ok
+      expect(node).to.be.a('string')
+    })
   })
 })

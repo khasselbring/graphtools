@@ -29,16 +29,24 @@ function generalWalk (graph, node, path, edgeFollow) {
 
 function functionWalk (graph, node, pathFn, edgeFollow) {
   var followPorts = pathFn(graph, node)
-  if (typeof (followPorts) === 'string') {
+  if (!followPorts) {
+    return [node]
+  } else if (typeof (followPorts) === 'string') {
     followPorts = [followPorts]
   }
   var nextNodes = _.flatten(_.map(followPorts, (port) => edgeFollow(node, port).plant(graph.nodeEdges(node)).value()))
-  return _.flatten(_.concat([node], _.map(nextNodes, (pred) => functionWalk(graph, pred, pathFn, edgeFollow))))
+  if (nextNodes.length === 0) return
+  var path = _.compact(_.map(nextNodes, (pred) => functionWalk(graph, pred, pathFn, edgeFollow)))
+  if (path.length === 0) return
+  return _.flatten(_.concat([node], path))
 }
 
 function arrayWalk (graph, node, pathArray, edgeFollow) {
   return _.reduce(pathArray, (nodes, p) => {
+    if (!nodes) return
     var curNode = _.last(nodes)
-    return _.concat(nodes, edgeFollow(curNode, p).plant(graph.nodeEdges(_.last(nodes))).flatten().value())
+    var nextNodes = edgeFollow(curNode, p).plant(graph.nodeEdges(_.last(nodes))).flatten().value()
+    if (nextNodes.length === 0) return
+    return _.concat(nodes, nextNodes)
   }, [node])
 }
