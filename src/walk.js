@@ -1,20 +1,45 @@
 
 import _ from 'lodash'
 
-export function walk (graph, node, path) {
-  var getOtherEnd = (node, port) =>
-    _([])
+export var successor = (graph, node, port) =>
+    _(graph.nodeEdges(node))
       .filter((e) => graph.edge(e).outPort === port)
       .map((e) => e.w)
-  return generalWalk(graph, node, path, getOtherEnd)
+      .value()
+
+export var predecessor = (graph, node, port) =>
+    _(graph.nodeEdges(node))
+      .filter((e) => graph.edge(e).inPort === port)
+      .map((e) => e.v)
+      .value()
+
+export function walk (graph, node, path) {
+  return generalWalk(graph, node, path, successor)
 }
 
 export function walkBack (graph, node, path) {
-  var getOtherEnd = (node, port) =>
-    _([])
-      .filter((e) => graph.edge(e).inPort === port)
-      .map((e) => e.v)
-  return generalWalk(graph, node, path, getOtherEnd)
+  return generalWalk(graph, node, path, predecessor)
+}
+
+/**
+ * returns a list of adjacent nodes for one port of a node
+ */
+export function adjacentNode (graph, node, port, edgeFollow) {
+  var adjacents = edgeFollow(graph, node, port)
+  if (adjacents.length === 0) return
+  else return adjacents
+}
+
+/**
+ * returns a list of adjacent of a node
+ */
+export function adjacentNodes (graph, node, ports, edgeFollow) {
+  if (!Array.isArray(ports)) {
+    ports = [ports]
+  }
+  var nodes = _.compact(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow)))
+  if (nodes.length === 0) return
+  return nodes
 }
 
 function generalWalk (graph, node, path, edgeFollow) {
@@ -31,22 +56,23 @@ function functionWalk (graph, node, pathFn, edgeFollow) {
   var followPorts = pathFn(graph, node)
   if (!followPorts) {
     return [node]
-  } else if (typeof (followPorts) === 'string') {
-    followPorts = [followPorts]
   }
-  var nextNodes = _.flatten(_.map(followPorts, (port) => edgeFollow(node, port).plant(graph.nodeEdges(node)).value()))
-  if (nextNodes.length === 0) return
-  var path = _.compact(_.map(nextNodes, (pred) => functionWalk(graph, pred, pathFn, edgeFollow)))
-  if (path.length === 0) return
-  return _.flatten(_.concat([node], path))
+  var nextNodes = adjacentNodes(graph, node, followPorts, edgeFollow)
+  var paths = _.compact(_.map(nextNodes, (pred) => functionWalk(graph, pred, pathFn, edgeFollow)))
+  return _.map(paths, (path) => _.flatten(_.concat([node], path)))
 }
 
 function arrayWalk (graph, node, pathArray, edgeFollow) {
   return _.reduce(pathArray, (nodes, p) => {
-    if (!nodes) return
-    var curNode = _.last(nodes)
-    var nextNodes = edgeFollow(curNode, p).plant(graph.nodeEdges(_.last(nodes))).flatten().value()
-    if (nextNodes.length === 0) return
-    return _.concat(nodes, nextNodes)
-  }, [node])
+    return _(nodes)
+      .map((path) => {
+        var curNode = _.last(path)
+        var nextNodes = adjacentNodes(graph, curNode, p, edgeFollow)
+        if (!nextNodes) return
+        return _.map(nextNodes, (n) => _.concat(path, n))
+      })
+      .flatten()
+      .compact()
+      .value()
+  }, [[node]])
 }
