@@ -17,8 +17,13 @@ export function walk (graph, node, path) {
   return generalWalk(graph, node, path, successor)
 }
 
+/**
+ * returns all pathes tracked by the path that defines the ports.
+ * The path will be pointing to node (node will be the last item of the result)
+ * it follows the direction of the directed edges
+ */
 export function walkBack (graph, node, path) {
-  return generalWalk(graph, node, path, predecessor)
+  return _.map(generalWalk(graph, node, path, predecessor), _.reverse)
 }
 
 /**

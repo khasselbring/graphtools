@@ -82,7 +82,7 @@ describe('Graph walks', () => {
   it('can walk backward through a given path', () => {
     var path = walk.walkBack(pGraph1, '2_STDOUT', ['input', 'i'])
     expect(path).to.have.length(1)
-    expect(path[0]).to.deep.equal(['2_STDOUT', '1_INC', '0_STDIN'])
+    expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
   })
 
   var pGraph2 = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph.graphlib')))
@@ -106,8 +106,8 @@ describe('Graph walks', () => {
   it('can follow multiple paths', () => {
     var path = walk.walkBack(pGraph2, '3_ADD', [['s1', 's2']])
     expect(path).to.have.length(2)
-    expect(path[0][1]).to.be.oneOf(['1_INC', '4_CONST1'])
-    expect(path[1][1]).to.be.oneOf(['1_INC', '4_CONST1'])
+    expect(path[0][0]).to.be.oneOf(['1_INC', '4_CONST1'])
+    expect(path[1][0]).to.be.oneOf(['1_INC', '4_CONST1'])
   })
 
   it('can follow a path given by a function', () => {
@@ -138,7 +138,7 @@ describe('Graph walks', () => {
     cb.onCall(0).returns(['s1', 's2'])
     var path = walk.walkBack(pGraph2, '3_ADD', cb)
     expect(path).to.have.length(2)
-    expect(path[0][1]).to.be.oneOf(['1_INC', '4_CONST1'])
-    expect(path[1][1]).to.be.oneOf(['1_INC', '4_CONST1'])
+    expect(path[0][0]).to.be.oneOf(['1_INC', '4_CONST1'])
+    expect(path[1][0]).to.be.oneOf(['1_INC', '4_CONST1'])
   })
 })
