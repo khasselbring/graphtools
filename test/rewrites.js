@@ -26,7 +26,7 @@ describe('Graph rewrites', () => {
     expect(resGraph.nodes()).to.include('a')
   })
 
-  it('can add edges with graphs', () => {
+  it('can add edges from a change-set', () => {
     var graph = new grlib.Graph({directed: true, compound: true})
     graph.setNode('a', {})
     var resGraph = rewrite.apply(graph, 'a',
@@ -39,7 +39,8 @@ describe('Graph rewrites', () => {
           {v: 'b', w: 'c', value: {inPort: 'i', outPort: 'o'}}
         ]
       })
-    expect(resGraph.nodeEdges('b')).to.have.length(1)
+    console.log(resGraph.edges())
+    expect(resGraph.nodeEdges('a:b')).to.have.length(1)
   })
 
   it('keeps all old edges', () => {
@@ -55,7 +56,7 @@ describe('Graph rewrites', () => {
     var graph = new grlib.Graph({directed: true, compound: true})
     graph.setNode('a', {})
     var resGraph = rewrite.apply(graph, 'a', {nodes: [{v: 'b'}, {v: 'c'}], edges: [{v: 'b', w: 'c'}]})
-    expect(resGraph(graph.nodeEdges('a:b'))).to.have.length(1)
-    expect(resGraph(graph.nodeEdges('a:c'))).to.have.length(1)
+    expect(resGraph.nodeEdges('a:b')).to.have.length(1)
+    expect(resGraph.nodeEdges('a:c')).to.have.length(1)
   })
 })
