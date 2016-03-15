@@ -25,3 +25,7 @@ export function prefixName (prefix, name) {
 export function prefixNode (prefix, node) {
   return _.merge({}, node, {v: prefixName(prefix, node.v)})
 }
+
+export function addParent (parent, node) {
+  return _.merge({}, node, {parent: parent})
+}

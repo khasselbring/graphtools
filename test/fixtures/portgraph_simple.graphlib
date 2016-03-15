@@ -26,7 +26,13 @@
         "nodeType": "process",
         "meta": "math/inc",
         "type": "composite",
-        "parent": "EXAMPLE1"
+        "parent": "EXAMPLE1",
+        "inputPorts": {
+          "i": "number"
+        },
+        "outputPorts": {
+          "inc": "number"
+        }
       },
       "parent": "EXAMPLE1"
     },

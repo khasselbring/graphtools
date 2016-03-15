@@ -39,7 +39,6 @@ describe('Graph rewrites', () => {
           {v: 'b', w: 'c', value: {inPort: 'i', outPort: 'o'}}
         ]
       })
-    console.log(resGraph.edges())
     expect(resGraph.nodeEdges('a:b')).to.have.length(1)
   })
 
@@ -58,5 +57,24 @@ describe('Graph rewrites', () => {
     var resGraph = rewrite.apply(graph, 'a', {nodes: [{v: 'b'}, {v: 'c'}], edges: [{v: 'b', w: 'c'}]})
     expect(resGraph.nodeEdges('a:b')).to.have.length(1)
     expect(resGraph.nodeEdges('a:c')).to.have.length(1)
+  })
+
+  it('can create connectors for rewrites', () => {
+    var pGraph1 = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.graphlib')))
+    var conns = rewrite.edgeConnectors(pGraph1, '1_INC', {
+      i: {node: 'a', port: 'b'},
+      inc: {node: 'b', port: 'c'}
+    })
+    expect(conns).to.have.length(2)
+    expect(conns[0].v).to.be.oneOf(['1_INC', 'b'])
+    expect(conns[0].w).to.be.oneOf(['1_INC', 'a'])
+  })
+
+  it('throws an error when creating connectors for a not existing port', () => {
+    var pGraph1 = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.graphlib')))
+    expect(() => rewrite.edgeConnectors(pGraph1, '1_INC',
+      {
+        none: {node: 'a', port: 'b'}
+      })).to.throw(Error)
   })
 })

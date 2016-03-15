@@ -1,29 +1,44 @@
 
-import {edit, finalize, prefixNode} from './utils'
+import {edit, finalize, prefixNode, addParent} from './utils'
 import _ from 'lodash'
 
 export function prefixMapping (parent, changeSet) {
   return _.map(changeSet.nodes, (n) => ({previous: n.v, after: prefixNode(parent, n).v}))
 }
 
-export function addParentToChangeSet (parent, changeSet) {
+export function prefixingFunction (parent, changeSet) {
   var nameMap = _.keyBy(prefixMapping(parent, changeSet), 'previous')
-  console.log(nameMap)
-  var map = (name) => {
+  return (name) => {
     if (nameMap[name]) return nameMap[name].after
     else return name
   }
+}
+
+export function addParentToChangeSet (parent, changeSet) {
+  var map = prefixingFunction(parent, changeSet)
   return _.merge({},
     changeSet,
     {
       nodes: _(changeSet.nodes)
         .map((n) => prefixNode(parent, n))
-        .map((n) => _.merge({}, n, {parent: parent}))
+        .map((n) => addParent(parent, n))
         .value(),
       edges: _(changeSet.edges)
         .map((e) => _.merge({}, e, {v: map(e.v), w: map(e.w)}))
         .value()
     })
+}
+
+export function edgeConnectors (graph, node, edges) {
+  return _.map(edges, (e, key) => {
+    if (graph.node(node).inputPorts[key]) {
+      return {v: node, w: e.node, value: {outPort: key, inPort: e.port}}
+    } else if (graph.node(node).outputPorts[key]) {
+      return {v: e.node, w: node, value: {outPort: e.pord, inPort: key}}
+    } else {
+      throw new Error(`unkown port ${key} on node ${node}`)
+    }
+  })
 }
 
 /**
