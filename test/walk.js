@@ -130,6 +130,8 @@ describe('Graph walks', () => {
     walk.walk(pGraph1, '0_STDIN', (graph, node) => {
       expect(graph).to.be.ok
       expect(node).to.be.a('string')
+      console.log(node)
+      if(node === '0_STDIN') return 'output'
     })
   })
 
