@@ -66,7 +66,7 @@ describe('Adjacent nodes', () => {
 
   it('`adjacentNodes` removes not usable paths', () => {
     var preds = walk.adjacentNodes(pGraph2, '3_ADD', ['s1', '-'], walk.predecessor)
-    expect(preds).to.have.length(1)
+    expect(preds).to.have.length(2)
     expect(preds[0]).to.deep.equal(['1_INC'])
   })
 })
@@ -130,8 +130,7 @@ describe('Graph walks', () => {
     walk.walk(pGraph1, '0_STDIN', (graph, node) => {
       expect(graph).to.be.ok
       expect(node).to.be.a('string')
-      console.log(node)
-      if(node === '0_STDIN') return 'output'
+      if (node === '0_STDIN') return 'output'
     })
   })
 

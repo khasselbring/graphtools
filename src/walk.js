@@ -40,9 +40,9 @@ export function adjacentNode (graph, node, port, edgeFollow) {
  */
 export function adjacentNodes (graph, node, ports, edgeFollow) {
   if (!Array.isArray(ports)) {
-    ports = [ports]
+    return adjacentNode(graph, node, ports, edgeFollow)
   }
-  var nodes = _.compact(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow)))
+  var nodes = _.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow))
   if (nodes.length === 0) return
   return nodes
 }
