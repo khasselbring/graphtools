@@ -18,6 +18,13 @@ describe('Adjacent nodes', () => {
     expect(pred).to.deep.equal(['1_INC'])
   })
 
+  var pGraph3 = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial.json')))
+  it('`predecessor` returns the correct neighbors for inPort-name = outPort-name', () => {
+    var preds = walk.predecessor(pGraph3, 'p', 'fn')
+    expect(preds).to.have.length(1)
+    expect(preds[0]).to.equal('l')
+  })
+
   it('can get the successor of a node', () => {
     var pred = walk.successor(pGraph1, '0_STDIN', 'output')
     expect(pred).to.deep.equal(['1_INC'])

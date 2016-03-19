@@ -3,12 +3,14 @@ import _ from 'lodash'
 
 export var successor = (graph, node, port) =>
     _(graph.nodeEdges(node))
+      .filter((e) => e.v === node)
       .filter((e) => graph.edge(e).outPort === port)
       .map((e) => e.w)
       .value()
 
 export var predecessor = (graph, node, port) =>
     _(graph.nodeEdges(node))
+      .filter((e) => e.w === node)
       .filter((e) => graph.edge(e).inPort === port)
       .map((e) => e.v)
       .value()
