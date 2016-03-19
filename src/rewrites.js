@@ -34,7 +34,7 @@ export function edgeConnectors (graph, node, edges) {
     if (graph.node(node).inputPorts[key]) {
       return {v: node, w: e.node, value: {outPort: key, inPort: e.port}}
     } else if (graph.node(node).outputPorts[key]) {
-      return {v: e.node, w: node, value: {outPort: e.pord, inPort: key}}
+      return {v: e.node, w: node, value: {outPort: e.port, inPort: key}}
     } else {
       throw new Error(`unkown port ${key} on node ${node}`)
     }

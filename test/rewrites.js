@@ -62,12 +62,25 @@ describe('Graph rewrites', () => {
   it('can create connectors for rewrites', () => {
     var pGraph1 = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.graphlib')))
     var conns = rewrite.edgeConnectors(pGraph1, '1_INC', {
-      i: {node: 'a', port: 'b'},
+      i: {node: 'a', port: 'b'}
+    })
+    expect(conns).to.have.length(1)
+    expect(conns[0].v).to.equal('1_INC')
+    expect(conns[0].w).to.equal('a')
+    expect(conns[0].value.inPort).to.equal('b')
+    expect(conns[0].value.outPort).to.equal('i')
+  })
+
+  it('can create connectors for rewrites', () => {
+    var pGraph1 = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.graphlib')))
+    var conns = rewrite.edgeConnectors(pGraph1, '1_INC', {
       inc: {node: 'b', port: 'c'}
     })
-    expect(conns).to.have.length(2)
-    expect(conns[0].v).to.be.oneOf(['1_INC', 'b'])
-    expect(conns[0].w).to.be.oneOf(['1_INC', 'a'])
+    expect(conns).to.have.length(1)
+    expect(conns[0].v).to.equal('b')
+    expect(conns[0].w).to.equal('1_INC')
+    expect(conns[0].value.inPort).to.equal('inc')
+    expect(conns[0].value.outPort).to.equal('c')
   })
 
   it('throws an error when creating connectors for a not existing port', () => {
