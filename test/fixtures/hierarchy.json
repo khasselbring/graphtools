@@ -1,0 +1,75 @@
+{
+  "options": {
+    "directed": true,
+    "multigraph": true,
+    "compound": true
+  },
+  "nodes": [
+    {
+      "v": "a",
+      "value": {
+        "meta": "A",
+        "inputPorts": {},
+        "outputPorts": {}
+      }
+    },
+    {
+      "v": "a:b",
+      "value": {
+        "meta": "B",
+        "inputPorts": {},
+        "outputPorts": {}
+      },
+      "parent": "a"
+    },
+    {
+      "v": "a:b:c",
+      "value": {
+        "meta": "C",
+        "inputPorts": {},
+        "outputPorts": {
+          "out": "number"
+        }
+      },
+      "parent": "a:b"
+    },
+    {
+      "v": "d",
+      "value": {
+        "meta": "D",
+        "inputPorts": {},
+        "outputPorts": {}
+      }
+    },
+    {
+      "v": "d:e",
+      "value": {
+        "meta": "E",
+        "inputPorts": {},
+        "outputPorts": {}
+      },
+      "parent": "d"
+    },
+    {
+      "v": "d:e:f",
+      "value": {
+        "meta": "F",
+        "inputPorts": {
+          "in": "number"
+        },
+        "outputPorts": {}
+      },
+      "parent": "d:e"
+    }
+  ],
+  "edges": [
+    {
+      "v": "a:b:c",
+      "w": "d:e:f",
+      "value": {
+        "outPort": "out",
+        "inPort": "in"
+      }
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 
-import {edit, finalize, prefixNode, addParent} from './utils'
+import {edit, finalize, prefixNode, addParent, hierarchyConnection, isConformityEdge, isConformityPort} from './utils'
 import _ from 'lodash'
 
 export function prefixMapping (parent, changeSet) {
@@ -39,6 +39,41 @@ export function edgeConnectors (graph, node, edges) {
       throw new Error(`unkown port ${key} on node ${node}`)
     }
   })
+}
+
+function createConformEdges (graph, edgeHierarchy) {
+  var eh = edgeHierarchy
+  var linkId = `[${eh[0].v}@${eh[2].outPort}→${eh[0].w}@${eh[2].inPort}]`
+  var start = {v: eh[0].v, w: eh[1][0], value: {outPort: graph.edge(eh[0]).outPort, inPort: linkId}}
+  var lastEh = eh[1][eh[1].length - 1]
+  var end = {v: lastEh, w: eh[0].w, value: {outPort: linkId, inPort: graph.edge(eh[0]).inPort}}
+  var pairs = _.zip(eh[1], _.tail(eh[1])).slice(0, -1)
+  return _.concat([start],
+    _.map(pairs, (p) => ({v: p[0], w: p[1], value: {outPort: linkId, inPort: linkId}})),
+    [end])
+}
+
+function convertNonConformEdgeList (graph, edges) {
+  var edgeLinks = _.map(edges, (e) => hierarchyConnection(graph, e))
+  var edgeValues = _.map(edges, (e) => graph.edge(e))
+  var edgeHierarchy = _.zip(edges, edgeLinks, edgeValues)
+  return _.map(edgeHierarchy, _.partial(createConformEdges, graph))
+}
+
+/**
+ * Add links to nodes that are on the edges to allow calling
+ */
+function addConformityLinks(graph, edges) {
+  var nonConfEdges = _.filter(edges, (e) => isConformityEdge)
+}
+
+export function rewriteNonConformEdges (graph, edges) {
+  var editGraph = edit(graph)
+  var newEdges = convertNonConformEdgeList(graph, edges)
+  var nodes = addConformityLinks(graph, newEdges)
+  console.log(JSON.stringify(newEdges, null, 2))
+  editGraph.edges = _.concat(editGraph.edges, _.flatten(newEdges))
+  return finalize(editGraph)
 }
 
 /**

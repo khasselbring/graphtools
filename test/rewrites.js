@@ -4,6 +4,7 @@ import chai from 'chai'
 import * as rewrite from '../src/rewrites.js'
 import grlib from 'graphlib'
 import fs from 'fs'
+import {nonConformEdges} from '../src/normalization.js'
 // import _ from 'lodash'
 
 var expect = chai.expect
@@ -89,5 +90,17 @@ describe('Graph rewrites', () => {
       {
         none: {node: 'a', port: 'b'}
       })).to.throw(Error)
+  })
+
+  it('can rewrite non-conform edges over one compound-layer', () => {
+    var aGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial_apply.json')))
+    var newGraph = rewrite.rewriteNonConformEdges(aGraph, [ { v: 'c', w: 'a:add' } ])
+    console.log(newGraph.edges())
+  })
+
+  it('can rewrite non-conform edges over many compound-layer', () => {
+    var hGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/hierarchy.json')))
+    var newGraph = rewrite.rewriteNonConformEdges(hGraph, hGraph.edges())
+    console.log(newGraph.edges())
   })
 })

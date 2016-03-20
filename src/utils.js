@@ -29,3 +29,22 @@ export function prefixNode (prefix, node) {
 export function addParent (parent, node) {
   return _.merge({}, node, {parent: parent})
 }
+
+export function hierarchy (graph, node, h = []) {
+  return (node) ? hierarchy(graph, graph.parent(node), _.concat([node], h)) : h
+}
+
+export function hierarchyConnection (graph, edge) {
+  var hFrom = _.reverse(hierarchy(graph, edge.v).slice(0, -1))
+  var hTo = hierarchy(graph, edge.w).slice(0, -1)
+  var hCon = _.dropWhile(_.zip(hFrom, hTo), (f, t) => f === t)
+  return _.concat(_.compact(_.flatten(_.unzip(hCon))))
+}
+
+export function isConformityPort (p) {
+  return p.indexOf('[') === 0 && p.indexOf(']') === p.length -1
+}
+
+export function isConformityEdge (e) {
+  return isConformityPort(e.inPort) || isConformityPort(e.outPort)
+}
