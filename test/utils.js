@@ -4,7 +4,7 @@ import chai from 'chai'
 import * as utils from '../src/utils.js'
 import grlib from 'graphlib'
 import fs from 'fs'
-// import _ from 'lodash'
+import _ from 'lodash'
 
 var expect = chai.expect
 
@@ -26,5 +26,12 @@ describe('Graph utilities', () => {
   it('can calculate the hierarchy levels between two nodes for higher distances', () => {
     var h = utils.hierarchyConnection(hGraph, hGraph.edges()[0])
     expect(h).to.deep.equal(['a:b', 'a', 'd', 'd:e'])
+  })
+
+  it('can calculate the hierarchy levels between two nodes for higher distances', () => {
+    var h = utils.rawHierarchyConnection(hGraph, hGraph.edges()[0])
+    expect(h.filter((n) => n.type === 'out')).to.have.length(2)
+    expect(h.filter((n) => n.type === 'in')).to.have.length(2)
+    expect(_.map(h, 'node')).to.deep.equal(['a:b', 'a', 'd', 'd:e'])
   })
 })

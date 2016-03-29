@@ -34,17 +34,33 @@ export function hierarchy (graph, node, h = []) {
   return (node) ? hierarchy(graph, graph.parent(node), _.concat([node], h)) : h
 }
 
+export function rawHierarchyConnection (graph, edge) {
+  var hFrom = hierarchy(graph, edge.v).slice(0, -1).map((f) => ({node: f, type: 'out'}))
+  var hTo = hierarchy(graph, edge.w).slice(0, -1).map((t) => ({node: t, type: 'in'}))
+  var hCon = _.dropWhile(_.zip(hFrom, hTo), (z) => {
+    return z[0] && z[1] && z[0].node === z[1].node
+  })
+  var unzipH = _.unzip(hCon)
+  return _.concat(_.compact(_.flatten([_.reverse(unzipH[0]), unzipH[1]])))
+}
+
+export function linkName (graph, link) {
+  var value = graph.edge(link)
+  return `[${link.v}@${value.outPort}→${link.w}@${value.inPort}`
+}
+
 export function hierarchyConnection (graph, edge) {
-  var hFrom = _.reverse(hierarchy(graph, edge.v).slice(0, -1))
+  var hFrom = hierarchy(graph, edge.v).slice(0, -1)
   var hTo = hierarchy(graph, edge.w).slice(0, -1)
-  var hCon = _.dropWhile(_.zip(hFrom, hTo), (f, t) => f === t)
-  return _.concat(_.compact(_.flatten(_.unzip(hCon))))
+  var hCon = _.dropWhile(_.zip(hFrom, hTo), (f) => f[0] === f[1])
+  var unzipH = _.unzip(hCon)
+  return _.concat(_.compact(_.flatten([_.reverse(unzipH[0]), unzipH[1]])))
 }
 
 export function isConformityPort (p) {
-  return p.indexOf('[') === 0 && p.indexOf(']') === p.length -1
+  return p.indexOf('[') === 0 && p.indexOf(']') === p.length - 1
 }
 
 export function isConformityEdge (e) {
-  return isConformityPort(e.inPort) || isConformityPort(e.outPort)
+  return isConformityPort(e.value.inPort) || isConformityPort(e.value.outPort)
 }
