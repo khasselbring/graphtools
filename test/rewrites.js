@@ -103,4 +103,34 @@ describe('Graph rewrites', () => {
     var newGraph = rewrite.rewriteNonConformEdges(hGraph, hGraph.edges())
     console.log(newGraph.edges())
   })
+
+  it('`linkToEdges` does not change normal edges', () => {
+    var pGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial.json')))
+    var edges = rewrite.linkToEdges(pGraph, {v: 'c', w: 'a', value: {outPort: 'const1/output', inPort: 'value'}})
+    expect(edges).to.have.length(1)
+  })
+
+  it('`linkToEdges` does check the validity of the input link', () => {
+    var pGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial.json')))
+    expect(() => rewrite.linkToEdges(pGraph, {v: 'c', w: 'a', value: {outPort: '', inPort: ''}}))
+      .to.throw(Error)
+  })
+  
+  it('`linkToEdges` does add edges for every hierarchy level', () => {
+    var hGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/hierarchy.json')))
+    var edges = rewrite.linkToEdges(hGraph, {v: 'a:b:c', w: 'd:e:f', value: {outPort: 'out', inPort: 'in'}})
+    expect(edges).to.have.length(5)
+  })
+
+  it('`linkToPorts` does add ports for every node in the hierarchy levels', () => {
+    var hGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/hierarchy.json')))
+    var edges = rewrite.linkToPorts(hGraph, {v: 'a:b:c', w: 'd:e:f', value: {outPort: 'out', inPort: 'in'}})
+    expect(edges).to.have.length(4)
+  })
+
+  it('`linkToPorts` does add no ports for an edge', () => {
+    var pGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial.json')))
+    var edges = rewrite.linkToPorts(pGraph, {v: 'c', w: 'a', value: {outPort: 'const1/output', inPort: 'value'}})
+    expect(edges).to.have.length(0)
+  })
 })

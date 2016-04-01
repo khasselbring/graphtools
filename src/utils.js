@@ -44,9 +44,9 @@ export function rawHierarchyConnection (graph, edge) {
   return _.concat(_.compact(_.flatten([_.reverse(unzipH[0]), unzipH[1]])))
 }
 
-export function linkName (graph, link) {
-  var value = graph.edge(link)
-  return `[${link.v}@${value.outPort}→${link.w}@${value.inPort}`
+export function linkName (link) {
+  var value = link.value
+  return `[${link.v}@${value.outPort}→${link.w}@${value.inPort}]`
 }
 
 export function hierarchyConnection (graph, edge) {

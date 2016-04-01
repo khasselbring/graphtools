@@ -55,9 +55,22 @@ function connectHierarchyEdges (graph, edgeHierarchy) {
     [end])
 }
 
-function linkConnectionViaHierarchy (graph, link, hierarchy, name) {
+function linkEdge ([h1, h2]) {
+  return {v: h1.node, w: h2.node, value: {outPort: h1.port, outType: h1.type, inPort: h2.port, inType: h2.type}}
+}
+
+function convertLinkViaHierarchy (graph, link, hierarchy, name) {
   if (hierarchy.length === 0) {
-    return link
+    return {edges: [link], ports: []}
+  } else {
+    var extraPorts = _.map(hierarchy, (e) => _.assign(e, {port: name}))
+    var edgeHierarchy = _.concat([{node: link.v, port: link.value.outPort}],
+      extraPorts,
+      [{node: link.w, port: link.value.inPort}])
+    var edges = _.zip(edgeHierarchy, _.tail(edgeHierarchy))
+      .slice(0, -1)
+      .map(linkEdge)
+    return {edges: edges, ports: extraPorts}
   }
 }
 
@@ -68,7 +81,14 @@ function linkConnectionViaHierarchy (graph, link, hierarchy, name) {
  */
 export function linkToEdges (graph, link) {
   var hierarchy = rawHierarchyConnection(graph, link)
-  var name = linkName(graph, link)
+  var name = linkName(link)
+  return convertLinkViaHierarchy(graph, link, hierarchy, name).edges
+}
+
+export function linkToPorts (graph, link) {
+  var hierarchy = rawHierarchyConnection(graph, link)
+  var name = linkName(link)
+  return convertLinkViaHierarchy(graph, link, hierarchy, name).ports
 }
 
 function convertNonConformEdgeList (graph, edges) {
