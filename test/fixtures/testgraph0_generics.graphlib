@@ -12,11 +12,12 @@
     {
       "v": "0_CONST1",
       "value": {
+        "nodeType": "process",
         "id": "math/const1",
         "version": "0.1.0",
         "inputPorts": {},
         "outputPorts": {
-          "const1/output": "int"
+          "const1": "int"
         },
         "atomic": true
       },
@@ -25,11 +26,12 @@
     {
       "v": "1_CONST2",
       "value": {
+        "nodeType": "process",
         "id": "math/const2",
         "version": "0.1.0",
         "inputPorts": {},
         "outputPorts": {
-          "const2/output": "bool"
+          "const2": "bool"
         },
         "atomic": true
       },
@@ -38,6 +40,7 @@
     {
       "v": "2_DEMUX",
       "value": {
+        "nodeType": "process",
         "name": "DEMUX",
         "id": "logic/demux",
         "inputPorts": {
@@ -56,10 +59,11 @@
     {
       "v": "3_STDOUT",
       "value": {
+        "nodeType": "process",
         "id": "io/stdout",
         "version": "0.1.0",
         "inputPorts": {
-          "stdout/input": "string"
+          "input": "string"
         },
         "outputPorts": {},
         "atomic": true
@@ -69,10 +73,11 @@
     {
       "v": "4_STDOUT",
       "value": {
+        "nodeType": "process",
         "id": "io/stdout",
         "version": "0.1.0",
         "inputPorts": {
-          "stdout/input": "string"
+          "input": "string"
         },
         "outputPorts": {},
         "atomic": true
@@ -80,18 +85,18 @@
       "parent": "EXAMPLE1"
     },
     {
-      "v": "0_CONST1_PORT_output",
+      "v": "0_CONST1_PORT_const1",
       "value": {
         "nodeType": "outPort",
-        "portName": "const1/output"
+        "portName": "const1"
       },
       "parent": "EXAMPLE1"
     },
     {
-      "v": "1_CONST2_PORT_output",
+      "v": "1_CONST2_PORT_const2",
       "value": {
         "nodeType": "outPort",
-        "portName": "const2/output"
+        "portName": "const2"
       },
       "parent": "EXAMPLE1"
     },
@@ -131,7 +136,7 @@
       "v": "3_STDOUT_PORT_input",
       "value": {
         "nodeType": "inPort",
-        "portName": "stdout/input"
+        "portName": "input"
       },
       "parent": "EXAMPLE1"
     },
@@ -139,7 +144,7 @@
       "v": "4_STDOUT_PORT_input",
       "value": {
         "nodeType": "inPort",
-        "portName": "stdout/input"
+        "portName": "input"
       },
       "parent": "EXAMPLE1"
     }
@@ -147,18 +152,18 @@
   "edges": [
     {
       "v": "0_CONST1",
-      "w": "0_CONST1_PORT_output"
+      "w": "0_CONST1_PORT_const1"
     },
     {
       "v": "1_CONST2",
-      "w": "1_CONST2_PORT_output"
+      "w": "1_CONST2_PORT_const2"
     },
     {
-      "v": "1_CONST2_PORT_output",
+      "v": "1_CONST2_PORT_const2",
       "w": "2_DEMUX_PORT_control"
     },
     {
-      "v": "0_CONST1_PORT_output",
+      "v": "0_CONST1_PORT_const1",
       "w": "2_DEMUX_PORT_input"
     },
     {
