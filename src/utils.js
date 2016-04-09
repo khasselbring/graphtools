@@ -22,6 +22,15 @@ export function prefixName (prefix, name) {
   return `${prefix}:${name}`
 }
 
+export function isNPG (graph) {
+  return !isNG(graph)
+}
+
+export function isNG (graph) {
+  // TODO: improve!
+  return !_.find(graph.nodes(), (n) => n.indexOf('_PORT_') !== -1)
+}
+
 export function prefixNode (prefix, node) {
   return _.merge({}, node, {v: prefixName(prefix, node.v)})
 }
