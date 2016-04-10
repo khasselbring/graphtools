@@ -94,14 +94,17 @@ describe('Graph rewrites', () => {
 
   it('can rewrite non-conform edges over one compound-layer', () => {
     var aGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial_apply.json')))
-    var newGraph = rewrite.rewriteNonConformEdges(aGraph, [ { v: 'c', w: 'a:add' } ])
-    console.log(newGraph.edges())
+    var newGraph = rewrite.rewriteNonConformEdges(aGraph, [{v: 'c', w: 'a:add', value: {outPort: 'const1/output', inPort: 's2'}}])
+    expect(newGraph.edge({v: 'c', w: 'a'}).inPort).to.equal('[c@const1/output→a:add@s2]')
+    expect(newGraph.edge({v: 'c', w: 'a'}).inType).to.equal('in')
+    expect(newGraph.edge({v: 'a', w: 'a:add'}).outPort).to.equal('[c@const1/output→a:add@s2]')
+    expect(newGraph.edge({v: 'a', w: 'a:add'}).outType).to.equal('in')
   })
 
   it('can rewrite non-conform edges over many compound-layer', () => {
     var hGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/hierarchy.json')))
-    var newGraph = rewrite.rewriteNonConformEdges(hGraph, hGraph.edges())
-    console.log(newGraph.edges())
+    var newGraph = rewrite.rewriteNonConformEdges(hGraph, hGraph.edges().map((e) => ({v: e.v, w: e.w, value: hGraph.edge(e)})))
+    console.log(newGraph.edges().map((e) => ({v: e.v, w: e.w, value: newGraph.edge(e)})))
   })
 
   it('`linkToEdges` does not change normal edges', () => {
@@ -115,7 +118,7 @@ describe('Graph rewrites', () => {
     expect(() => rewrite.linkToEdges(pGraph, {v: 'c', w: 'a', value: {outPort: '', inPort: ''}}))
       .to.throw(Error)
   })
-  
+
   it('`linkToEdges` does add edges for every hierarchy level', () => {
     var hGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/hierarchy.json')))
     var edges = rewrite.linkToEdges(hGraph, {v: 'a:b:c', w: 'd:e:f', value: {outPort: 'out', inPort: 'in'}})

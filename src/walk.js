@@ -8,11 +8,26 @@ export var successor = (graph, node, port) =>
       .map((e) => e.w)
       .value()
 
+
+export var successorInPort = (graph, node, port) =>
+  _(graph.nodeEdges(node))
+      .filter((e) => e.v === node)
+      .filter((e) => graph.edge(e).outPort === port)
+      .map((e) => ({node: e.w, port: graph.edge(e).inPort}))
+      .value()
+
 export var predecessor = (graph, node, port) =>
     _(graph.nodeEdges(node))
       .filter((e) => e.w === node)
       .filter((e) => graph.edge(e).inPort === port)
       .map((e) => e.v)
+      .value()
+
+export var predecessorOutPort = (graph, node, port) =>
+  _(graph.nodeEdges(node))
+      .filter((e) => e.w === node)
+      .filter((e) => graph.edge(e).inPort === port)
+      .map((e) => ({node: e.v, port: graph.edge(e).outPort}))
       .value()
 
 export function walk (graph, node, path) {

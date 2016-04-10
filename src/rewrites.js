@@ -1,5 +1,5 @@
 
-import {edit, finalize, prefixNode, addParent, rawHierarchyConnection, isConformityEdge, isConformityPort, linkName} from './utils'
+import {edit, finalize, prefixNode, addParent, rawHierarchyConnection, linkName} from './utils'
 import _ from 'lodash'
 
 export function prefixMapping (parent, changeSet) {
@@ -40,7 +40,7 @@ export function edgeConnectors (graph, node, edges) {
     }
   })
 }
-
+/*
 function connectHierarchyEdges (graph, edgeHierarchy) {
   var eh = edgeHierarchy
   var name = eh[1][0].node
@@ -54,7 +54,7 @@ function connectHierarchyEdges (graph, edgeHierarchy) {
     _.map(pairs, (p) => ({v: p[0].node, w: p[1].node, value: {outPort: linkId, outType: p[0].type, inPort: linkId, inType: p[1].type}})),
     [end])
 }
-
+*/
 function linkEdge ([h1, h2]) {
   return {v: h1.node, w: h2.node, value: {outPort: h1.port, outType: h1.type, inPort: h2.port, inType: h2.type}}
 }
@@ -74,29 +74,28 @@ function convertLinkViaHierarchy (graph, link, hierarchy, name) {
   }
 }
 
+function linkEdgePortConvert (graph, link) {
+  var hierarchy = rawHierarchyConnection(graph, link)
+  var name = linkName(link)
+  return convertLinkViaHierarchy(graph, link, hierarchy, name)
+}
+
 /**
  * A link is a connection between two nodes that do not necessarily have the same parent
  * A edge is a connection between two nodes that share a common parent
  * This function returns a list of edges for a link (length >= 1)
  */
 export function linkToEdges (graph, link) {
-  var hierarchy = rawHierarchyConnection(graph, link)
-  var name = linkName(link)
-  return convertLinkViaHierarchy(graph, link, hierarchy, name).edges
+  return linkEdgePortConvert(graph, link).edges
 }
 
 export function linkToPorts (graph, link) {
-  var hierarchy = rawHierarchyConnection(graph, link)
-  var name = linkName(link)
-  return convertLinkViaHierarchy(graph, link, hierarchy, name).ports
+  return linkEdgePortConvert(graph, link).ports
 }
 
-function convertNonConformEdgeList (graph, edges) {
-  var edgeLinks = _.map(edges, (e) => rawHierarchyConnection(graph, e))
-  console.log(edgeLinks)
-  var edgeValues = _.map(edges, (e) => graph.edge(e))
-  var edgeHierarchy = _.zip(edges, edgeLinks, edgeValues)
-  return _.flatten(_.map(edgeHierarchy, _.partial(connectHierarchyEdges, graph)))
+function convertNonConformEdgeList (graph, links) {
+  var edgePortLinks = _.map(links, (e) => linkEdgePortConvert(graph, e))
+  return edgePortLinks
 }
 /*
 function addConformityLink (graph, node, port) {
@@ -135,24 +134,13 @@ function addConformityLinks (graph, edges) {
   return nodes
 }
 */
-function nodeCPorts (node, port) {
-  if (isConformityPort(port)) {
-    return {node: node, port: port}
-  }
-}
-
-function linkCPorts (link) {
-  if (isConformityEdge(link)) {
-    return _.compact([nodeCPorts(link.v, link.value.outPort), nodeCPorts(link.w, link.value.inPort)])
-  }
-}
 
 function linksCPorts (linkList) {
   var links = _(linkList)
-    .map(linkCPorts)
+    .map('ports')
     .flatten()
     .groupBy('node')
-    .map((g) => _.merge({}, _.omit(g[0], 'port'), {links: _.uniq(_.map(g, 'port'))}))
+    .map((g) => _.merge({}, _.omit(g[0], 'port'), {links: _.uniqBy(g, (e) => g.port)}))
     .keyBy('node')
     .value()
   return links
@@ -164,9 +152,9 @@ export function rewriteNonConformEdges (graph, edges) {
   /* var newNodes = addConformityLinks(graph, linkEdges)
   console.log(JSON.stringify(linkEdges, null, 2))
   console.log(newNodes)*/
+  var newEdges = _(linkEdges).map('edges').flatten().value()
   var nodes = linksCPorts(linkEdges)
-  console.log(nodes)
-  editGraph.edges = _.concat(editGraph.edges, linkEdges)
+  editGraph.edges = _.concat(editGraph.edges, newEdges)
   editGraph.nodes = _.map(editGraph.nodes, (n) => {
     if (_.has(nodes, n.v)) {
       return _.assign(n, {value: {links: nodes[n.v].links}})
@@ -174,7 +162,6 @@ export function rewriteNonConformEdges (graph, edges) {
       return n
     }
   })
-  console.log(editGraph.nodes)
   return finalize(editGraph)
 }
 
