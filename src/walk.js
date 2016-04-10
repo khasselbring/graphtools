@@ -8,7 +8,6 @@ export var successor = (graph, node, port) =>
       .map((e) => e.w)
       .value()
 
-
 export var successorInPort = (graph, node, port) =>
   _(graph.nodeEdges(node))
       .filter((e) => e.v === node)
