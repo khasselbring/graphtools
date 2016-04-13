@@ -1,5 +1,5 @@
 
-import {edit, finalize, prefixNode, addParent, hierarchyConnection, isConformityEdge, isConformityPort} from './utils'
+import {edit, finalize, prefixNode, addParent, hierarchyConnection} from './utils'
 import _ from 'lodash'
 
 export function prefixMapping (parent, changeSet) {
@@ -63,14 +63,14 @@ function convertNonConformEdgeList (graph, edges) {
 /**
  * Add links to nodes that are on the edges to allow calling
  */
-function addConformityLinks(graph, edges) {
+/* function addConformityLinks (graph, edges) {
   var nonConfEdges = _.filter(edges, (e) => isConformityEdge)
-}
+} */
 
 export function rewriteNonConformEdges (graph, edges) {
   var editGraph = edit(graph)
   var newEdges = convertNonConformEdgeList(graph, edges)
-  var nodes = addConformityLinks(graph, newEdges)
+  // var nodes = addConformityLinks(graph, newEdges)
   console.log(JSON.stringify(newEdges, null, 2))
   editGraph.edges = _.concat(editGraph.edges, _.flatten(newEdges))
   return finalize(editGraph)

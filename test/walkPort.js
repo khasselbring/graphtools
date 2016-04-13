@@ -18,6 +18,11 @@ describe('Adjacent nodes', () => {
     expect(pred).to.deep.equal(['2_DEMUX'])
   })
 
+  it('can get the output-port of the predecessor of a node', () => {
+    var pred = walk.predecessorPort(pGraph1, '3_STDOUT', 'input')
+    expect(pred).to.deep.equal(['outTrue'])
+  })
+
   it('can get the successor of a node', () => {
     var pred = walk.successor(pGraph1, '0_CONST1', 'const1')
     expect(pred).to.deep.equal(['2_DEMUX'])
@@ -103,6 +108,22 @@ describe('Graph walks', () => {
     var path = walk.walk(pGraph1, '0_CONST1', cb)
     expect(path).to.have.length(1)
     expect(path[0]).to.deep.equal(['0_CONST1', '2_DEMUX', '4_STDOUT'])
+  })
+
+  it('creates paths correctly', () => {
+    var cb = sinon.stub()
+    cb.onCall(0).returns('input')
+    var path = walk.walkBack(pGraph1, '2_DEMUX', cb)
+    expect(path).to.have.length(1)
+    expect(path[0][0]).to.be.a('string')
+  })
+
+  it('returns the starting node if no path is found', () => {
+    var cb = sinon.stub()
+    cb.onCall(0).returns([])
+    var path = walk.walk(pGraph1, '0_CONST1', cb)
+    expect(path).to.have.length(1)
+    expect(path[0]).to.deep.equal(['0_CONST1'])
   })
 
   it('returns an empty array if the path given by a function does not exist', () => {

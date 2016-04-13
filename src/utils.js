@@ -42,7 +42,7 @@ export function hierarchyConnection (graph, edge) {
 }
 
 export function isConformityPort (p) {
-  return p.indexOf('[') === 0 && p.indexOf(']') === p.length -1
+  return p.indexOf('[') === 0 && p.indexOf(']') === p.length - 1
 }
 
 export function isConformityEdge (e) {

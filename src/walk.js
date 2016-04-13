@@ -61,7 +61,7 @@ function generalWalk (graph, node, path, edgeFollow) {
 
 function functionWalk (graph, node, pathFn, edgeFollow) {
   var followPorts = pathFn(graph, node)
-  if (!followPorts) {
+  if (!followPorts || followPorts.length === 0) {
     return [node]
   }
   var nextNodes = adjacentNodes(graph, node, followPorts, edgeFollow)

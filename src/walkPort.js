@@ -2,8 +2,12 @@
 import _ from 'lodash'
 
 export function successor (graph, node, port) {
+  console.log('node: ' + node)
   var edges = graph.nodeEdges(node)
+  console.log('edges: ' + edges)
+  console.log('port: ' + node + '_PORT_' + port)
   var nodes = _.filter(edges, (e) => e.w === node + '_PORT_' + port).map((e) => e.w)
+  console.log('nodes: ' + nodes)
   for (var i = 0; i < nodes.length; i++) {
     while (graph.node(nodes[i])['nodeType'] !== 'process') {
       var successors = graph.successors(nodes[i])
@@ -24,6 +28,23 @@ export function predecessor (graph, node, port) {
       nodes = nodes.concat(predecessors.slice(1, predecessors.length))
     }
   }
+  return nodes
+}
+
+export function predecessorPort (graph, node, port) {
+  var edges = graph.nodeEdges(node)
+  // console.log('edges: ' + edges)
+  var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
+  // console.log('nodes: ' + nodes)
+  for (var i = 0; i < nodes.length; i++) {
+    var predecessors = graph.predecessors(nodes[i])
+    // console.log('predecessors: ' + predecessors)
+    nodes[i] = predecessors[0]
+    nodes = nodes.concat(predecessors.slice(1, predecessors.length))
+  }
+  nodes = nodes.map(function (n) {
+    return n.split('_')[3]
+  })
   return nodes
 }
 
@@ -58,7 +79,7 @@ export function adjacentNodes (graph, node, ports, edgeFollow) {
   }
   var nodes = _.compact(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow)))
   if (nodes.length === 0) return
-  return nodes
+  return _.flatten(nodes)
 }
 
 function generalWalk (graph, node, path, edgeFollow) {
@@ -73,11 +94,11 @@ function generalWalk (graph, node, path, edgeFollow) {
 
 function functionWalk (graph, node, pathFn, edgeFollow) {
   var followPorts = pathFn(graph, node)
-  if (!followPorts) {
-    return [node]
+  if (!followPorts || followPorts.length === 0) {
+    return [[node]]
   }
   var nextNodes = adjacentNodes(graph, node, followPorts, edgeFollow)
-  var paths = _.compact(_.map(nextNodes, (pred) => functionWalk(graph, pred, pathFn, edgeFollow)))
+  var paths = _.compact(_.map(nextNodes, (pred) => _.flatten(functionWalk(graph, pred, pathFn, edgeFollow))))
   return _.map(paths, (path) => _.flatten(_.concat([node], path)))
 }
 
