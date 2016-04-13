@@ -71,7 +71,6 @@ export function rewriteNonConformEdges (graph, edges) {
   var editGraph = edit(graph)
   var newEdges = convertNonConformEdgeList(graph, edges)
   // var nodes = addConformityLinks(graph, newEdges)
-  console.log(JSON.stringify(newEdges, null, 2))
   editGraph.edges = _.concat(editGraph.edges, _.flatten(newEdges))
   return finalize(editGraph)
 }

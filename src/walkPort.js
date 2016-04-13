@@ -2,12 +2,8 @@
 import _ from 'lodash'
 
 export function successor (graph, node, port) {
-  console.log('node: ' + node)
   var edges = graph.nodeEdges(node)
-  console.log('edges: ' + edges)
-  console.log('port: ' + node + '_PORT_' + port)
   var nodes = _.filter(edges, (e) => e.w === node + '_PORT_' + port).map((e) => e.w)
-  console.log('nodes: ' + nodes)
   for (var i = 0; i < nodes.length; i++) {
     while (graph.node(nodes[i])['nodeType'] !== 'process') {
       var successors = graph.successors(nodes[i])
@@ -33,12 +29,9 @@ export function predecessor (graph, node, port) {
 
 export function predecessorPort (graph, node, port) {
   var edges = graph.nodeEdges(node)
-  // console.log('edges: ' + edges)
   var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
-  // console.log('nodes: ' + nodes)
   for (var i = 0; i < nodes.length; i++) {
     var predecessors = graph.predecessors(nodes[i])
-    // console.log('predecessors: ' + predecessors)
     nodes[i] = predecessors[0]
     nodes = nodes.concat(predecessors.slice(1, predecessors.length))
   }
@@ -79,7 +72,7 @@ export function adjacentNodes (graph, node, ports, edgeFollow) {
   }
   var nodes = _.compact(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow)))
   if (nodes.length === 0) return
-  return _.flatten(nodes)
+  return nodes
 }
 
 function generalWalk (graph, node, path, edgeFollow) {
