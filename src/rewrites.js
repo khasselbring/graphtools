@@ -40,21 +40,7 @@ export function edgeConnectors (graph, node, edges) {
     }
   })
 }
-/*
-function connectHierarchyEdges (graph, edgeHierarchy) {
-  var eh = edgeHierarchy
-  var name = eh[1][0].node
-  var last = eh[1].length - 1
-  var linkId = `[${eh[0].v}@${eh[2].outPort}→${eh[0].w}@${eh[2].inPort}`
-  var start = {v: eh[0].v, w: name, value: {outPort: graph.edge(eh[0]).outPort, inPort: linkId, inType: 'out'}}
-  var lastEh = eh[1][last]
-  var end = {v: lastEh.node, w: eh[0].w, value: {outPort: linkId, outType: 'in', inPort: graph.edge(eh[0]).inPort}}
-  var pairs = _.zip(eh[1], _.tail(eh[1])).slice(0, -1)
-  return _.concat([start],
-    _.map(pairs, (p) => ({v: p[0].node, w: p[1].node, value: {outPort: linkId, outType: p[0].type, inPort: linkId, inType: p[1].type}})),
-    [end])
-}
-*/
+
 function linkEdge ([h1, h2]) {
   return {v: h1.node, w: h2.node, value: {outPort: h1.port, outType: h1.type, inPort: h2.port, inType: h2.type}}
 }
@@ -97,43 +83,6 @@ function convertNonConformEdgeList (graph, links) {
   var edgePortLinks = _.map(links, (e) => linkEdgePortConvert(graph, e))
   return edgePortLinks
 }
-/*
-function addConformityLink (graph, node, port) {
-  var nodeVal = graph.node(node)
-  if (!isConformityPort(port)) return
-  return {
-    v: node,
-    value: _.merge({}, nodeVal, {links: _.concat(nodeVal.links || [], [port])}),
-    parent: graph.parent(node)
-  }
-}
-
-/**
- * Add links to nodes that are on the edges to allow calling
- *//*
-function addConformityLinks (graph, edges) {
-  var nonConfEdges = _.filter(edges, (e) => isConformityEdge)
-  var nodes = _(nonConfEdges)
-    .map((e) => {
-      return _([[e.v, e.value.outPort], [e.w, e.value.inPort]])
-        .map((v) => {
-          var node = addConformityLink(graph, v[0], v[1])
-          return (node) ? [v[1], node] : null
-        })
-        .compact()
-        .value()
-    })
-    .flatten()
-    .uniqBy((n) => {
-      return n[0] + n[1].v
-    })
-    .map((n) => n[1])
-    .flatten()
-    .value()
-  console.log(nodes)
-  return nodes
-}
-*/
 
 function linksCPorts (linkList) {
   var links = _(linkList)
@@ -149,9 +98,6 @@ function linksCPorts (linkList) {
 export function rewriteNonConformEdges (graph, edges) {
   var editGraph = edit(graph)
   var linkEdges = convertNonConformEdgeList(graph, edges)
-  /* var newNodes = addConformityLinks(graph, linkEdges)
-  console.log(JSON.stringify(linkEdges, null, 2))
-  console.log(newNodes)*/
   var newEdges = _(linkEdges).map('edges').flatten().value()
   var nodes = linksCPorts(linkEdges)
   editGraph.edges = _.concat(editGraph.edges, newEdges)

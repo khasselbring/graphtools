@@ -1,33 +1,45 @@
 
 import _ from 'lodash'
 
-export var successor = (graph, node, port) =>
-    _(graph.nodeEdges(node))
-      .filter((e) => e.v === node)
-      .filter((e) => graph.edge(e).outPort === port)
-      .map((e) => e.w)
-      .value()
+export function successor (graph, node, port) {
+  var edges = graph.nodeEdges(node)
+  var nodes = _.filter(edges, (e) => e.w === node + '_PORT_' + port).map((e) => e.w)
+  for (var i = 0; i < nodes.length; i++) {
+    while (graph.node(nodes[i])['nodeType'] !== 'process') {
+      var successors = graph.successors(nodes[i])
+      nodes[i] = successors[0]
+      nodes = nodes.concat(successors.slice(1, successors.length))
+    }
+  }
+  return nodes
+}
 
-export var successorInPort = (graph, node, port) =>
-  _(graph.nodeEdges(node))
-      .filter((e) => e.v === node)
-      .filter((e) => graph.edge(e).outPort === port)
-      .map((e) => ({node: e.w, port: graph.edge(e).inPort}))
-      .value()
+export function predecessor (graph, node, port) {
+  var edges = graph.nodeEdges(node)
+  var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
+  for (var i = 0; i < nodes.length; i++) {
+    while (graph.node(nodes[i])['nodeType'] !== 'process') {
+      var predecessors = graph.predecessors(nodes[i])
+      nodes[i] = predecessors[0]
+      nodes = nodes.concat(predecessors.slice(1, predecessors.length))
+    }
+  }
+  return nodes
+}
 
-export var predecessor = (graph, node, port) =>
-    _(graph.nodeEdges(node))
-      .filter((e) => e.w === node)
-      .filter((e) => graph.edge(e).inPort === port)
-      .map((e) => e.v)
-      .value()
-
-export var predecessorOutPort = (graph, node, port) =>
-  _(graph.nodeEdges(node))
-      .filter((e) => e.w === node)
-      .filter((e) => graph.edge(e).inPort === port)
-      .map((e) => ({node: e.v, port: graph.edge(e).outPort}))
-      .value()
+export function predecessorPort (graph, node, port) {
+  var edges = graph.nodeEdges(node)
+  var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
+  for (var i = 0; i < nodes.length; i++) {
+    var predecessors = graph.predecessors(nodes[i])
+    nodes[i] = predecessors[0]
+    nodes = nodes.concat(predecessors.slice(1, predecessors.length))
+  }
+  nodes = nodes.map(function (n) {
+    return n.split('_')[3]
+  })
+  return nodes
+}
 
 export function walk (graph, node, path) {
   return generalWalk(graph, node, path, successor)
@@ -56,9 +68,9 @@ export function adjacentNode (graph, node, port, edgeFollow) {
  */
 export function adjacentNodes (graph, node, ports, edgeFollow) {
   if (!Array.isArray(ports)) {
-    return adjacentNode(graph, node, ports, edgeFollow)
+    ports = [ports]
   }
-  var nodes = _.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow))
+  var nodes = _.compact(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow)))
   if (nodes.length === 0) return
   return nodes
 }
@@ -76,10 +88,10 @@ function generalWalk (graph, node, path, edgeFollow) {
 function functionWalk (graph, node, pathFn, edgeFollow) {
   var followPorts = pathFn(graph, node)
   if (!followPorts || followPorts.length === 0) {
-    return [node]
+    return [[node]]
   }
   var nextNodes = adjacentNodes(graph, node, followPorts, edgeFollow)
-  var paths = _.compact(_.map(nextNodes, (pred) => functionWalk(graph, pred, pathFn, edgeFollow)))
+  var paths = _.compact(_.map(nextNodes, (pred) => _.flatten(functionWalk(graph, pred, pathFn, edgeFollow))))
   return _.map(paths, (path) => _.flatten(_.concat([node], path)))
 }
 
