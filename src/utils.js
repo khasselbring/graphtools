@@ -22,6 +22,15 @@ export function prefixName (prefix, name) {
   return `${prefix}:${name}`
 }
 
+export function isNPG (graph) {
+  return !isNG(graph)
+}
+
+export function isNG (graph) {
+  // TODO: improve!
+  return !_.find(graph.nodes(), (n) => n.indexOf('_PORT_') !== -1)
+}
+
 export function prefixNode (prefix, node) {
   return _.merge({}, node, {v: prefixName(prefix, node.v)})
 }
@@ -34,11 +43,27 @@ export function hierarchy (graph, node, h = []) {
   return (node) ? hierarchy(graph, graph.parent(node), _.concat([node], h)) : h
 }
 
+export function rawHierarchyConnection (graph, edge) {
+  var hFrom = hierarchy(graph, edge.v).slice(0, -1).map((f) => ({node: f, type: 'out'}))
+  var hTo = hierarchy(graph, edge.w).slice(0, -1).map((t) => ({node: t, type: 'in'}))
+  var hCon = _.dropWhile(_.zip(hFrom, hTo), (z) => {
+    return z[0] && z[1] && z[0].node === z[1].node
+  })
+  var unzipH = _.unzip(hCon)
+  return _.concat(_.compact(_.flatten([_.reverse(unzipH[0]), unzipH[1]])))
+}
+
+export function linkName (link) {
+  var value = link.value
+  return `[${link.v}@${value.outPort}→${link.w}@${value.inPort}]`
+}
+
 export function hierarchyConnection (graph, edge) {
-  var hFrom = _.reverse(hierarchy(graph, edge.v).slice(0, -1))
+  var hFrom = hierarchy(graph, edge.v).slice(0, -1)
   var hTo = hierarchy(graph, edge.w).slice(0, -1)
-  var hCon = _.dropWhile(_.zip(hFrom, hTo), (f, t) => f === t)
-  return _.concat(_.compact(_.flatten(_.unzip(hCon))))
+  var hCon = _.dropWhile(_.zip(hFrom, hTo), (f) => f[0] === f[1])
+  var unzipH = _.unzip(hCon)
+  return _.concat(_.compact(_.flatten([_.reverse(unzipH[0]), unzipH[1]])))
 }
 
 export function isConformityPort (p) {
@@ -46,5 +71,5 @@ export function isConformityPort (p) {
 }
 
 export function isConformityEdge (e) {
-  return isConformityPort(e.inPort) || isConformityPort(e.outPort)
+  return isConformityPort(e.value.inPort) || isConformityPort(e.value.outPort)
 }

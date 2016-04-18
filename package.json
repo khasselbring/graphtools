@@ -1,11 +1,12 @@
 {
   "name": "@buggyorg/graphtools",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "description": "Tools for processing buggy graphs.",
   "main": "lib/api.js",
   "scripts": {
     "test": "node node_modules/standard/bin/cmd.js src/**/*.js && babel src -d lib && node_modules/mocha/bin/mocha --compilers js:babel-register",
-    "build": "babel src -d lib"
+    "build": "babel src -d lib",
+    "prepublish": "babel src -d lib"
   },
   "keywords": [
     "Buggy"

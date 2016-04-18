@@ -21,7 +21,6 @@ describe('Graph Normalization', () => {
 
   it('can return a list of non-conform edges', () => {
     var edges = norm.nonConformEdges(pGraph2)
-    console.log(edges)
     expect(edges).to.have.length(1)
     expect(pGraph2.edge(edges[0])).to.be.ok
   })
