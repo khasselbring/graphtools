@@ -36,7 +36,7 @@ export function predecessorPort (graph, node, port) {
     nodes = nodes.concat(predecessors.slice(1, predecessors.length))
   }
   nodes = nodes.map(function (n) {
-    return n.split('_')[3]
+    return n.split('_')[n.split('_').length - 1]
   })
   return nodes
 }
