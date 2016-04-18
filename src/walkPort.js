@@ -32,6 +32,9 @@ export function predecessorPort (graph, node, port) {
   var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
   for (var i = 0; i < nodes.length; i++) {
     var predecessors = graph.predecessors(nodes[i])
+    while (graph.node(predecessors[0]).hierarchyBorder) {
+      predecessors = graph.predecessors(predecessors[0])
+    }
     nodes[i] = predecessors[0]
     nodes = nodes.concat(predecessors.slice(1, predecessors.length))
   }
