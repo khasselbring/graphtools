@@ -23,6 +23,12 @@ describe('Adjacent nodes', () => {
     expect(pred).to.deep.equal(['outTrue'])
   })
 
+  it('does get the input port for a not connected hierarchy port', () => {
+    var aGraph = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/apply.json')))
+    var pred = walk.predecessorPort(aGraph, 'inc_lambda:add', 's1')
+    expect(pred).to.have.length(1)
+  })
+
   it('can get the successor of a node', () => {
     var pred = walk.successor(pGraph1, '0_CONST1', 'const1')
     expect(pred).to.deep.equal(['2_DEMUX'])
