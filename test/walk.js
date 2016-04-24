@@ -99,7 +99,7 @@ describe('Graph walks', () => {
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
   })
 
-  it('can walk through into a compound node', () => {
+  it('can walk into a compound node', () => {
     var path = walk.walk(pGraph2, '0_STDIN', ['output', 'i'])
     expect(path).to.have.length(1)
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '3_ADD'])

@@ -28,10 +28,13 @@ export function predecessor (graph, node, port) {
 }
 
 export function predecessorPort (graph, node, port) {
-  var edges = graph.nodeEdges(node)
+  var edges = graph.edges(node)
   var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
   for (var i = 0; i < nodes.length; i++) {
     var predecessors = graph.predecessors(nodes[i])
+    if (predecessors.length === 0) {
+      return []
+    }
     while (graph.predecessors(predecessors[0]).length > 0 && graph.node(predecessors[0]).hierarchyBorder) {
       predecessors = graph.predecessors(predecessors[0])
     }
