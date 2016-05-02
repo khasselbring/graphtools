@@ -1,0 +1,59 @@
+{
+  "options": {
+    "directed": true,
+    "multigraph": false,
+    "compound": true
+  },
+  "nodes": [
+    {
+      "v": "a",
+      "value": { }
+    },
+    {
+      "v": "b",
+      "value": { }
+    },
+    {
+      "v": "c",
+      "value": { }
+    },
+    {
+      "v": "d",
+      "value": { }
+    },
+    {
+      "v": "e",
+      "value": { }
+    },
+    {
+      "v": "f",
+      "value": { }
+    }
+  ],
+  "edges": [
+    {
+      "v": "a",
+      "w": "b"
+    },
+    {
+      "v": "b",
+      "w": "d"
+    },
+    {
+      "v": "d",
+      "w": "f"
+    },
+    {
+      "v": "a",
+      "w": "c"
+    },
+    {
+      "v": "c",
+      "w": "e"
+    },
+    {
+      "v": "e",
+      "w": "f"
+    }
+  ]
+}

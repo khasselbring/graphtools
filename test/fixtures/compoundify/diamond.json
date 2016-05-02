@@ -1,0 +1,43 @@
+{
+  "options": {
+    "directed": true,
+    "multigraph": false,
+    "compound": true
+  },
+  "nodes": [
+    {
+      "v": "a",
+      "value": { }
+    },
+    {
+      "v": "b",
+      "value": { }
+    },
+    {
+      "v": "c",
+      "value": { }
+    },
+    {
+      "v": "d",
+      "value": { }
+    }
+  ],
+  "edges": [
+    {
+      "v": "a",
+      "w": "b"
+    },
+    {
+      "v": "b",
+      "w": "d"
+    },
+    {
+      "v": "a",
+      "w": "c"
+    },
+    {
+      "v": "c",
+      "w": "d"
+    }
+  ]
+}
