@@ -4,7 +4,7 @@
   "description": "Tools for processing buggy graphs.",
   "main": "lib/api.js",
   "scripts": {
-    "test": "node node_modules/standard/bin/cmd.js src/**/*.js && babel src -d lib && node_modules/mocha/bin/mocha --compilers js:babel-register",
+    "test": "node node_modules/standard/bin/cmd.js src/**/*.js && node_modules/mocha/bin/mocha --compilers js:babel-register",
     "build": "babel src -d lib",
     "prepublish": "babel src -d lib"
   },
@@ -18,6 +18,7 @@
     "lodash": "^4.6.1"
   },
   "devDependencies": {
+    "@buggyorg/npg-port-remodeler": "^0.1.9",
     "babel-cli": "^6.4.5",
     "babel-preset-es2015": "^6.3.13",
     "babel-register": "^6.4.3",

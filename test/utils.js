@@ -34,4 +34,21 @@ describe('Graph utilities', () => {
     expect(h.filter((n) => n.type === 'in')).to.have.length(2)
     expect(_.map(h, 'node')).to.deep.equal(['a:b', 'a', 'd', 'd:e'])
   })
+
+  it('recognizes port nodes', () => {
+    expect(utils.isPortNode('a_PORT_b')).to.be.true
+    expect(utils.isPortNode('a_PORT_b_PORT')).to.be.true
+    expect(utils.isPortNode('a_PORT_b_PORT_c')).to.be.false
+    expect(utils.isPortNode('apportation')).to.be.false
+  })
+
+  it('gets the corresponding node name for a port node', () => {
+    expect(utils.portNodeName('a_PORT_b')).to.equal('a')
+    expect(utils.portNodeName('multi_name_thing:with:stuff_PORT_and:stuff')).to.equal('multi_name_thing:with:stuff')
+  })
+
+  it('gets the port name for a port node', () => {
+    expect(utils.portNodePort('a_PORT_b')).to.equal('b')
+    expect(utils.portNodePort('multi_name_thing:with:stuff_PORT_and:stuff')).to.equal('and:stuff')
+  })
 })

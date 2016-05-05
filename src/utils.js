@@ -27,8 +27,19 @@ export function isNPG (graph) {
 }
 
 export function isNG (graph) {
-  // TODO: improve!
-  return !_.find(graph.nodes(), (n) => n.indexOf('_PORT_') !== -1)
+  return !graph.isMultigraph()
+}
+
+export function isPortNode (nodeName) {
+  return nodeName.split('_PORT_').length === 2
+}
+
+export function portNodePort (nodeName) {
+  return nodeName.split('_PORT_')[1]
+}
+
+export function portNodeName (nodeName) {
+  return nodeName.split('_PORT_')[0]
 }
 
 export function prefixNode (prefix, node) {

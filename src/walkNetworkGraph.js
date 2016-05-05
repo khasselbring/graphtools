@@ -1,8 +1,9 @@
 
+import {portNodeName} from './utils'
 import _ from 'lodash'
 
 export function successor (graph, node, port) {
-  var edges = graph.nodeEdges(node)
+  var edges = graph.edges()
   var nodes = _.filter(edges, (e) => e.w === node + '_PORT_' + port).map((e) => e.w)
   for (var i = 0; i < nodes.length; i++) {
     while (graph.node(nodes[i])['nodeType'] !== 'process') {
@@ -14,21 +15,37 @@ export function successor (graph, node, port) {
   return nodes
 }
 
-export function predecessor (graph, node, port) {
-  var edges = graph.nodeEdges(node)
-  var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
-  for (var i = 0; i < nodes.length; i++) {
-    while (graph.node(nodes[i])['nodeType'] !== 'process') {
-      var predecessors = graph.predecessors(nodes[i])
-      nodes[i] = predecessors[0]
-      nodes = nodes.concat(predecessors.slice(1, predecessors.length))
-    }
+function getPredecessorWithCheck (graph, curNode, node, port) {
+  var predecessors = graph.predecessors(curNode)
+  if (predecessors.length > 1) {
+    throw new Error('Invalid port graph, every port can only have one predecessor (violated for ' + node + '@' + port + ' while searching for predecessor of ' + curNode + ')')
   }
-  return nodes
+  return _.merge({}, graph.node(predecessors[0]), {name: predecessors[0]})
+}
+
+export function predecessor (graph, node, port) {
+  var pFn = _.partial(getPredecessorWithCheck, graph, _, node, port)
+  var edges = graph.edges()
+  var portNode = node + '_PORT_' + port
+  var nodes = _.filter(edges, (e) => e.v === portNode).map((e) => e.v)
+  if (nodes.length > 1) {
+    throw new Error('Invalid port graph, every port can only have one predecessor (violated for ' + node + '@' + port + ')')
+  }
+  var resNodes = _.map(nodes, (curNode) => {
+    var pred = pFn(curNode)
+    while (pred.nodeType !== 'process' && !pred.hierarchyBorder) {
+      pred = pFn(pred.name)
+    }
+    if (pred.hierarchyBorder) {
+      return portNodeName(pred.name)
+    }
+    return pred.name
+  })
+  return resNodes
 }
 
 export function predecessorPort (graph, node, port) {
-  var edges = graph.edges(node)
+  var edges = graph.edges()
   var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
   for (var i = 0; i < nodes.length; i++) {
     var predecessors = graph.predecessors(nodes[i])
@@ -47,6 +64,11 @@ export function predecessorPort (graph, node, port) {
   return nodes
 }
 
+export function predecessorPair (graph, node, port) {
+  return _.map(_.zip(predecessor(graph, node, port), predecessorPort(graph, node, port)),
+    ([node, port]) => ({node: node, port: port}))
+}
+
 export function walk (graph, node, path) {
   return generalWalk(graph, node, path, successor)
 }
@@ -57,7 +79,7 @@ export function walk (graph, node, path) {
  * it follows the direction of the directed edges
  */
 export function walkBack (graph, node, path) {
-  return _.map(generalWalk(graph, node, path, predecessor), _.reverse)
+  return _.map(generalWalk(graph, node, path, predecessorPair), _.reverse)
 }
 
 /**
@@ -76,7 +98,7 @@ export function adjacentNodes (graph, node, ports, edgeFollow) {
   if (!Array.isArray(ports)) {
     ports = [ports]
   }
-  var nodes = _.compact(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow)))
+  var nodes = _.compact(_.flatten(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow))))
   if (nodes.length === 0) return
   return nodes
 }
@@ -91,13 +113,18 @@ function generalWalk (graph, node, path, edgeFollow) {
   }
 }
 
-function functionWalk (graph, node, pathFn, edgeFollow) {
-  var followPorts = pathFn(graph, node)
+function functionWalk (graph, node, pathFn, edgeFollow, port) {
+  var followPorts = pathFn(graph, node, port)
   if (!followPorts || followPorts.length === 0) {
     return [[node]]
   }
   var nextNodes = adjacentNodes(graph, node, followPorts, edgeFollow)
-  var paths = _.compact(_.map(nextNodes, (pred) => _.flatten(functionWalk(graph, pred, pathFn, edgeFollow))))
+  console.log(nextNodes)
+  var paths = _(nextNodes)
+    .map((preds) => _.flatten(_.map(preds, ({pred, port}) => functionWalk(graph, pred, pathFn, edgeFollow, port))))
+    .compact()
+    .value()
+//  var paths = _.compact(_.map(nextNodes, (pred) => _.flatten(functionWalk(graph, pred, pathFn, edgeFollow))))
   return _.map(paths, (path) => _.flatten(_.concat([node], path)))
 }
 

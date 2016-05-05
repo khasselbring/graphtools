@@ -1,0 +1,422 @@
+{
+  "options": {
+    "directed": true,
+    "multigraph": true,
+    "compound": true
+  },
+  "nodes": [
+    {
+      "v": "in",
+      "value": {
+        "id": "io/stdin",
+        "version": "0.2.0",
+        "inputPorts": {},
+        "outputPorts": {
+          "output": "string"
+        },
+        "atomic": true,
+        "path": [],
+        "branchPath": "in",
+        "branch": "in",
+        "name": "in"
+      }
+    },
+    {
+      "v": "lambda_inc",
+      "value": {
+        "id": "functional/lambda",
+        "version": "0.1.0",
+        "inputPorts": {},
+        "outputPorts": {
+          "fn": "function"
+        },
+        "atomic": true,
+        "path": [],
+        "params": {
+          "implementation": "math/inc"
+        },
+        "branchPath": "lambda_inc",
+        "branch": "lambda_inc",
+        "name": "lambda_inc"
+      }
+    },
+    {
+      "v": "inc_lambda",
+      "value": {
+        "id": "math/inc",
+        "version": "0.4.1",
+        "inputPorts": {
+          "i": "number"
+        },
+        "outputPorts": {
+          "inc": "number"
+        },
+        "atomic": false,
+        "implementation": {
+          "nodes": [
+            {
+              "id": "math/add",
+              "version": "0.2.0",
+              "inputPorts": {
+                "s1": "number",
+                "s2": "number"
+              },
+              "outputPorts": {
+                "sum": "number"
+              },
+              "atomic": true,
+              "path": [
+                {
+                  "meta": "math/inc",
+                  "branch": "inc_lambda",
+                  "version": "0.4.1",
+                  "path": []
+                }
+              ],
+              "parent": "inc_lambda",
+              "branchPath": "inc_lambda:add",
+              "branch": "add"
+            },
+            {
+              "id": "math/const",
+              "version": "0.2.0",
+              "inputPorts": {},
+              "outputPorts": {
+                "output": "number"
+              },
+              "atomic": true,
+              "path": [
+                {
+                  "meta": "math/inc",
+                  "branch": "inc_lambda",
+                  "version": "0.4.1",
+                  "path": []
+                }
+              ],
+              "params": {
+                "value": 1
+              },
+              "parent": "inc_lambda",
+              "branchPath": "inc_lambda:c",
+              "branch": "c"
+            }
+          ],
+          "edges": [
+            {
+              "from": "i",
+              "to": "add:s1"
+            },
+            {
+              "from": "c:output",
+              "to": "add:s2"
+            },
+            {
+              "from": "add:sum",
+              "to": "inc"
+            }
+          ]
+        },
+        "path": [],
+        "branchPath": "inc_lambda",
+        "branch": "inc_lambda",
+        "name": "inc_lambda"
+      }
+    },
+    {
+      "v": "inc_lambda:add",
+      "value": {
+        "id": "math/add",
+        "version": "0.2.0",
+        "inputPorts": {
+          "s1": "number",
+          "s2": "number"
+        },
+        "outputPorts": {
+          "sum": "number"
+        },
+        "atomic": true,
+        "path": [
+          {
+            "meta": "math/inc",
+            "branch": "inc_lambda",
+            "version": "0.4.1",
+            "path": []
+          }
+        ],
+        "parent": "inc_lambda",
+        "branchPath": "inc_lambda:add",
+        "branch": "add"
+      },
+      "parent": "inc_lambda"
+    },
+    {
+      "v": "inc_lambda:c",
+      "value": {
+        "id": "math/const",
+        "version": "0.2.0",
+        "inputPorts": {},
+        "outputPorts": {
+          "output": "number"
+        },
+        "atomic": true,
+        "path": [
+          {
+            "meta": "math/inc",
+            "branch": "inc_lambda",
+            "version": "0.4.1",
+            "path": []
+          }
+        ],
+        "params": {
+          "value": 1
+        },
+        "parent": "inc_lambda",
+        "branchPath": "inc_lambda:c",
+        "branch": "c"
+      },
+      "parent": "inc_lambda"
+    },
+    {
+      "v": "strToArr",
+      "value": {
+        "id": "translator/string_to_array",
+        "version": "0.1.0",
+        "inputPorts": {
+          "input": "string"
+        },
+        "outputPorts": {
+          "output": "[generic]"
+        },
+        "atomic": true,
+        "path": [],
+        "typeHint": {
+          "output": "[number]"
+        },
+        "branchPath": "strToArr",
+        "branch": "strToArr",
+        "name": "strToArr"
+      }
+    },
+    {
+      "v": "mapInc",
+      "value": {
+        "id": "functional/map",
+        "version": "0.1.4",
+        "inputPorts": {
+          "fn": "function",
+          "data": "[generic]"
+        },
+        "outputPorts": {
+          "result": "[generic]"
+        },
+        "settings": {
+          "unpacked": true
+        },
+        "implementation": {
+          "nodes": [
+            {
+              "id": "functional/apply",
+              "version": "0.1.2",
+              "inputPorts": {
+                "fn": "function",
+                "value": "function:arg"
+              },
+              "outputPorts": {
+                "result": "function:return"
+              },
+              "atomic": true,
+              "specialForm": true,
+              "path": [
+                {
+                  "meta": "functional/map",
+                  "branch": "mapInc",
+                  "version": "0.1.4",
+                  "path": []
+                }
+              ],
+              "parent": "mapInc",
+              "branchPath": "mapInc:apply",
+              "branch": "apply"
+            }
+          ],
+          "edges": [
+            {
+              "from": "data",
+              "to": "apply:data"
+            },
+            {
+              "from": "fn",
+              "to": "apply:fn"
+            },
+            {
+              "from": "apply:result",
+              "to": "result"
+            }
+          ]
+        },
+        "path": [],
+        "branchPath": "mapInc",
+        "branch": "mapInc",
+        "name": "mapInc"
+      }
+    },
+    {
+      "v": "mapInc:apply",
+      "value": {
+        "id": "functional/apply",
+        "version": "0.1.2",
+        "inputPorts": {
+          "fn": "function",
+          "value": "function:arg"
+        },
+        "outputPorts": {
+          "result": "function:return"
+        },
+        "atomic": true,
+        "specialForm": true,
+        "path": [
+          {
+            "meta": "functional/map",
+            "branch": "mapInc",
+            "version": "0.1.4",
+            "path": []
+          }
+        ],
+        "parent": "mapInc",
+        "branchPath": "mapInc:apply",
+        "branch": "apply"
+      },
+      "parent": "mapInc"
+    },
+    {
+      "v": "arrToStr",
+      "value": {
+        "id": "translator/array_to_string",
+        "version": "0.1.0",
+        "inputPorts": {
+          "input": "[generic]"
+        },
+        "outputPorts": {
+          "output": "string"
+        },
+        "atomic": true,
+        "path": [],
+        "branchPath": "arrToStr",
+        "branch": "arrToStr",
+        "name": "arrToStr"
+      }
+    },
+    {
+      "v": "out",
+      "value": {
+        "id": "io/stdout",
+        "version": "0.2.0",
+        "inputPorts": {
+          "input": "string"
+        },
+        "outputPorts": {},
+        "atomic": true,
+        "path": [],
+        "branchPath": "out",
+        "branch": "out",
+        "name": "out"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "v": "in",
+      "w": "strToArr",
+      "value": {
+        "outPort": "output",
+        "inPort": "input"
+      }
+    },
+    {
+      "v": "strToArr",
+      "w": "mapInc",
+      "value": {
+        "outPort": "output",
+        "inPort": "data"
+      }
+    },
+    {
+      "v": "lambda_inc",
+      "w": "mapInc",
+      "value": {
+        "outPort": "fn",
+        "inPort": "fn"
+      }
+    },
+    {
+      "v": "mapInc",
+      "w": "arrToStr",
+      "value": {
+        "outPort": "result",
+        "inPort": "input"
+      }
+    },
+    {
+      "v": "arrToStr",
+      "w": "out",
+      "value": {
+        "outPort": "output",
+        "inPort": "input"
+      }
+    },
+    {
+      "v": "inc_lambda",
+      "w": "inc_lambda:add",
+      "name": "inc_lambda:i→inc_lambda:add:s1",
+      "value": {
+        "outPort": "i",
+        "inPort": "s1"
+      }
+    },
+    {
+      "v": "inc_lambda:c",
+      "w": "inc_lambda:add",
+      "name": "inc_lambda:c:output→inc_lambda:add:s2",
+      "value": {
+        "outPort": "output",
+        "inPort": "s2"
+      }
+    },
+    {
+      "v": "inc_lambda:add",
+      "w": "inc_lambda",
+      "name": "inc_lambda:add:sum→inc_lambda:inc",
+      "value": {
+        "outPort": "sum",
+        "inPort": "inc"
+      }
+    },
+    {
+      "v": "mapInc",
+      "w": "mapInc:apply",
+      "name": "mapInc:data→mapInc:apply:data",
+      "value": {
+        "outPort": "data",
+        "inPort": "data"
+      }
+    },
+    {
+      "v": "mapInc",
+      "w": "mapInc:apply",
+      "name": "mapInc:fn→mapInc:apply:fn",
+      "value": {
+        "outPort": "fn",
+        "inPort": "fn"
+      }
+    },
+    {
+      "v": "mapInc:apply",
+      "w": "mapInc",
+      "name": "mapInc:apply:result→mapInc:result",
+      "value": {
+        "outPort": "result",
+        "inPort": "result"
+      }
+    }
+  ]
+}
