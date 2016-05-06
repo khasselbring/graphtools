@@ -161,11 +161,23 @@ function testSetting (setting, preprocess) {
       expect(path[1][0]).to.be.oneOf(['1_INC', '4_CONST1'])
     })
 
+    it('calls the walk callback with the graph, node and port', () => {
+      var cb = sinon.stub()
+      cb.calledWith(pGraph2, '0_STDIN', 'output')
+      walk.walkBack(pGraph2, '1_INC', cb)
+    })
+
     it('can follows a path into a generic', () => {
       var mapG = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map.ports.json'))))
       var path = walk.walkBack(mapG, 'arrToStr', ['input', 'result'])
       expect(path).to.have.length(1)
       expect(path).to.deep.equal([['mapInc:apply', 'mapInc', 'arrToStr']])
+    })
+
+    it('can walk through a map correctly', () => {
+      var mapG = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map.ports.json'))))
+      var paths = walk.walkBack(mapG, 'arrToStr', ['input', 'result', ['fn', 'data']], {keepPorts: true})
+      expect(paths).to.have.length(2)
     })
   })
 }

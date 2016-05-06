@@ -16,8 +16,8 @@ export function successor (graph, node, port) {
       : walkNG.successor(graph, node, port)
 }
 
-export function walk (graph, node, path) {
-  return generalWalk(graph, node, path, successor)
+export function walk (graph, node, path, options = {keepPorts: false}) {
+  return generalWalk(graph, node, path, successor, options)
 }
 
 /**
@@ -25,8 +25,8 @@ export function walk (graph, node, path) {
  * The path will be pointing to node (node will be the last item of the result)
  * it follows the direction of the directed edges
  */
-export function walkBack (graph, node, path) {
-  return _.map(generalWalk(graph, node, path, predecessor), _.reverse)
+export function walkBack (graph, node, path, options = {keepPorts: false}) {
+  return _.map(generalWalk(graph, node, path, predecessor, options), _.reverse)
 }
 
 /**
@@ -50,13 +50,22 @@ export function adjacentNodes (graph, node, ports, edgeFollow) {
   return nodes
 }
 
-function generalWalk (graph, node, path, edgeFollow) {
+function generalWalk (graph, node, path, edgeFollow, options) {
+  var res
+  if (typeof (node) !== 'object') {
+    node = {node}
+  }
   if (Array.isArray(path)) {
-    return pickNodeNames(arrayWalk(graph, {node: node}, path, edgeFollow))
+    res = arrayWalk(graph, node, path, edgeFollow)
   } else if (typeof (path) === 'function') {
-    return pickNodeNames(functionWalk(graph, {node: node}, path, edgeFollow))
+    res = functionWalk(graph, node, path, edgeFollow)
   } else {
     return undefined
+  }
+  if (options.keepPorts) {
+    return res
+  } else {
+    return pickNodeNames(res)
   }
 }
 
@@ -64,17 +73,16 @@ function pickNodeNames (pathes) {
   return _.map(pathes, _.partial(_.map, _, 'node'))
 }
 
-function functionWalk (graph, node, pathFn, edgeFollow, port) {
-  var followPorts = pathFn(graph, node.node, port)
+function functionWalk (graph, node, pathFn, edgeFollow) {
+  var followPorts = pathFn(graph, node.node, node.port)
   if (!followPorts || followPorts.length === 0) {
     return [[node]]
   }
   var nextNodes = adjacentNodes(graph, node.node, followPorts, edgeFollow)
   var paths = _(nextNodes)
-    .map((nodeObj = {node, port}) => functionWalk(graph, nodeObj, pathFn, edgeFollow, port))
+    .map((node) => functionWalk(graph, node, pathFn, edgeFollow))
     .compact()
     .value()
-//  var paths = _.compact(_.map(nextNodes, (pred) => _.flatten(functionWalk(graph, pred, pathFn, edgeFollow))))
   return _.map(paths, (path) => _.flatten(_.concat([node], path)))
 }
 
