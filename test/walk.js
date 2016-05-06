@@ -1,7 +1,8 @@
 /* global describe, it */
 
 import chai from 'chai'
-import walk from '../src/walk.js'
+import * as walk from '../src/walk.js'
+import {normalize} from '@buggyorg/dupjoin'
 import {remodelPorts} from '@buggyorg/npg-port-remodeler'
 import grlib from 'graphlib'
 import sinon from 'sinon'
@@ -17,39 +18,39 @@ function testSetting (setting, preprocess) {
     preprocess = (x) => x
   }
 
-  describe.only('Adjacent nodes for ' + setting, () => {
+  describe('Adjacent nodes for ' + setting, () => {
     var pGraph1 = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.graphlib'))))
     it('can get the predecessor of a node for', () => {
       var pred = walk.predecessor(pGraph1, '2_STDOUT', 'input')
-      expect(pred).to.deep.equal(['1_INC'])
+      expect(pred).to.deep.equal([{node: '1_INC', port: 'inc'}])
     })
 
     var pGraph3 = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial.json'))))
     it('`predecessor` returns the correct neighbors for inPort-name = outPort-name', () => {
       var preds = walk.predecessor(pGraph3, 'p', 'fn')
       expect(preds).to.have.length(1)
-      expect(preds[0]).to.equal('l')
+      expect(preds[0]).to.deep.equal({node: 'l', port: 'fn'})
     })
 
     it('can get the successor of a node', () => {
       var pred = walk.successor(pGraph1, '0_STDIN', 'output')
-      expect(pred).to.deep.equal(['1_INC'])
+      expect(pred).to.deep.equal([{node: '1_INC', port: 'i'}])
     })
 
     var doubleInGraph = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_double_in.graphlib'))))
     it('can get multiple predecessors from one port', () => {
       var pred = walk.predecessor(doubleInGraph, '2_STDOUT', 'input')
       expect(pred).to.have.length(2)
-      expect(pred).to.include('0_STDIN')
-      expect(pred).to.include('1_STDIN')
+      expect(pred).to.deep.include({node: '0_STDIN', port: 'output'})
+      expect(pred).to.deep.include({node: '1_STDIN', port: 'output'})
     })
 
     var doubleOutGraph = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_double_out.graphlib'))))
     it('can get multiple successor from one port', () => {
-      var pred = walk.successor(doubleOutGraph, '0_STDIN', 'output')
-      expect(pred).to.have.length(2)
-      expect(pred).to.include('1_STDOUT')
-      expect(pred).to.include('2_STDOUT')
+      var succ = walk.successor(doubleOutGraph, '0_STDIN', 'output')
+      expect(succ).to.have.length(2)
+      expect(succ).to.deep.include({node: '1_STDOUT', port: 'input'})
+      expect(succ).to.deep.include({node: '2_STDOUT', port: 'input'})
     })
 
     it('`adjacentNode` returns edgeFollow result', () => {
@@ -59,7 +60,7 @@ function testSetting (setting, preprocess) {
 
     it('`adjacentNode` can use successor function', () => {
       var succ = walk.adjacentNode(pGraph1, '0_STDIN', 'output', walk.successor)
-      expect(succ).to.deep.equal(['1_INC'])
+      expect(succ).to.deep.equal([{node: '1_INC', port: 'i'}])
     })
 
     it('`adjacentNode` returns undefined if path does not exists', () => {
@@ -68,19 +69,23 @@ function testSetting (setting, preprocess) {
     })
 
     var pGraph2 = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph.graphlib'))))
+    it('`adjacentNode` can handle compound nodes', () => {
+      var preds = walk.adjacentNodes(pGraph2, '3_ADD', 's1', walk.predecessor)
+      expect(preds).to.have.length(1)
+      expect(preds[0]).to.deep.equal({node: '1_INC', port: 'i'})
+    })
+
     it('`adjacentNodes` can process multiple ports', () => {
       var preds = walk.adjacentNodes(pGraph2, '3_ADD', ['s1', 's2'], walk.predecessor)
       expect(preds).to.have.length(2)
-      expect(preds[0]).to.have.length(1)
-      expect(preds[1]).to.have.length(1)
-      expect(_.flatten(preds)).to.include('4_CONST1')
-      expect(_.flatten(preds)).to.include('1_INC')
+      expect(preds).to.deep.include({node: '4_CONST1', port: 'const1'})
+      expect(preds).to.deep.include({node: '1_INC', port: 'i'})
     })
 
     it('`adjacentNodes` removes not usable paths', () => {
       var preds = walk.adjacentNodes(pGraph2, '3_ADD', ['s1', '-'], walk.predecessor)
-      expect(preds).to.have.length(2)
-      expect(preds[0]).to.deep.equal(['1_INC'])
+      expect(preds).to.have.length(1)
+      expect(preds[0]).to.deep.equal({node: '1_INC', port: 'i'})
     })
   })
 
@@ -99,7 +104,7 @@ function testSetting (setting, preprocess) {
     })
 
     var pGraph2 = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph.graphlib'))))
-    it('can walk through over a compound node', () => {
+    it('can walk over a compound node', () => {
       var path = walk.walk(pGraph2, '0_STDIN', ['output', 'inc'])
       expect(path).to.have.length(1)
       expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
@@ -165,5 +170,5 @@ function testSetting (setting, preprocess) {
   })
 }
 
-// testSetting('network port graphs')
-testSetting('network graphs', remodelPorts)
+testSetting('network port graphs')
+testSetting('network graphs', (graph) => remodelPorts(normalize(graph)))

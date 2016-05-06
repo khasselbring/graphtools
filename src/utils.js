@@ -42,6 +42,16 @@ export function portNodeName (nodeName) {
   return nodeName.split('_PORT_')[0]
 }
 
+export function nthInput (graph, node, n) {
+  var inputs = graph.node(node).inputPorts
+  return _.keys(inputs)[n]
+}
+
+export function nthOutput (graph, node, n) {
+  var outputs = graph.node(node).outputPorts
+  return _.keys(outputs)[n]
+}
+
 export function prefixNode (prefix, node) {
   return _.merge({}, node, {v: prefixName(prefix, node.v)})
 }

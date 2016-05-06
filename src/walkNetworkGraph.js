@@ -1,18 +1,13 @@
 
-import {portNodeName} from './utils'
+import {portNodeName, portNodePort, nthInput, nthOutput} from './utils'
 import _ from 'lodash'
 
-export function successor (graph, node, port) {
-  var edges = graph.edges()
-  var nodes = _.filter(edges, (e) => e.w === node + '_PORT_' + port).map((e) => e.w)
-  for (var i = 0; i < nodes.length; i++) {
-    while (graph.node(nodes[i])['nodeType'] !== 'process') {
-      var successors = graph.successors(nodes[i])
-      nodes[i] = successors[0]
-      nodes = nodes.concat(successors.slice(1, successors.length))
-    }
+function getSuccessorWithCheck (graph, curNode, node, port) {
+  var successors = graph.successors(curNode)
+  if (successors.length > 1) {
+    throw new Error('Invalid port graph, every port can only have one successor (violated for ' + node + '@' + port + ' while searching for successors of ' + curNode + ')')
   }
-  return nodes
+  return _.merge({}, graph.node(successors[0]), {name: successors[0]})
 }
 
 function getPredecessorWithCheck (graph, curNode, node, port) {
@@ -23,122 +18,44 @@ function getPredecessorWithCheck (graph, curNode, node, port) {
   return _.merge({}, graph.node(predecessors[0]), {name: predecessors[0]})
 }
 
-export function predecessor (graph, node, port) {
-  var pFn = _.partial(getPredecessorWithCheck, graph, _, node, port)
+function neighbor (graph, node, port, neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn) {
   var edges = graph.edges()
   var portNode = node + '_PORT_' + port
   var nodes = _.filter(edges, (e) => e.v === portNode).map((e) => e.v)
   if (nodes.length > 1) {
     throw new Error('Invalid port graph, every port can only have one predecessor (violated for ' + node + '@' + port + ')')
   }
-  var resNodes = _.map(nodes, (curNode) => {
-    var pred = pFn(curNode)
-    while (pred.nodeType !== 'process' && !pred.hierarchyBorder) {
-      pred = pFn(pred.name)
+  var resNodes = _.flatten(_.map(nodes, (curNode) => {
+    var neigh = neighborFn(curNode)
+    var lastPort = null
+    while (neigh.nodeType !== 'process' && !neigh.hierarchyBorder) {
+      if (neigh.name.indexOf('_PORT_') !== -1) {
+        lastPort = portNodePort(neigh.name)
+      }
+      neigh = neighborFn(neigh.name)
     }
-    if (pred.hierarchyBorder) {
-      return portNodeName(pred.name)
+    if (neigh.hierarchyBorder) {
+      lastPort = portNodePort(neigh.name)
+      return {node: portNodeName(neigh.name), port: lastPort}
     }
-    return pred.name
-  })
+    // this is still ugly.. jumps over duplicates and joins
+    if (neigh.name.indexOf(multiCase) !== -1) {
+      return _.flatten([
+        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn),
+        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 1), neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn)
+      ])
+    } else if (neigh.name.indexOf(jumpOver) !== -1) {
+      return neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn)
+    }
+    return {node: neigh.name, port: lastPort}
+  }))
   return resNodes
 }
 
-export function predecessorPort (graph, node, port) {
-  var edges = graph.edges()
-  var nodes = _.filter(edges, (e) => e.v === node + '_PORT_' + port).map((e) => e.v)
-  for (var i = 0; i < nodes.length; i++) {
-    var predecessors = graph.predecessors(nodes[i])
-    if (predecessors.length === 0) {
-      return []
-    }
-    while (graph.predecessors(predecessors[0]).length > 0 && graph.node(predecessors[0]).hierarchyBorder) {
-      predecessors = graph.predecessors(predecessors[0])
-    }
-    nodes[i] = predecessors[0]
-    nodes = nodes.concat(predecessors.slice(1, predecessors.length))
-  }
-  nodes = _.compact(nodes).map(function (n) {
-    return n.split('_')[n.split('_').length - 1]
-  })
-  return nodes
+export function successor (graph, node, port) {
+  return neighbor(graph, node, port, _.partial(getSuccessorWithCheck, graph, _, node, port), '_DUPLICATE_', nthOutput, '_JOIN_', nthOutput)
 }
 
-export function predecessorPair (graph, node, port) {
-  return _.map(_.zip(predecessor(graph, node, port), predecessorPort(graph, node, port)),
-    ([node, port]) => ({node: node, port: port}))
-}
-
-export function walk (graph, node, path) {
-  return generalWalk(graph, node, path, successor)
-}
-
-/**
- * returns all pathes tracked by the path that defines the ports.
- * The path will be pointing to node (node will be the last item of the result)
- * it follows the direction of the directed edges
- */
-export function walkBack (graph, node, path) {
-  return _.map(generalWalk(graph, node, path, predecessorPair), _.reverse)
-}
-
-/**
- * returns a list of adjacent nodes for one port of a node
- */
-export function adjacentNode (graph, node, port, edgeFollow) {
-  var adjacents = edgeFollow(graph, node, port)
-  if (adjacents.length === 0) return
-  else return adjacents
-}
-
-/**
- * returns a list of adjacent of a node
- */
-export function adjacentNodes (graph, node, ports, edgeFollow) {
-  if (!Array.isArray(ports)) {
-    ports = [ports]
-  }
-  var nodes = _.compact(_.flatten(_.map(ports, _.partial(adjacentNode, graph, node, _, edgeFollow))))
-  if (nodes.length === 0) return
-  return nodes
-}
-
-function generalWalk (graph, node, path, edgeFollow) {
-  if (Array.isArray(path)) {
-    return arrayWalk(graph, node, path, edgeFollow)
-  } else if (typeof (path) === 'function') {
-    return functionWalk(graph, node, path, edgeFollow)
-  } else {
-    return undefined
-  }
-}
-
-function functionWalk (graph, node, pathFn, edgeFollow, port) {
-  var followPorts = pathFn(graph, node, port)
-  if (!followPorts || followPorts.length === 0) {
-    return [[node]]
-  }
-  var nextNodes = adjacentNodes(graph, node, followPorts, edgeFollow)
-  console.log(nextNodes)
-  var paths = _(nextNodes)
-    .map((preds) => _.flatten(_.map(preds, ({pred, port}) => functionWalk(graph, pred, pathFn, edgeFollow, port))))
-    .compact()
-    .value()
-//  var paths = _.compact(_.map(nextNodes, (pred) => _.flatten(functionWalk(graph, pred, pathFn, edgeFollow))))
-  return _.map(paths, (path) => _.flatten(_.concat([node], path)))
-}
-
-function arrayWalk (graph, node, pathArray, edgeFollow) {
-  return _.reduce(pathArray, (nodes, p) => {
-    return _(nodes)
-      .map((path) => {
-        var curNode = _.last(path)
-        var nextNodes = adjacentNodes(graph, curNode, p, edgeFollow)
-        if (!nextNodes) return
-        return _.map(nextNodes, (n) => _.concat(path, n))
-      })
-      .flatten()
-      .compact()
-      .value()
-  }, [[node]])
+export function predecessor (graph, node, port) {
+  return neighbor(graph, node, port, _.partial(getPredecessorWithCheck, graph, _, node, port), '_JOIN_', nthInput, '_DUPLICATE_', nthInput)
 }
