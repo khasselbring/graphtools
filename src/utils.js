@@ -11,7 +11,7 @@ export function clone (graph) {
 }
 
 export function edit (graph) {
-  return graphlib.json.write(graph)
+  return JSON.parse(JSON.stringify(graphlib.json.write(graph)))
 }
 
 export function finalize (editGraph) {
