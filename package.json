@@ -19,7 +19,7 @@
     "object-hash": "^1.1.2"
   },
   "devDependencies": {
-    "@buggyorg/dupjoin": "^0.1.4",
+    "@buggyorg/dupjoin": "^0.1.5",
     "@buggyorg/npg-port-remodeler": "^0.1.9",
     "babel-cli": "^6.4.5",
     "babel-preset-es2015": "^6.3.13",

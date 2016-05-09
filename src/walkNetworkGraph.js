@@ -18,10 +18,10 @@ function getPredecessorWithCheck (graph, curNode, node, port) {
   return _.merge({}, graph.node(predecessors[0]), {name: predecessors[0]})
 }
 
-function neighbor (graph, node, port, neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn) {
+function neighbor (graph, node, port, neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn) {
   var edges = graph.edges()
   var portNode = node + '_PORT_' + port
-  var nodes = _.filter(edges, (e) => e.v === portNode).map((e) => e.v)
+  var nodes = _.filter(edges, (e) => e[nType] === portNode).map((e) => e[nType])
   if (nodes.length > 1) {
     throw new Error('Invalid port graph, every port can only have one predecessor (violated for ' + node + '@' + port + ')')
   }
@@ -41,11 +41,11 @@ function neighbor (graph, node, port, neighborFn, multiCase, multiPortFn, jumpOv
     // this is still ugly.. jumps over duplicates and joins
     if (neigh.name.indexOf(multiCase) !== -1) {
       return _.flatten([
-        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn),
-        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 1), neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn)
+        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn),
+        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 1), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn)
       ])
     } else if (neigh.name.indexOf(jumpOver) !== -1) {
-      return neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, multiCase, multiPortFn, jumpOver, jumpOverFn)
+      return neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn)
     }
     return {node: neigh.name, port: lastPort}
   }))
@@ -53,9 +53,9 @@ function neighbor (graph, node, port, neighborFn, multiCase, multiPortFn, jumpOv
 }
 
 export function successor (graph, node, port) {
-  return neighbor(graph, node, port, _.partial(getSuccessorWithCheck, graph, _, node, port), '_DUPLICATE_', nthOutput, '_JOIN_', nthOutput)
+  return neighbor(graph, node, port, _.partial(getSuccessorWithCheck, graph, _, node, port), 'v', '_DUPLICATE_', nthOutput, '_JOIN_', nthOutput)
 }
 
 export function predecessor (graph, node, port) {
-  return neighbor(graph, node, port, _.partial(getPredecessorWithCheck, graph, _, node, port), '_JOIN_', nthInput, '_DUPLICATE_', nthInput)
+  return neighbor(graph, node, port, _.partial(getPredecessorWithCheck, graph, _, node, port), 'w', '_JOIN_', nthInput, '_DUPLICATE_', nthInput)
 }
