@@ -181,9 +181,35 @@ function testSetting (setting, preprocess) {
     })
     
     if(setting === 'network graphs') {
-      it('can walk through recursive map correctly', () => {
+      it('can walk out of recursive map correctly', () => {
         var mapG = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map_recursive.json')))
         var paths = walk.walkBack(mapG, 'mapInc', ['data'], {keepPorts: true})
+        expect(paths).to.have.length(1)
+        expect(paths[0]).to.have.length(2)
+      })
+
+      it('can walk through recursive map correctly', () => {
+        var mapG = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map_recursive.1.json')))
+        var paths = walk.walkBack(mapG, {node: 'mapInc', port: 'result'}, (graph, node, port) => {
+          if (node === 'mapInc' && port === 'data') {
+            return 'data'
+          }
+          switch(node) {
+            case 'mapInc':
+              return ['result']
+            case 'mapInc:join':
+              return ['in1', 'in2']
+            case 'mapInc:term':
+              return ['input']
+            case 'mapInc:prep':
+              return ['value']
+            case 'mapInc:strToArr':
+              return []
+            case 'mapInc:apply':
+              return []
+          }
+        }, {keepPorts: true})
+        expect(paths).to.have.length(2)
       })
     }
   })
