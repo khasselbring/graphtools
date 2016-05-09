@@ -1,5 +1,6 @@
 import graphlib from 'graphlib'
 import _ from 'lodash'
+import hash from 'object-hash'
 
 var markNodes = function (graph, subset) {
   for (let n of subset) {
@@ -27,25 +28,35 @@ var lastMarkedIndex = function (graph, topsort) {
 }
 
 // checks if the element is blocked forward
-var checkForward = function (elem, graph, topsort, last) {
+var blockedForward = function (elem, graph, topsort, last) {
   if (_.indexOf(topsort, elem) > last) { return false }
   if (graph.node(elem).mark) { return true }
   for (let succ of graph.successors(elem)) {
-    if (checkForward(succ, graph, topsort, last)) { return true }
+    if (blockedForward(succ, graph, topsort, last)) { return true }
   }
 }
 
 // checks if the element is blocked backward
-var checkBackward = function (elem, graph, topsort, first) {
+var blockedBackward = function (elem, graph, topsort, first) {
   if (_.indexOf(topsort, elem) > first) { return false }
   if (graph.node(elem).mark) { return true }
   for (let pred of graph.predecessors(elem)) {
-    if (checkBackward(pred, graph, topsort, first)) { return true }
+    if (blockedBackward(pred, graph, topsort, first)) { return true }
   }
+}
+
+var sameParents = function (graph, subset) {
+  if (subset.length < 1) { return true }
+  var par = graph.parent(subset[0])
+  for (let n of subset) {
+    if (graph.parent(n) !== par) { return false }
+  }
+  return true
 }
 
 export function isCompoundable (g, subset) {
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
+  if (!sameParents(graph, subset) || !graph.isCompound()) { return false }
   markNodes(graph, subset)
   var topsort = graphlib.alg.topsort(graph)
   var first = firstMarkedIndex(graph, topsort)
@@ -55,7 +66,7 @@ export function isCompoundable (g, subset) {
       if (i < first || i > last) {
         continue
       }
-      if (checkForward(topsort[i], graph, topsort, last) && checkBackward(topsort[i], graph, topsort)) {
+      if (blockedForward(topsort[i], graph, topsort, last) && blockedBackward(topsort[i], graph, topsort)) {
         return false
       }
     }
@@ -66,8 +77,13 @@ export function isCompoundable (g, subset) {
 // TODO: Unfinished
 export function compoundify (g, subset) {
   if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
+  if (subset.length < 1) { return g }
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
   markNodes(graph, subset)
-  console.log(JSON.stringify(graphlib.json.write(graph)))
+  var comp = 'comp' + hash(graph)
+  graph.setNode(comp)
+  for (let n of subset) {
+    graph.setParent(n, comp)
+  }
   return graph
 }

@@ -26,6 +26,13 @@ describe('Compoundification Property Check', () => {
     expect(cmpdfy.isCompoundable(simple, ['a', 'c'])).to.be.false
   })
 
+  var simpleDif = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/compoundify/simple.json')))
+  simpleDif.setNode('par')
+  simpleDif.setParent('a', 'par')
+  it('different parents in subset of simple graph', () => {
+    expect(cmpdfy.isCompoundable(simpleDif, ['a', 'b'])).to.be.false
+  })
+
   var diamond = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/compoundify/diamond.json')))
   it('all nodes in subset in diamond graph', () => {
     expect(cmpdfy.isCompoundable(diamond, ['a', 'b', 'c', 'd'])).to.be.true
@@ -53,10 +60,28 @@ describe('Compoundification Property Check', () => {
   })
 })
 
-// TODO: Unfinished
 describe('Compoundification of Subset of Nodes', () => {
   var simple = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/compoundify/simple.json')))
+  it('impossible subset of simple graph', () => {
+    expect(() => cmpdfy.compoundify(simple, ['a', 'c'])).to.throw(Error)
+  })
+
   it('empty subset of simple graph', () => {
-    cmpdfy.compoundify(simple, [])
+    expect(cmpdfy.compoundify(simple, [])).to.deep.equal(simple)
+  })
+
+  it('unary subset of simple graph', () => {
+    var graph = cmpdfy.compoundify(simple, ['b'])
+    expect(graph.nodes().length).to.equal(4)
+    expect(graph.parent('b')).to.not.be.undefined
+    expect(graph.parent('a')).to.be.undefined
+  })
+
+  it('possible subset of simple graph', () => {
+    var graph = cmpdfy.compoundify(simple, ['b', 'a'])
+    expect(graph.nodes().length).to.equal(4)
+    expect(graph.parent('a')).to.not.be.undefined
+    expect(graph.parent('b')).to.not.be.undefined
+    expect(graph.parent('c')).to.be.undefined
   })
 })

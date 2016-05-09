@@ -15,7 +15,8 @@
   "license": "MIT",
   "dependencies": {
     "graphlib": "^2.1.0",
-    "lodash": "^4.6.1"
+    "lodash": "^4.6.1",
+    "object-hash": "^1.1.2"
   },
   "devDependencies": {
     "@buggyorg/dupjoin": "^0.1.4",
