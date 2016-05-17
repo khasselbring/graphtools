@@ -94,3 +94,7 @@ export function isConformityPort (p) {
 export function isConformityEdge (e) {
   return isConformityPort(e.value.inPort) || isConformityPort(e.value.outPort)
 }
+
+export function getAll (graph, id) {
+  return _.filter(graph.nodes(), (n) => graph.node(n).id === id)
+}
