@@ -27,7 +27,7 @@ export function isNPG (graph) {
 }
 
 export function isNG (graph) {
-  return !graph.isMultigraph()
+  return _.filter(graph.nodes(), (n) => n.indexOf('_PORT_') !== -1).length !== 0
 }
 
 export function isPortNode (nodeName) {

@@ -19,7 +19,7 @@ function getPredecessorWithCheck (graph, curNode, node, port) {
 }
 
 function neighbor (graph, node, port, neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn, partialEdge) {
-  var edges = graph.edges()
+  var edges = _.reject(graph.edges(), (e) => graph.edge(e) && graph.edge(e).continuation)
   var portNode = node + '_PORT_' + port
   var nodes = _.filter(edges, (e) => e[nType] === portNode).map((e) => e[nType])
   if (nodes.length > 1) {

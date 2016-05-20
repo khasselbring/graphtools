@@ -3,6 +3,7 @@ import _ from 'lodash'
 
 export var successor = (graph, node, port) =>
     _(graph.edges())
+      .reject((e) => graph.edge(e) && graph.edge(e).continuation)
       .filter((e) => e.v === node)
       .filter((e) => graph.edge(e).outPort === port)
       .map((e) => ({node: e.w, port: graph.edge(e).inPort, edge: {from: e.v, to: e.w, outPort: graph.edge(e).outPort, inPort: graph.edge(e).inPort}}))
@@ -10,6 +11,7 @@ export var successor = (graph, node, port) =>
 
 export var predecessor = (graph, node, port) =>
   _(graph.edges())
+    .reject((e) => graph.edge(e) && graph.edge(e).continuation)
     .filter((e) => e.w === node)
     .filter((e) => graph.edge(e).inPort === port)
     .map((e) => ({node: e.v, port: graph.edge(e).outPort, edge: {from: e.v, to: e.w, outPort: graph.edge(e).outPort, inPort: graph.edge(e).inPort}}))
