@@ -96,5 +96,5 @@ export function isConformityEdge (e) {
 }
 
 export function getAll (graph, id) {
-  return _.filter(graph.nodes(), (n) => graph.node(n).id === id)
+  return _.filter(graph.nodes(), (n) => graph.node(n).id === id || graph.node(n).meta === id)
 }
