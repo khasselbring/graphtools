@@ -98,3 +98,8 @@ export function isConformityEdge (e) {
 export function getAll (graph, id) {
   return _.filter(graph.nodes(), (n) => graph.node(n).id === id || graph.node(n).meta === id)
 }
+
+export function portType (graph, node, port) {
+  var curNode = graph.node(node)
+  return _.merge({}, curNode.inputPorts, curNode.outputPorts)[port]
+}
