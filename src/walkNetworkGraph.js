@@ -18,8 +18,8 @@ function getPredecessorWithCheck (graph, curNode, node, port) {
   return _.merge({}, graph.node(predecessors[0]), {name: predecessors[0]})
 }
 
-function neighbor (graph, node, port, neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn) {
-  var edges = graph.edges()
+function neighbor (graph, node, port, neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn, partialEdge) {
+  var edges = _.reject(graph.edges(), (e) => graph.edge(e) && graph.edge(e).continuation)
   var portNode = node + '_PORT_' + port
   var nodes = _.filter(edges, (e) => e[nType] === portNode).map((e) => e[nType])
   if (nodes.length > 1) {
@@ -36,26 +36,41 @@ function neighbor (graph, node, port, neighborFn, nType, multiCase, multiPortFn,
     }
     if (neigh.hierarchyBorder) {
       lastPort = portNodePort(neigh.name)
-      return {node: portNodeName(neigh.name), port: lastPort}
+      return {node: portNodeName(neigh.name), port: lastPort,
+        edge: _.merge({
+          from: (nType === 'v') ? node : portNodeName(neigh.name),
+          to: (nType === 'v') ? portNodeName(neigh.name) : node,
+          outPort: (nType === 'v') ? port : lastPort,
+          inPort: (nType === 'v') ? lastPort : port
+        }, partialEdge)
+      }
     }
     // this is still ugly.. jumps over duplicates and joins
     if (neigh.name.indexOf(multiCase) !== -1) {
       return _.flatten([
-        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn),
-        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 1), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn)
+        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn, partialEdge),
+        neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 1), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn, partialEdge)
       ])
     } else if (neigh.name.indexOf(jumpOver) !== -1) {
-      return neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn)
+      return neighbor(graph, neigh.name, multiPortFn(graph, neigh.name, 0), neighborFn, nType, multiCase, multiPortFn, jumpOver, jumpOverFn, partialEdge)
     }
-    return {node: neigh.name, port: lastPort}
+    return {node: neigh.name, port: lastPort,
+      edge: _.merge({
+        from: (nType === 'v') ? node : neigh.name,
+        to: (nType === 'v') ? neigh.name : node,
+        outPort: (nType === 'v') ? port : lastPort,
+        inPort: (nType === 'v') ? lastPort : port
+      }, partialEdge)}
   }))
   return resNodes
 }
 
 export function successor (graph, node, port) {
-  return neighbor(graph, node, port, _.partial(getSuccessorWithCheck, graph, _, node, port), 'v', '_DUPLICATE_', nthOutput, '_JOIN_', nthOutput)
+  var edge = {from: node, outPort: port}
+  return neighbor(graph, node, port, _.partial(getSuccessorWithCheck, graph, _, node, port), 'v', '_DUPLICATE_', nthOutput, '_JOIN_', nthOutput, edge)
 }
 
 export function predecessor (graph, node, port) {
-  return neighbor(graph, node, port, _.partial(getPredecessorWithCheck, graph, _, node, port), 'w', '_JOIN_', nthInput, '_DUPLICATE_', nthInput)
+  var edge = {to: node, inPort: port}
+  return neighbor(graph, node, port, _.partial(getPredecessorWithCheck, graph, _, node, port), 'w', '_JOIN_', nthInput, '_DUPLICATE_', nthInput, edge)
 }

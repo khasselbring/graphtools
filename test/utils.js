@@ -51,4 +51,6 @@ describe('Graph utilities', () => {
     expect(utils.portNodePort('a_PORT_b')).to.equal('b')
     expect(utils.portNodePort('multi_name_thing:with:stuff_PORT_and:stuff')).to.equal('and:stuff')
   })
+
+  // TODO: Test for utils.getAll
 })

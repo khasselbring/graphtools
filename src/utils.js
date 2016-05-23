@@ -27,7 +27,7 @@ export function isNPG (graph) {
 }
 
 export function isNG (graph) {
-  return !graph.isMultigraph()
+  return _.filter(graph.nodes(), (n) => n.indexOf('_PORT_') !== -1).length !== 0
 }
 
 export function isPortNode (nodeName) {
@@ -93,4 +93,13 @@ export function isConformityPort (p) {
 
 export function isConformityEdge (e) {
   return isConformityPort(e.value.inPort) || isConformityPort(e.value.outPort)
+}
+
+export function getAll (graph, id) {
+  return _.filter(graph.nodes(), (n) => graph.node(n).id === id || graph.node(n).meta === id)
+}
+
+export function portType (graph, node, port) {
+  var curNode = graph.node(node)
+  return _.merge({}, curNode.inputPorts, curNode.outputPorts)[port]
 }

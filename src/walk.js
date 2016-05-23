@@ -81,9 +81,10 @@ function functionWalk (graph, node, pathFn, edgeFollow) {
   var nextNodes = adjacentNodes(graph, node.node, followPorts, edgeFollow)
   var paths = _(nextNodes)
     .map((node) => functionWalk(graph, node, pathFn, edgeFollow))
+    .flattenDepth(1)
     .compact()
     .value()
-  return _.map(paths, (path) => _.flatten(_.concat([node], path)))
+  return _.map(paths, (path) => _.concat([node], path))
 }
 
 function arrayWalk (graph, node, pathArray, edgeFollow) {

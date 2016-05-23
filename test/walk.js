@@ -22,35 +22,35 @@ function testSetting (setting, preprocess) {
     var pGraph1 = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.graphlib'))))
     it('can get the predecessor of a node for', () => {
       var pred = walk.predecessor(pGraph1, '2_STDOUT', 'input')
-      expect(pred).to.deep.equal([{node: '1_INC', port: 'inc'}])
+      expect(pred).to.deep.equal([{node: '1_INC', port: 'inc', edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input'}}])
     })
 
     var pGraph3 = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial.json'))))
     it('`predecessor` returns the correct neighbors for inPort-name = outPort-name', () => {
       var preds = walk.predecessor(pGraph3, 'p', 'fn')
       expect(preds).to.have.length(1)
-      expect(preds[0]).to.deep.equal({node: 'l', port: 'fn'})
+      expect(preds[0]).to.deep.equal({node: 'l', port: 'fn', edge: {from: 'l', outPort: 'fn', to: 'p', inPort: 'fn'}})
     })
 
     it('can get the successor of a node', () => {
       var pred = walk.successor(pGraph1, '0_STDIN', 'output')
-      expect(pred).to.deep.equal([{node: '1_INC', port: 'i'}])
+      expect(pred).to.deep.equal([{node: '1_INC', port: 'i', edge: {from: '0_STDIN', outPort: 'output', to: '1_INC', inPort: 'i'}}])
     })
 
     var doubleInGraph = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_double_in.graphlib'))))
     it('can get multiple predecessors from one port', () => {
       var pred = walk.predecessor(doubleInGraph, '2_STDOUT', 'input')
       expect(pred).to.have.length(2)
-      expect(pred).to.deep.include({node: '0_STDIN', port: 'output'})
-      expect(pred).to.deep.include({node: '1_STDIN', port: 'output'})
+      expect(pred).to.deep.include({node: '0_STDIN', port: 'output', edge: {from: '0_STDIN', outPort: 'output', to: '2_STDOUT', inPort: 'input'}})
+      expect(pred).to.deep.include({node: '1_STDIN', port: 'output', edge: {from: '1_STDIN', outPort: 'output', to: '2_STDOUT', inPort: 'input'}})
     })
 
     var doubleOutGraph = preprocess(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_double_out.graphlib'))))
     it('can get multiple successor from one port', () => {
       var succ = walk.successor(doubleOutGraph, '0_STDIN', 'output')
       expect(succ).to.have.length(2)
-      expect(succ).to.deep.include({node: '1_STDOUT', port: 'input'})
-      expect(succ).to.deep.include({node: '2_STDOUT', port: 'input'})
+      expect(succ).to.deep.include({node: '1_STDOUT', port: 'input', edge: {from: '0_STDIN', outPort: 'output', to: '1_STDOUT', inPort: 'input'}})
+      expect(succ).to.deep.include({node: '2_STDOUT', port: 'input', edge: {from: '0_STDIN', outPort: 'output', to: '2_STDOUT', inPort: 'input'}})
     })
 
     it('`adjacentNode` returns edgeFollow result', () => {
@@ -60,7 +60,7 @@ function testSetting (setting, preprocess) {
 
     it('`adjacentNode` can use successor function', () => {
       var succ = walk.adjacentNode(pGraph1, '0_STDIN', 'output', walk.successor)
-      expect(succ).to.deep.equal([{node: '1_INC', port: 'i'}])
+      expect(succ).to.deep.equal([{node: '1_INC', port: 'i', edge: {from: '0_STDIN', outPort: 'output', to: '1_INC', inPort: 'i'}}])
     })
 
     it('`adjacentNode` returns undefined if path does not exists', () => {
@@ -72,20 +72,20 @@ function testSetting (setting, preprocess) {
     it('`adjacentNode` can handle compound nodes', () => {
       var preds = walk.adjacentNodes(pGraph2, '3_ADD', 's1', walk.predecessor)
       expect(preds).to.have.length(1)
-      expect(preds[0]).to.deep.equal({node: '1_INC', port: 'i'})
+      expect(preds[0]).to.deep.equal({node: '1_INC', port: 'i', edge: {from: '1_INC', outPort: 'i', to: '3_ADD', inPort: 's1'}})
     })
 
     it('`adjacentNodes` can process multiple ports', () => {
       var preds = walk.adjacentNodes(pGraph2, '3_ADD', ['s1', 's2'], walk.predecessor)
       expect(preds).to.have.length(2)
-      expect(preds).to.deep.include({node: '4_CONST1', port: 'const1'})
-      expect(preds).to.deep.include({node: '1_INC', port: 'i'})
+      expect(preds).to.deep.include({node: '4_CONST1', port: 'const1', edge: {from: '4_CONST1', outPort: 'const1', to: '3_ADD', inPort: 's2'}})
+      expect(preds).to.deep.include({node: '1_INC', port: 'i', edge: {from: '1_INC', outPort: 'i', to: '3_ADD', inPort: 's1'}})
     })
 
     it('`adjacentNodes` removes not usable paths', () => {
       var preds = walk.adjacentNodes(pGraph2, '3_ADD', ['s1', '-'], walk.predecessor)
       expect(preds).to.have.length(1)
-      expect(preds[0]).to.deep.equal({node: '1_INC', port: 'i'})
+      expect(preds[0]).to.deep.equal({node: '1_INC', port: 'i', edge: {from: '1_INC', outPort: 'i', to: '3_ADD', inPort: 's1'}})
     })
   })
 
@@ -179,11 +179,37 @@ function testSetting (setting, preprocess) {
       var paths = walk.walkBack(mapG, 'arrToStr', ['input', 'result', ['fn', 'data']], {keepPorts: true})
       expect(paths).to.have.length(2)
     })
-    
-    if(setting === 'network graphs') {
-      it('can walk through recursive map correctly', () => {
+
+    if (setting === 'network graphs') {
+      it('can walk out of recursive map correctly', () => {
         var mapG = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map_recursive.json')))
         var paths = walk.walkBack(mapG, 'mapInc', ['data'], {keepPorts: true})
+        expect(paths).to.have.length(1)
+        expect(paths[0]).to.have.length(2)
+      })
+
+      it('can walk through recursive map correctly', () => {
+        var mapG = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map_recursive.1.json')))
+        var paths = walk.walkBack(mapG, {node: 'mapInc', port: 'result'}, (graph, node, port) => {
+          if (node === 'mapInc' && port === 'data') {
+            return 'data'
+          }
+          switch (node) {
+            case 'mapInc':
+              return ['result']
+            case 'mapInc:join':
+              return ['in1', 'in2']
+            case 'mapInc:term':
+              return ['input']
+            case 'mapInc:prep':
+              return ['value']
+            case 'mapInc:strToArr':
+              return []
+            case 'mapInc:apply':
+              return []
+          }
+        }, {keepPorts: true})
+        expect(paths).to.have.length(2)
       })
     }
   })
