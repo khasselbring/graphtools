@@ -71,7 +71,8 @@ describe('Compoundification of Subset of Nodes', () => {
   })
 
   it('empty subset of simple graph', () => {
-    expect(cmpdfy.compoundify(simple, [])).to.deep.equal(simple)
+    var graph = cmpdfy.compoundify(simple, [])
+    expect(graph).to.deep.equal(simple)
   })
 
   it('unary subset of simple graph', () => {

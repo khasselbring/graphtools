@@ -97,9 +97,11 @@ export function compoundify (g, subset) {
   if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
   if (subset.length < 1) { return g }
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
-  markNodes(graph, subset)
   var comp = 'comp' + hash(graph)
+
+  markNodes(graph, subset)
   graph.setNode(comp, createLabel(graph, subset, comp))
+
   for (let n of subset) {
     graph.setParent(n, comp)
   }
