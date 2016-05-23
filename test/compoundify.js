@@ -18,6 +18,10 @@ describe('Compoundification Property Check', () => {
     expect(cmpdfy.isCompoundable(simple, ['b'])).to.be.true
   })
 
+  it('not existing node in subset of simple graph', () => {
+    expect(cmpdfy.isCompoundable(simple, ['z'])).to.be.false
+  })
+
   it('all nodes in subset of simple graph', () => {
     expect(cmpdfy.isCompoundable(simple, ['a', 'b', 'c'])).to.be.true
   })

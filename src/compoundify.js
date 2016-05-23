@@ -8,6 +8,16 @@ var markNodes = function (graph, subset) {
   }
 }
 
+var contains = function (graph, subset) {
+  var nodes = graph.nodes()
+  for (let n of subset) {
+    if (!_.includes(nodes, n)) {
+      return false
+    }
+  }
+  return true
+}
+
 var firstMarkedIndex = function (graph, topsort) {
   for (let i = 0; i < topsort.length; i++) {
     if (graph.node(topsort[i]).mark) {
@@ -54,9 +64,18 @@ var sameParents = function (graph, subset) {
   return true
 }
 
+// TODO: unfinished
+var createLabel = function (graph, subset, name) {
+  var label = { id: name, atomic: false, name: name, nodeType: 'process', inputPorts: {}, outputPorts: {} }
+  for (let n of subset) {
+    n
+  }
+  return label
+}
+
 export function isCompoundable (g, subset) {
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
-  if (!sameParents(graph, subset) || !graph.isCompound()) { return false }
+  if (!sameParents(graph, subset) || !graph.isCompound() || !contains(graph, subset)) { return false }
   markNodes(graph, subset)
   var topsort = graphlib.alg.topsort(graph)
   var first = firstMarkedIndex(graph, topsort)
@@ -74,14 +93,13 @@ export function isCompoundable (g, subset) {
   return true
 }
 
-// TODO: Unfinished
 export function compoundify (g, subset) {
   if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
   if (subset.length < 1) { return g }
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
   markNodes(graph, subset)
   var comp = 'comp' + hash(graph)
-  graph.setNode(comp)
+  graph.setNode(comp, createLabel(graph, subset, comp))
   for (let n of subset) {
     graph.setParent(n, comp)
   }
