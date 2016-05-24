@@ -75,7 +75,9 @@ function pickNodeNames (pathes) {
 
 function functionWalk (graph, node, pathFn, edgeFollow) {
   var followPorts = pathFn(graph, node.node, node.port)
-  if (!followPorts || followPorts.length === 0) {
+  if (!followPorts) {
+    return []
+  } else if (followPorts.length === 0) {
     return [[node]]
   }
   var nextNodes = adjacentNodes(graph, node.node, followPorts, edgeFollow)
