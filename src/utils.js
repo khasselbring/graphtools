@@ -103,3 +103,13 @@ export function portType (graph, node, port) {
   var curNode = graph.node(node)
   return _.merge({}, curNode.inputPorts, curNode.outputPorts)[port]
 }
+
+export function portDirectionType (graph, node, port) {
+  var curNode = graph.node(node)
+  if (_.has(curNode.inputPorts, port)) {
+    return 'inputPorts'
+  } else if (_.has(curNode.outputPorts, port)) {
+    return 'outputPorts'
+  }
+  throw new Error('The node ' + node + ' does not have a port with the name ' + port)
+}
