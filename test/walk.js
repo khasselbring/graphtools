@@ -219,4 +219,4 @@ function testSetting (setting, preprocess) {
 }
 
 testSetting('network port graphs')
-testSetting('network graphs', (graph) => remodelPorts(normalize(graph)))
+// testSetting('network graphs', (graph) => remodelPorts(normalize(graph)))
