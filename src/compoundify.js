@@ -91,8 +91,6 @@ export function compoundify (g, subset, name, label) {
   if (!name) {
     name = 'comp' + hash(graph)
   }
-
-  markNodes(graph, subset)
   graph.setNode(name, label)
 
   for (let n of subset) {
