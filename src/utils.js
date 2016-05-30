@@ -99,9 +99,18 @@ export function getAll (graph, id) {
   return _.filter(graph.nodes(), (n) => graph.node(n).id === id || graph.node(n).meta === id)
 }
 
-export function portType (graph, node, port) {
+export function ports (graph, node) {
   var curNode = graph.node(node)
-  return _.merge({}, curNode.inputPorts, curNode.outputPorts)[port]
+  return _.merge({}, curNode.inputPorts, curNode.outputPorts)
+}
+
+export function portType (graph, node, port) {
+  return ports(graph, node)[port]
+}
+
+export function setPortType (graph, node, port, type) {
+  var ports = (graph.node(node).inputPorts[port]) ? graph.node(node).inputPorts : graph.node(node).outputPorts
+  ports[port] = type
 }
 
 export function portDirectionType (graph, node, port) {
