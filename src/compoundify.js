@@ -64,15 +64,6 @@ var sameParents = function (graph, subset) {
   return true
 }
 
-// TODO: unfinished
-var createLabel = function (graph, subset, name) {
-  var label = { id: name, atomic: false, name: name, nodeType: 'process', inputPorts: {}, outputPorts: {} }
-  for (let n of subset) {
-    n
-  }
-  return label
-}
-
 export function isCompoundable (g, subset) {
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
   if (!sameParents(graph, subset) || !graph.isCompound() || !contains(graph, subset)) { return false }
@@ -93,17 +84,19 @@ export function isCompoundable (g, subset) {
   return true
 }
 
-export function compoundify (g, subset) {
+export function compoundify (g, subset, name, label) {
   if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
   if (subset.length < 1) { return g }
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
-  var comp = 'comp' + hash(graph)
+  if (!name) {
+    name = 'comp' + hash(graph)
+  }
 
   markNodes(graph, subset)
-  graph.setNode(comp, createLabel(graph, subset, comp))
+  graph.setNode(name, label)
 
   for (let n of subset) {
-    graph.setParent(n, comp)
+    graph.setParent(n, name)
   }
   return graph
 }
