@@ -33,5 +33,24 @@ describe('Path tools', () => {
         ['defco_ack', 'defco_ack:add_9', 'defco_ack:ack_8', 'defco_ack:mux_3']))
         .to.equal(-1)
     })
+
+    it('can compare two pathes', () => {
+      expect(path.equal(['a', 'b', 'c'], ['a', 'b', 'c'])).to.be.true
+      expect(path.equal([], [])).to.be.true
+      expect(path.equal(['a'], [])).to.be.false
+      expect(path.equal([], ['a'])).to.be.false
+      expect(path.equal(['a', 'b', 'c'], ['a', 'd', 'c'])).to.be.false
+      expect(path.equal(['a', 'b'], ['a'])).to.be.false
+      expect(path.equal(['a'], ['a', 'b'])).to.be.false
+    })
+
+    it('can compare two pathes with port information', () => {
+      expect(path.equal([{node: 'a'}, {node: 'b'}, {node: 'c'}], [{node: 'a'}, {node: 'b'}, {node: 'c'}])).to.be.true
+      expect(path.equal([{node: 'a'}], [])).to.be.false
+      expect(path.equal([], [{node: 'a'}])).to.be.false
+      expect(path.equal([{node: 'a'}, {node: 'b'}, {node: 'c'}], [{node: 'c'}, {node: 'b'}, {node: 'c'}])).to.be.false
+      expect(path.equal([{node: 'a'}, 'b'], [{node: 'a'}])).to.be.false
+      expect(path.equal([{node: 'a'}], ['a'])).to.be.false
+    })
   })
 })
