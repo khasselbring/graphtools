@@ -1,6 +1,7 @@
 import graphlib from 'graphlib'
 import _ from 'lodash'
 import hash from 'object-hash'
+import { utils } from './api'
 
 var markNodes = function (graph, subset) {
   for (let n of subset) {
@@ -64,6 +65,19 @@ var sameParents = function (graph, subset) {
   return true
 }
 
+export function completeSubset (g, subset) {
+  for (let p of g.nodes()) {
+    if (g.node(p).nodeType !== 'process') {
+      for (let s of subset) {
+        if (g.node(p).process === s) {
+          subset.push(p)
+        }
+      }
+    }
+  }
+  return subset
+}
+
 export function isCompoundable (g, subset) {
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
   if (!sameParents(graph, subset) || !graph.isCompound() || !contains(graph, subset)) { return false }
@@ -85,8 +99,9 @@ export function isCompoundable (g, subset) {
 }
 
 export function compoundify (g, subset, name, label) {
-  if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
   if (subset.length < 1) { return g }
+  if (utils.isNG(g)) { subset = completeSubset(g, subset) }
+  if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
   if (!name) {
     name = 'comp' + hash(graph)

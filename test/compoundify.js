@@ -89,4 +89,10 @@ describe('Compoundification of Subset of Nodes', () => {
     expect(graph.parent('b')).to.not.be.undefined
     expect(graph.parent('c')).to.be.undefined
   })
+
+  it('auto completion of subset', () => {
+    var realadd = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/compoundify/real_add.json')))
+    var subset = cmpdfy.completeSubset(realadd, ['add'])
+    console.log(subset)
+  })
 })
