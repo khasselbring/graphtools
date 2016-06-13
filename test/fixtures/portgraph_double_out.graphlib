@@ -16,6 +16,10 @@
         "nodeType": "process",
         "meta": "io/stdin",
         "type": "atomic",
+        "inputPorts": {},
+        "outputPorts": {
+          "const1": "int"
+        },
         "parent": "EXAMPLE1"
       },
       "parent": "EXAMPLE1"
@@ -26,7 +30,12 @@
         "nodeType": "process",
         "meta": "io/stdout",
         "type": "atomic",
-        "parent": "EXAMPLE1"
+        "parent": "EXAMPLE1",
+        "inputPorts": {
+          "input": "string"
+        },
+        "outputPorts": {
+        }
       },
       "parent": "EXAMPLE1"
     },
@@ -36,7 +45,12 @@
         "nodeType": "process",
         "meta": "io/stdout",
         "type": "atomic",
-        "parent": "EXAMPLE1"
+        "parent": "EXAMPLE1",
+        "inputPorts": {
+          "input": "string"
+        },
+        "outputPorts": {
+        }
       },
       "parent": "EXAMPLE1"
     }

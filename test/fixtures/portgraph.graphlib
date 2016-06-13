@@ -16,6 +16,10 @@
         "nodeType": "process",
         "meta": "io/stdin",
         "type": "atomic",
+        "inputPorts": {},
+        "outputPorts": {
+          "const1": "int"
+        },
         "parent": "EXAMPLE1"
       },
       "parent": "EXAMPLE1"
@@ -26,7 +30,13 @@
         "nodeType": "process",
         "meta": "math/inc",
         "type": "composite",
-        "parent": "EXAMPLE1"
+        "parent": "EXAMPLE1",
+        "inputPorts": {
+          "i": "number"
+        },
+        "outputPorts": {
+          "inc": "number"
+        }
       },
       "parent": "EXAMPLE1"
     },
@@ -36,7 +46,12 @@
         "nodeType": "process",
         "meta": "io/stdout",
         "type": "atomic",
-        "parent": "EXAMPLE1"
+        "parent": "EXAMPLE1",
+        "inputPorts": {
+          "input": "string"
+        },
+        "outputPorts": {
+        }
       },
       "parent": "EXAMPLE1"
     },
@@ -46,7 +61,14 @@
         "nodeType": "process",
         "meta": "math/add",
         "type": "atomic",
-        "parent": "1_INC"
+        "parent": "1_INC",
+        "inputPorts": {
+          "s1": "number",
+          "s2": "number"
+        },
+        "outputPorts": {
+          "sum": "number"
+        }
       },
       "parent": "1_INC"
     },
@@ -56,7 +78,12 @@
         "nodeType": "process",
         "meta": "math/const1",
         "type": "atomic",
-        "parent": "1_INC"
+        "parent": "1_INC",
+        "inputPorts": {
+        },
+        "outputPorts": {
+          "const1": "number"
+        }
       },
       "parent": "1_INC"
     }
