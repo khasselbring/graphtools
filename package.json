@@ -8,7 +8,8 @@
     "build": "babel src -d lib",
     "doc": "jsdoc -c .jsdoc.json",
     "publish-docs": "jsdoc -c .jsdoc.json && git subtree split --prefix jsdoc -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages",
-    "prepublish": "babel src -d lib"
+    "prepublish": "jsdoc -c .jsdoc.json && babel src -d lib",
+    "postpublish": "git subtree split --prefix jsdoc -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages"
   },
   "keywords": [
     "Buggy"

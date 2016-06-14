@@ -4,7 +4,6 @@
 import graphlib from 'graphlib'
 import _ from 'lodash'
 
-
 /**
  * A link is a connection between two nodes that can extend over multiple compound nodes. But it can never leave a recursion.
  * @typedef {Object} Link
