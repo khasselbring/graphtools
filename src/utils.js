@@ -2,6 +2,11 @@
 import graphlib from 'graphlib'
 import _ from 'lodash'
 
+/**
+ * Creates a new graph that has the exact same nodes and edges.
+ * @param {Graphlib} graph The graph to clone
+ * @returns {Graphlib} A clone of the input graph.
+ */
 export function clone (graph) {
   if (typeof (graph.graph) === 'function') {
     return graphlib.json.read(graphlib.json.write(graph))
@@ -10,37 +15,79 @@ export function clone (graph) {
   }
 }
 
+/**
+ * Returns the pure JSON representation of the graph without all the graphlib features.
+ * @param {Object} graph The graph in graphlib format to convert
+ * @returns {Object} A JSON representation of the graph.
+ */
 export function edit (graph) {
   return JSON.parse(JSON.stringify(graphlib.json.write(graph)))
 }
 
+/**
+ * Parses the pure JSON format to return a graphlib version of the graph.
+ * @param {Object} editGraph A JSON representation (e.g. created by edit) of a graph.
+ * @returns {Object} A graphlib graph of the editGraph
+ */
 export function finalize (editGraph) {
   return graphlib.json.read(editGraph)
 }
 
+/**
+ * Applies the name prefixing for e.g. path names or similar stuff.
+ * @param {String} prefix The prefix for the name.
+ * @param {String} name The name to prefix.
+ * @returns {String} The prefixed name.
+ */
 export function prefixName (prefix, name) {
   return `${prefix}:${name}`
 }
 
+/**
+ * Returns whether the graph is a network-port-graph (i.e. has nodes that have ports).
+ * @param {Object} graph A graphlib graph
+ * @returns {boolean} True if the graph is a network-port-graph, false otherwise.
+ */
 export function isNPG (graph) {
   return !isNG(graph)
 }
 
+/**
+ * Checks whether the graph is a network-graph (i.e. process nodes and port nodes).
+ * @param {Object} graph A graphlib graph
+ * @returns {boolean} True if the graph is a network-graph, false otherwise.
+ */
 export function isNG (graph) {
   return _.filter(graph.nodes(), (n) => n.indexOf('_PORT_') !== -1).length !== 0
 }
 
+/**
+ * Returns true if the node is a port node (in an NG), false otherwise.
+ * @param {string} nodeName The name of the port node.
+ * @returns {boolean} True if it is a port node, false otherwise.
+ */
 export function isPortNode (nodeName) {
   return nodeName.split('_PORT_').length === 2
 }
 
+/**
+ * Returns the name of the port that the port node represents.
+ * @param {string} nodeName The name of the port node.
+ * @returns {string} The port name of port node.
+ */
 export function portNodePort (nodeName) {
   return nodeName.split('_PORT_')[1]
 }
 
+/**
+ * Returns the name of the node that the port node is connected to.
+ * @param {string} nodeName The name of the port node.
+ * @returns {string} The name of the process of this port node.
+ */
 export function portNodeName (nodeName) {
   return nodeName.split('_PORT_')[0]
 }
+
 
 export function nthInput (graph, node, n) {
   var inputs = graph.node(node).inputPorts
