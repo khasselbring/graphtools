@@ -1,0 +1,10 @@
+{
+  "plugins": ["plugins/markdown"],
+  "source": {
+    "include": ["src/path.js", "src/utils.js", "src/walk.js"]
+  },
+  "opts": {
+    "encoding": "utf8",
+    "destination": "./jsdoc/"
+  }
+}

@@ -1,29 +1,86 @@
 
+/** @module walk */
+
 import _ from 'lodash'
 import * as utils from './utils'
 import * as walkNPG from './walkNetworkPortGraph'
 import * as walkNG from './walkNetworkGraph'
 
+/**
+ * Gets the predecessors of the node over the port `port`.
+ * @param {Graphlib} graph The graph
+ * @param {string} node A string identifying the node.
+ * @param {string} port The port to use to find predecessors
+ * @returns {Object[]} It returns an array of objects in the following
+ * format: `{node: 'NODE_ID', port: 'OUTPUT_PORT', edge: EDGE}`. It contains the predecessor node, the output
+ * port it came in through (the port is always one of the predecessor) and the edge.
+ */
 export function predecessor (graph, node, port) {
   return (utils.isNPG(graph))
       ? walkNPG.predecessor(graph, node, port)
       : walkNG.predecessor(graph, node, port)
 }
 
+/**
+ * Gets the successors of the node over the port `port`.
+ * @param {Graphlib} graph The graph
+ * @param {string} node A string identifying the node.
+ * @param {string} port The port to use to find successors
+ * @returns {Object[]} It returns an array of objects in the following
+ * format: `{node: 'NODE_ID', port: 'OUTPUT_PORT', edge: EDGE}`. It contains the successor node, the output
+ * port it came in through (the port is always one of the successor) and the edge.
+ */
 export function successor (graph, node, port) {
   return (utils.isNPG(graph))
       ? walkNPG.successor(graph, node, port)
       : walkNG.successor(graph, node, port)
 }
 
+/**
+ * Tries to follows a given path through the graph starting at `node`. It uses the successor function to track the neighbors.
+ * @param {Graphlib} graph The graph
+ * @param {string|Object} node The node can either be
+ *   - the name of the starting node
+ *   - an object `{node: 'START', port: 'USE_PORT'}` that forces the walk to use USE_PORT for the first node.
+ * @param {string[]|function} path The path itself can be
+ *   - an array of ports that should be followed (even if the USE_PORT field is set, you must start with it as the first port).
+ *     If it is not possible to follow the port a empty list of paths is returned.
+ *   - a function that is called for every node on the path and that returns
+ *     + a list of ports to continue with
+ *     + an empty list to stop the walk
+ *     + `null` to discard the branch.
+ *
+ *   The function takes three arguments: `graph`, `node`, `port`, where the `node` is the name of the current node on the path.
+ *   The port is the port it used to get to node.
+ * @param {Object} [options = {keepPorts: false}] An optional object that can have the following properties
+ *   - `keepPorts`: If this field is true, walk will return a list of objects that each have the format:
+ *      `{node: 'NODE_ID', port: 'INPUT_PORT', edge: EDGE}`. It will not have an edge object for the first node on the path.
+ * @returns {string[]|object[]} It returns the list of nodes on the path.
+ */
 export function walk (graph, node, path, options = {keepPorts: false}) {
   return generalWalk(graph, node, path, successor, options)
 }
 
 /**
- * returns all pathes tracked by the path that defines the ports.
- * The path will be pointing to node (node will be the last item of the result)
- * it follows the direction of the directed edges
+ * Tries to follows a given path through the graph starting at `node`. It uses the predecessor function to track the neighbors.
+ * @param {Graphlib} graph The graph
+ * @param {string|Object} node The node can either be
+ *   - the name of the starting node
+ *   - an object `{node: 'START', port: 'USE_PORT'}` that forces the walk to use USE_PORT for the first node.
+ * @param {string[]|function} path The path itself can be
+ *   - an array of ports that should be followed (even if the USE_PORT field is set, you must start with it as the first port).
+ *     If it is not possible to follow the port a empty list of paths is returned.
+ *   - a function that is called for every node on the path and that returns
+ *     + a list of ports to continue with
+ *     + an empty list to stop the walk
+ *     + `null` to discard the branch.
+ *
+ *   The function takes three arguments: `graph`, `node`, `port`, where the `node` is the name of the current node on the path.
+ *   The port is the port it used to get to node.
+ * @param {Object} [options = {keepPorts: false}] An optional object that can have the following properties
+ *   - `keepPorts`: If this field is true, walk will return a list of objects that each have the format:
+ *      `{node: 'NODE_ID', port: 'INPUT_PORT', edge: EDGE}`. It will not have an edge object for the first node on the path.
+ * @returns {string[]|object[]} It returns the list of nodes on the path.
  */
 export function walkBack (graph, node, path, options = {keepPorts: false}) {
   return _.map(generalWalk(graph, node, path, predecessor, options), _.reverse)

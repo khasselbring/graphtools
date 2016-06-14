@@ -1,4 +1,6 @@
 
+/** @module rewrites */
+
 import {edit, finalize, prefixNode, addParent, rawHierarchyConnection, linkName} from './utils'
 import _ from 'lodash'
 

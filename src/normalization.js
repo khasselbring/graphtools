@@ -1,4 +1,6 @@
 
+/** @module normalization */
+
 import _ from 'lodash'
 
 /**
