@@ -8,8 +8,7 @@
     "build": "babel src -d lib",
     "doc": "jsdoc -c .jsdoc.json",
     "publish-docs": "jsdoc -c .jsdoc.json && git subtree split --prefix jsdoc -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages",
-    "prepublish": "jsdoc -c .jsdoc.json && babel src -d lib",
-    "postpublish": "git subtree split --prefix jsdoc -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages"
+    "prepublish": "babel src -d lib"
   },
   "keywords": [
     "Buggy"
@@ -28,6 +27,7 @@
     "babel-preset-es2015": "^6.3.13",
     "babel-register": "^6.4.3",
     "chai": "^3.4.1",
+    "jsdoc": "^3.4.0",
     "mocha": "^2.3.3",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
