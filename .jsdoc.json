@@ -1,7 +1,7 @@
 {
   "plugins": ["plugins/markdown"],
   "source": {
-    "include": ["src/path.js", "src/utils.js", "src/walk.js"]
+    "include": ["src/path.js", "src/utils.js", "src/walk.js", "src/graph.js", "src/changeSet.js"]
   },
   "opts": {
     "encoding": "utf8",

@@ -1,7 +1,7 @@
 
 /** @module utils */
 
-import graphlib from 'graphlib'
+import * as graphAPI from './graph'
 import _ from 'lodash'
 
 /**
@@ -11,34 +11,27 @@ import _ from 'lodash'
 
 /**
  * Creates a new graph that has the exact same nodes and edges.
+ * @deprecated Moved to `graph.clone`. Will be removed in the next minor release (0.3.0).
  * @param {Graphlib} graph The graph to clone
  * @returns {Graphlib} A clone of the input graph.
  */
-export function clone (graph) {
-  if (typeof (graph.graph) === 'function') {
-    return graphlib.json.read(graphlib.json.write(graph))
-  } else {
-    return _.clone(graph)
-  }
-}
+export const clone = graphAPI.clone
 
 /**
  * Returns the pure JSON representation of the graph without all the graphlib features.
+ * @deprecated Moved and renamed to `graph.toJSON`. Will be removed in the next minor release (0.3.0).
  * @param {Graphlib} graph The graph in graphlib format to convert
  * @returns {Object} A JSON representation of the graph.
  */
-export function edit (graph) {
-  return JSON.parse(JSON.stringify(graphlib.json.write(graph)))
-}
+export const edit = graphAPI.toJSON
 
 /**
  * Parses the pure JSON format to return a graphlib version of the graph.
+ * @deprecated Moved and renamed to `graph.toJSON`. Will be removed in the next minor release (0.3.0).
  * @param {Object} editGraph A JSON representation (e.g. created by edit) of a graph.
  * @returns {Graphlib} A graphlib graph of the editGraph
  */
-export function finalize (editGraph) {
-  return graphlib.json.read(editGraph)
-}
+export const finalize = graphAPI.importJSON
 
 /**
  * Applies the name prefixing for e.g. path names or similar stuff.
@@ -153,9 +146,9 @@ export function hierarchy (graph, node, h = []) {
  * @returns {Object[]} It returns an array of objects that all are in the format: {node: 'COMPOUND_ID', type: 'in/out'}.
  * The type indicates if the edge is going into or out of the compound.
  */
-export function rawHierarchyConnection (graph, edge) {
-  var hFrom = hierarchy(graph, edge.v).slice(0, -1).map((f) => ({node: f, type: 'out'}))
-  var hTo = hierarchy(graph, edge.w).slice(0, -1).map((t) => ({node: t, type: 'in'}))
+export function rawHierarchyConnection (graph, link) {
+  var hFrom = hierarchy(graph, link.v).slice(0, -1).map((f) => ({node: f, type: 'out'}))
+  var hTo = hierarchy(graph, link.w).slice(0, -1).map((t) => ({node: t, type: 'in'}))
   var hCon = _.dropWhile(_.zip(hFrom, hTo), (z) => {
     return z[0] && z[1] && z[0].node === z[1].node
   })
@@ -176,12 +169,12 @@ export function linkName (link) {
 /**
  * Returns all hierarchy borders that lie between two nodes connected by an link.
  * @param {Graphlib} The graph
- * @param {Link} edge The link between the two nodes
+ * @param {Link} link The link between the two nodes
  * @returns {Object[]} It returns an array of compounds between the two nodes.
  */
-export function hierarchyConnection (graph, edge) {
-  var hFrom = hierarchy(graph, edge.v).slice(0, -1)
-  var hTo = hierarchy(graph, edge.w).slice(0, -1)
+export function hierarchyConnection (graph, link) {
+  var hFrom = hierarchy(graph, link.v).slice(0, -1)
+  var hTo = hierarchy(graph, link.w).slice(0, -1)
   var hCon = _.dropWhile(_.zip(hFrom, hTo), (f) => f[0] === f[1])
   var unzipH = _.unzip(hCon)
   return _.concat(_.compact(_.flatten([_.reverse(unzipH[0]), unzipH[1]])))
