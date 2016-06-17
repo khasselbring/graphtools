@@ -162,7 +162,7 @@ export function rawHierarchyConnection (graph, link) {
  * @returns {string} A unique name for this link (unique by input/output node).
  */
 export function linkName (link) {
-  var value = link.value
+  var value = link.value || {}
   return `[${link.v}@${value.outPort}→${link.w}@${value.inPort}]`
 }
 
