@@ -27,6 +27,21 @@ export function insertEdge (newEdge) {
   return {type: 'changeSet', operation: 'insert', query: 'edges', value: newEdge}
 }
 
+export function removeEdge (edge) {
+  return {type: 'changeSet', operation: 'remove', query: 'edges', filter: edge}
+}
+
+export function createConnection (stations) {
+  return _.reduce(stations, (acc, cur) => {
+    if (!acc) {
+      return {last: cur, edges: []}
+    } else {
+      var edgeCS = insertEdge({v: acc.last.node, w: cur.node, value: {outPort: acc.last.port, inPort: cur.port}})
+      return {last: cur, edges: _.concat(acc.edges, [edgeCS])}
+    }
+  }).edges
+}
+
 /**
  * Checks whether a value is a change set or not.
  * @param changeSet The value that should be checked.
@@ -49,6 +64,10 @@ const applyInsert = (refs, insertValue) => {
     }
     r.push(insertValue)
   })
+}
+
+const applyRemove = (refs, removeFilter) => {
+  refs = _.reject(refs, (r) => _.isEqual(r, removeFilter))
 }
 
 const getReferences = (graph, changeSet) => {
@@ -77,6 +96,9 @@ export function applyChangeSet (graph, changeSet) {
       break
     case 'insert':
       applyInsert(refs, changeSet.value)
+      break
+    case 'remove':
+      applyRemove(refs, changeSet.filter)
       break
   }
   return graph
