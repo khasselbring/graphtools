@@ -161,9 +161,13 @@ export function rawHierarchyConnection (graph, link) {
  * @param {Link} link The link
  * @returns {string} A unique name for this link (unique by input/output node).
  */
-export function linkName (link) {
+export function linkName (link, portNames = true) {
   var value = link.value || {}
-  return `[${link.v}@${value.outPort}→${link.w}@${value.inPort}]`
+  if (portNames) {
+    return `[${link.v}@${value.outPort}→${link.w}@${value.inPort}]`
+  } else {
+    return `[${link.v}→${link.w}]`
+  }
 }
 
 /**

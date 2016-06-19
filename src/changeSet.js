@@ -27,19 +27,35 @@ export function insertEdge (newEdge) {
   return {type: 'changeSet', operation: 'insert', query: 'edges', value: newEdge}
 }
 
+/**
+ * Creates a change set that removes the edge `edge`.
+ * @param {Object} edge The edge to remove.
+ * @returns {ChangeSet} The change set containing the deletion operation.
+ */
 export function removeEdge (edge) {
   return {type: 'changeSet', operation: 'remove', query: 'edges', filter: edge}
 }
 
+/**
+ * Creates a change set that adds edges to connect nodes in succession. All nodes, except the first and last, must be compound nodes.
+ * @params {Object[]} stations The different nodes to connect in succession. Each object must contain a node property
+ * and can contain a port property. E.g. `{node: 'a'}` org `{node: 'b', port: 'p'}`.
+ * @returns {ChangeSet[]} An array of change sets that inserts the edges between the nodes. The change set will generate |stations| - 1 edges.
+ */
 export function createConnection (stations) {
   return _.reduce(stations, (acc, cur) => {
     if (!acc) {
       return {last: cur, edges: []}
     } else {
-      var edgeCS = insertEdge({v: acc.last.node, w: cur.node, value: {outPort: acc.last.port, inPort: cur.port}})
+      var edgeCS = insertEdge({
+        v: acc.last.node,
+        w: cur.node,
+        value: {outPort: acc.last.port, inPort: cur.port},
+        name: acc.last.node + '@' + acc.last.port + '→' + cur.node + '@' + cur.port
+      })
       return {last: cur, edges: _.concat(acc.edges, [edgeCS])}
     }
-  }).edges
+  }, null).edges
 }
 
 /**
@@ -67,7 +83,12 @@ const applyInsert = (refs, insertValue) => {
 }
 
 const applyRemove = (refs, removeFilter) => {
-  refs = _.reject(refs, (r) => _.isEqual(r, removeFilter))
+  _.each(refs, (ref) => {
+    var idx = _.findIndex(ref, (r) => _.isEqual(r, removeFilter))
+    if (idx > -1) {
+      ref.splice(idx, 1)
+    }
+  })
 }
 
 const getReferences = (graph, changeSet) => {

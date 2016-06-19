@@ -15,10 +15,18 @@ describe.only('Change Sets', () => {
     expect(newGraph.nodes[0].value.NEW_PROP).to.equal('test')
   })
 
-  it('can insert a new edge via', () => {
+  it('can insert a new edge', () => {
     var graph = graphAPI.jsonFromFile('test/fixtures/real_add.json')
     var cS = changeSet.insertEdge({v: 'test', w: 'test2'})
     var newGraph = changeSet.applyChangeSet(graph, cS)
     expect(_.last(newGraph.edges)).to.eql({v: 'test', w: 'test2'})
+  })
+
+  it('can remove an edge', () => {
+    var graph = graphAPI.jsonFromFile('test/fixtures/real_add.json')
+    var edgesCnt = graph.edges.length
+    var cS = changeSet.removeEdge({ v: 'numToStr_PORT_output', w: 'out_PORT_input' })
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(newGraph.edges.length).to.equal(edgesCnt - 1)
   })
 })
