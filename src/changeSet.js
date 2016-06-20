@@ -42,7 +42,7 @@ export function removeEdge (edge) {
  * and can contain a port property. E.g. `{node: 'a'}` org `{node: 'b', port: 'p'}`.
  * @returns {ChangeSet[]} An array of change sets that inserts the edges between the nodes. The change set will generate |stations| - 1 edges.
  */
-export function createConnection (stations) {
+export function createConnection (stations, extraValue = {}) {
   return _.reduce(stations, (acc, cur) => {
     if (!acc) {
       return {last: cur, edges: []}
@@ -50,7 +50,7 @@ export function createConnection (stations) {
       var edgeCS = insertEdge({
         v: acc.last.node,
         w: cur.node,
-        value: {outPort: acc.last.port, inPort: cur.port},
+        value: _.merge({outPort: acc.last.port, inPort: cur.port}, extraValue),
         name: acc.last.node + '@' + acc.last.port + '→' + cur.node + '@' + cur.port
       })
       return {last: cur, edges: _.concat(acc.edges, [edgeCS])}
@@ -69,7 +69,11 @@ export function isChangeSet (changeSet) {
 
 const applyMerge = (refs, mergeValue) => {
   _.each(refs, (r) => {
-    _.merge(r, mergeValue)
+    _.mergeWith(r, mergeValue, (objValue, srcValue) => {
+      if (_.isArray(objValue)) {
+        return objValue.concat(srcValue)
+      }
+    })
   })
 }
 
