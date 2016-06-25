@@ -1,37 +1,12 @@
 
 /** @module utils */
 
-import * as graphAPI from './graph'
 import _ from 'lodash'
 
 /**
  * A link is a connection between two nodes that can extend over multiple compound nodes. But it can never leave a recursion.
  * @typedef {Object} Link
  */
-
-/**
- * Creates a new graph that has the exact same nodes and edges.
- * @deprecated Moved to `graph.clone`. Will be removed in the next minor release (0.3.0).
- * @param {Graphlib} graph The graph to clone
- * @returns {Graphlib} A clone of the input graph.
- */
-export const clone = graphAPI.clone
-
-/**
- * Returns the pure JSON representation of the graph without all the graphlib features.
- * @deprecated Moved and renamed to `graph.toJSON`. Will be removed in the next minor release (0.3.0).
- * @param {Graphlib} graph The graph in graphlib format to convert
- * @returns {Object} A JSON representation of the graph.
- */
-export const edit = graphAPI.toJSON
-
-/**
- * Parses the pure JSON format to return a graphlib version of the graph.
- * @deprecated Moved and renamed to `graph.toJSON`. Will be removed in the next minor release (0.3.0).
- * @param {Object} editGraph A JSON representation (e.g. created by edit) of a graph.
- * @returns {Graphlib} A graphlib graph of the editGraph
- */
-export const finalize = graphAPI.importJSON
 
 /**
  * Applies the name prefixing for e.g. path names or similar stuff.
@@ -253,4 +228,14 @@ export function portDirectionType (graph, node, port) {
     return 'outputPorts'
   }
   throw new Error('The node ' + node + ' does not have a port with the name ' + port)
+}
+
+/**
+ * Returns whether the edge is a continuation link or not
+ * @param {Graphlib} graph The graph.
+ * @param {edge} edge The edge to test.
+ * @return True if the edge is a continuation link, false otherwise.
+ */
+export function isContinuation (graph, edge) {
+  return graph.edge(edge) && graph.edge(edge).continuation
 }

@@ -1,7 +1,7 @@
 import graphlib from 'graphlib'
 import _ from 'lodash'
 import hash from 'object-hash'
-import { utils } from './api'
+import { utils, graph as graphAPI } from './api'
 
 var markNodes = function (graph, subset) {
   for (let n of subset) {
@@ -82,7 +82,7 @@ export function isCompoundable (g, subset) {
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
   if (!sameParents(graph, subset) || !graph.isCompound() || !contains(graph, subset)) { return false }
   markNodes(graph, subset)
-  var topsort = graphlib.alg.topsort(graph)
+  var topsort = graphAPI.topoSort(graph)
   var first = firstMarkedIndex(graph, topsort)
   var last = lastMarkedIndex(graph, topsort)
   for (let i = 0; i < topsort.length; i++) {
@@ -102,7 +102,7 @@ export function compoundify (g, subset, name, label) {
   if (subset.length < 1) { return g }
   if (utils.isNG(g)) { subset = completeSubset(g, subset) }
   if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
-  var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
+  var graph = graphAPI.clone(g)
   if (!name) {
     name = 'comp' + hash(graph)
   }

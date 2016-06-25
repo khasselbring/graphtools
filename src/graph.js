@@ -1,6 +1,7 @@
 
 import fs from 'fs'
 import graphlib from 'graphlib'
+import * as utils from './utils'
 import _ from 'lodash'
 
 /**
@@ -69,5 +70,25 @@ export function clone (graph) {
     return graphlib.json.read(graphlib.json.write(graph))
   } else {
     return _.clone(graph)
+  }
+}
+
+/**
+ * Returns a topological sorting of the graph. Removes all continuations before calculating the topological sorting.
+ * @param {Graphlib} graph The graph.
+ * @return {string[]} A sorting of the nodes.
+ * @throws {Error} If the graph has loops.
+ */
+export function topoSort (graph) {
+  try {
+    var tGraph = clone(graph)
+    _.each(tGraph.edges(), (e) => {
+      if (utils.isContinuation(tGraph, e)) {
+        tGraph.removeEdge(e)
+      }
+    })
+    return graphlib.alg.topsort(tGraph)
+  } catch (err) {
+    throw Error('[topoSort] Cannot calculate toplogical sorting, graph contains loop.')
   }
 }
