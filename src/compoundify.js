@@ -42,7 +42,9 @@ var lastMarkedIndex = function (graph, topsort) {
 var blockedForward = function (elem, graph, topsort, last) {
   if (_.indexOf(topsort, elem) > last) { return false }
   if (graph.node(elem).mark) { return true }
+  var parent = graph.parent(elem)
   for (let succ of graph.successors(elem)) {
+    if (parent !== graph.parent(succ)) { continue }
     if (blockedForward(succ, graph, topsort, last)) { return true }
   }
 }
@@ -51,7 +53,9 @@ var blockedForward = function (elem, graph, topsort, last) {
 var blockedBackward = function (elem, graph, topsort, first) {
   if (_.indexOf(topsort, elem) > first) { return false }
   if (graph.node(elem).mark) { return true }
+  var parent = graph.parent(elem)
   for (let pred of graph.predecessors(elem)) {
+    if (parent !== graph.parent(pred)) { continue }
     if (blockedBackward(pred, graph, topsort, first)) { return true }
   }
 }
@@ -80,6 +84,11 @@ export function completeSubset (g, subset) {
 
 export function isCompoundable (g, subset) {
   var graph = graphlib.json.read(JSON.parse(JSON.stringify(graphlib.json.write(g))))
+  _.each(graph.edges(), (e) => {
+    if (utils.isContinuation(graph, e)) {
+      graph.removeEdge(e)
+    }
+  })
   if (!sameParents(graph, subset) || !graph.isCompound() || !contains(graph, subset)) { return false }
   markNodes(graph, subset)
   var topsort = graphAPI.topoSort(graph)
