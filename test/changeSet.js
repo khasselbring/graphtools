@@ -7,7 +7,7 @@ import _ from 'lodash'
 
 var expect = chai.expect
 
-describe.only('Change Sets', () => {
+describe('Change Sets', () => {
   it('can apply set a field in nodes', () => {
     var graph = graphAPI.jsonFromFile('test/fixtures/real_add.json')
     var cS = changeSet.updateNode(graph.nodes[0].v, {NEW_PROP: 'test'})
