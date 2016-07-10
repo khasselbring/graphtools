@@ -2,6 +2,7 @@ import graphlib from 'graphlib'
 import _ from 'lodash'
 import hash from 'object-hash'
 import { utils, graph as graphAPI } from './api'
+import fs from 'fs'
 
 var markNodes = function (graph, subset) {
   for (let n of subset) {
@@ -100,6 +101,7 @@ export function isCompoundable (g, subset) {
         continue
       }
       if (blockedForward(topsort[i], graph, topsort, last) && blockedBackward(topsort[i], graph, topsort)) {
+        console.error('blocked', topsort[i])
         return false
       }
     }
@@ -109,8 +111,11 @@ export function isCompoundable (g, subset) {
 
 export function compoundify (g, subset, name, label) {
   if (subset.length < 1) { return g }
+  var origSubset = _.clone(subset)
   if (utils.isNG(g)) { subset = completeSubset(g, subset) }
-  if (!isCompoundable(g, subset)) { throw new Error('This subset cannot be compoundified given this particular subset.') }
+  if (!isCompoundable(g, subset)) {
+    throw new Error('This subset cannot be compoundified given this particular subset.' + JSON.stringify(origSubset)) 
+  }
   var graph = graphAPI.clone(g)
   if (!name) {
     name = 'comp' + hash(graph)
