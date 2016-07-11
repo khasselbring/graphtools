@@ -112,7 +112,7 @@ export function compoundify (g, subset, name, label) {
   var origSubset = _.clone(subset)
   if (utils.isNG(g)) { subset = completeSubset(g, subset) }
   if (!isCompoundable(g, subset)) {
-    throw new Error('This subset cannot be compoundified given this particular subset.' + JSON.stringify(origSubset))
+    throw new Error('This subset cannot be compoundified given this particular subset.\n' + JSON.stringify(origSubset))
   }
   var graph = graphAPI.clone(g)
   if (!name) {

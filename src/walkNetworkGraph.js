@@ -65,12 +65,13 @@ function neighbor (graph, node, port, neighborFn, nType, multiCase, multiPortFn,
   return resNodes
 }
 
-export function successor (graph, node, port) {
+export function successor (graph, node, port, options) {
   var edge = {from: node, outPort: port}
-  return neighbor(graph, node, port, _.partial(getSuccessorWithCheck, graph, _, node, port), 'v', '_DUPLICATE_', nthOutput, '_JOIN_', nthOutput, edge)
+  var multiCase = (options && options.keepDuplicates) ? null : '_DUPLICATE_'
+  return neighbor(graph, node, port, _.partial(getSuccessorWithCheck, graph, _, node, port), 'v', multiCase, nthOutput, '_JOIN_', nthOutput, edge)
 }
 
-export function predecessor (graph, node, port) {
+export function predecessor (graph, node, port, options) {
   var edge = {to: node, inPort: port}
   return neighbor(graph, node, port, _.partial(getPredecessorWithCheck, graph, _, node, port), 'w', '_JOIN_', nthInput, '_DUPLICATE_', nthInput, edge)
 }

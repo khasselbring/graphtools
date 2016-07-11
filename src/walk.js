@@ -15,10 +15,10 @@ import * as walkNG from './walkNetworkGraph'
  * format: `{node: 'NODE_ID', port: 'OUTPUT_PORT', edge: EDGE}`. It contains the predecessor node, the output
  * port it came in through (the port is always one of the predecessor) and the edge.
  */
-export function predecessor (graph, node, port) {
+export function predecessor (graph, node, port, options) {
   return (utils.isNPG(graph))
-      ? walkNPG.predecessor(graph, node, port)
-      : walkNG.predecessor(graph, node, port)
+      ? walkNPG.predecessor(graph, node, port, options)
+      : walkNG.predecessor(graph, node, port, options)
 }
 
 /**
@@ -30,10 +30,10 @@ export function predecessor (graph, node, port) {
  * format: `{node: 'NODE_ID', port: 'OUTPUT_PORT', edge: EDGE}`. It contains the successor node, the output
  * port it came in through (the port is always one of the successor) and the edge.
  */
-export function successor (graph, node, port) {
+export function successor (graph, node, port, options) {
   return (utils.isNPG(graph))
-      ? walkNPG.successor(graph, node, port)
-      : walkNG.successor(graph, node, port)
+      ? walkNPG.successor(graph, node, port, options)
+      : walkNG.successor(graph, node, port, options)
 }
 
 /**
@@ -58,7 +58,7 @@ export function successor (graph, node, port) {
  * @returns {string[]|object[]} It returns the list of nodes on the path.
  */
 export function walk (graph, node, path, options = {keepPorts: false}) {
-  return generalWalk(graph, node, path, successor, options)
+  return generalWalk(graph, node, path, _.partial(successor, _, _, _, options), options)
 }
 
 /**
@@ -83,7 +83,7 @@ export function walk (graph, node, path, options = {keepPorts: false}) {
  * @returns {string[]|object[]} It returns the list of nodes on the path.
  */
 export function walkBack (graph, node, path, options = {keepPorts: false}) {
-  return _.map(generalWalk(graph, node, path, predecessor, options), _.reverse)
+  return _.map(generalWalk(graph, node, path, _.partial(predecessor, _, _, _, options), options), _.reverse)
 }
 
 /**

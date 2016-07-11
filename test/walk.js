@@ -191,6 +191,23 @@ function testSetting (setting, preprocess) {
         expect(paths[0]).to.have.length(2)
       })
 
+      it('can keep duplicates in the walk results', () => {
+        var mapG = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map_recursive.json')))
+        var walkTerm = (graph, node, port, mux) => {
+          if (node === 'mapInc:term') {
+            return []
+          } else if (node === 'mapInc' && port === 'fn') {
+            return 'fn'
+          } else {
+            return _.keys(graph.node(node).outputPorts)
+          }
+        }
+        var paths = walk.walk(mapG, {node: 'mapInc', port: 'fn'}, walkTerm, {keepDuplicates: true})
+        expect(paths).to.have.length(2)
+        expect(paths[0]).to.have.length(3)
+        expect(_.includes(paths[0], 'mapInc_DUPLICATE_0_1')).to.be.true
+      })
+
       /* it.only('can walk through recursive map correctly', () => {
         var mapG = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/map_recursive.1.json')))
         var paths = walk.walkBack(mapG, {node: 'mapInc', port: 'result'}, (graph, node, port) => {
@@ -219,4 +236,4 @@ function testSetting (setting, preprocess) {
 }
 
 testSetting('network port graphs')
-testSetting('network graphs', (graph) => remodelPorts(normalize(graph)))
+testSetting('network graphs', (graph) => remodelPorts(normalize(graph, {createIdNodes: false, addConsumeNodes: false})))
