@@ -61,6 +61,14 @@ export const equal = (graph1, graph2) => {
 }
 
 /**
+ * Creats an empty graph with no nodes and edges.
+ * @returns {PortGraph} An empty port graph.
+ */
+export const empty = () => {
+  return new graphlib.Graph({multigraph: true, compound: true, directed: true})
+}
+
+/**
  * Creates a new graph that has the exact same nodes and edges.
  * @param {Graphlib} graph The graph to clone
  * @returns {Graphlib} A clone of the input graph.
