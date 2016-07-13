@@ -6,6 +6,8 @@
 
 import jq from 'json-query'
 import _ from 'lodash'
+import {clone} from './graph'
+import {toJSON} from './io'
 
 /**
  * Creates a change set to update a node with a given value
@@ -16,6 +18,14 @@ import _ from 'lodash'
  */
 export function updateNode (node, mergeValue) {
   return {type: 'changeSet', operation: 'merge', query: 'nodes[v=' + node + '].value', value: mergeValue}
+}
+
+export function insertNode (node, value) {
+  return {type: 'changeSet', operation: 'insert', query: 'nodes', value: {v: node, value}}
+}
+
+export function addMetaInformation (key, value) {
+  return {type: 'changeSet', operation: 'set', query: 'nodes[v=meta»' + key + '].value', value: {value, v: 'meta»' + key}}
 }
 
 /**
@@ -95,6 +105,14 @@ const applyRemove = (refs, removeFilter) => {
   })
 }
 
+const applySet = (refs, value) => {
+  if (Array.isArray(refs[0])) {
+    applyInsert(refs, value)
+  } else {
+    applyMerge(refs, value)
+  }
+}
+
 const getReferences = (graph, changeSet) => {
   var refs = jq(changeSet.query, {data: graph})
   if (refs.length === 0) {
@@ -104,13 +122,59 @@ const getReferences = (graph, changeSet) => {
 }
 
 /**
- * Apply a changeSet on the given graph
+ * Apply a changeSet on the given graph.
+ * @param {Object} graph The graph in JSON format that should be changed.
+ * @param {ChangeSet} changeSet The change set that should be applied.
+ * @returns {Graphlib} A new graph with the applied change set graph.
+ * @throws {Error} If the change set is no valid change set it throws an error.
+ */
+export function applyChangeSet (graph, changeSet) {
+  graph = toJSON(graph)
+  var newGraph = clone(graph)
+  if (!isChangeSet(changeSet)) {
+    throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
+  }
+  var refs = getReferences(newGraph, changeSet)
+  switch (changeSet.operation) {
+    case 'merge':
+      applyMerge(refs, changeSet.value)
+      break
+    case 'insert':
+      applyInsert(refs, changeSet.value)
+      break
+    case 'remove':
+      applyRemove(refs, changeSet.filter)
+      break
+    case 'set':
+      applySet(refs, changeSet.value)
+      break
+  }
+  return newGraph
+}
+
+/**
+ * Apply an array of changeSets on the given graph. All changes are applied sequentially.
+ * @param {Object} graph The graph in JSON format that should be changed.
+ * @param {ChangeSet[]} changeSets The change sets that should be applied. The order might influence the resulting graph, they are processesed sequentially.
+ * @returns {Graphlib} A new graph with the applied change set graph.
+ * @throws {Error} If the change set is no valid change set it throws an error.
+ */
+export function applyChangeSets (graph, changeSets) {
+  graph = toJSON(graph)
+  var newGraph = clone(graph)
+  _.each(changeSets, (c) => applyChangeSetInplace(newGraph, c))
+  return newGraph
+}
+
+/**
+ * Apply a changeSet on the given graph inplace.
  * @param {Object} graph The graph in JSON format that should be changed.
  * @param {ChangeSet} changeSet The change set that should be applied.
  * @returns {Graphlib} The changed graph. Currently the changes are all made inplace so the return value is equal to the input graph.
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
-export function applyChangeSet (graph, changeSet) {
+export function applyChangeSetInplace (graph, changeSet) {
+  graph = toJSON(graph)
   if (!isChangeSet(changeSet)) {
     throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
   }
@@ -124,6 +188,9 @@ export function applyChangeSet (graph, changeSet) {
       break
     case 'remove':
       applyRemove(refs, changeSet.filter)
+      break
+    case 'set':
+      applySet(refs, changeSet.value)
       break
   }
   return graph

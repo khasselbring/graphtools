@@ -19,6 +19,15 @@ export function prefixName (prefix, name) {
 }
 
 /**
+ * Returns whether the key is a meta key or not
+ * @param {string} key The node identifier (its key)
+ * @returns {boolean} True if the key is a meta key, false otherwise
+ */
+export function isMetaKey (key) {
+  return key.indexOf('meta»') === 0
+}
+
+/**
  * Returns whether the graph is a network-port-graph (i.e. has nodes that have ports).
  * @param {Graphlib} graph A graphlib graph
  * @returns {boolean} True if the graph is a network-port-graph, false otherwise.
