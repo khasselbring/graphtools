@@ -2,69 +2,97 @@
 
 import chai from 'chai'
 import * as changeSet from '../src/changeSet.js'
-import * as io from '../src/io.js'
-import _ from 'lodash'
-import {empty} from '../src/graph'
+import * as Graph from '../src/graph'
 
 var expect = chai.expect
 
-describe('Change Sets', () => {
-  it('can apply set a field in nodes', () => {
-    var graph = io.jsonFromFile('test/fixtures/real_add.json')
-    var cS = changeSet.updateNode(graph.nodes[0].v, {NEW_PROP: 'test'})
+describe.only('Change Sets', () => {
+  it('can add new nodes', () => {
+    var graph = Graph.empty()
+    var cS = changeSet.insertNode({ id: 'a', prop: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(newGraph.nodes[0].value.NEW_PROP).to.equal('test')
+    expect(Graph.node(newGraph, 'a')).to.be.ok
+    expect(Graph.node(newGraph, 'a').prop).to.equal('test')
   })
 
-  it('can add new nodes', () => {
-    var graph = empty()
-    var cS = changeSet.insertNode('a', {prop: 'test'})
+  it('can set a field in a node', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(),
+      changeSet.insertNode({id: 'a', prop: 'test'}))
+    var cS = changeSet.updateNode('a', { NEW_PROP: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(newGraph.nodes[0].v).to.equal('a')
-    expect(newGraph.nodes[0].value.prop).to.equal('test')
+    expect(Graph.node(newGraph, 'a').NEW_PROP).to.equal('test')
+  })
+
+  it('can update a field in a node', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(),
+      changeSet.insertNode({id: 'a', prop: 'test'}))
+    var cS = changeSet.updateNode('a', { prop: 'new_test' })
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.node(newGraph, 'a').prop).to.equal('new_test')
+  })
+
+  it('can remove a node', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(),
+      changeSet.insertNode({id: 'a', prop: 'test'}))
+    var cS = changeSet.removeNode('a')
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.nodes(newGraph)).to.have.length(0)
   })
 
   it('can insert a new edge', () => {
-    var graph = io.jsonFromFile('test/fixtures/real_add.json')
-    var cS = changeSet.insertEdge({v: 'test', w: 'test2'})
+    var graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertNode({id: 'a'}),
+      changeSet.insertNode({id: 'b'})
+    ])
+    var cS = changeSet.insertEdge({ from: 'a', to: 'b' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(_.last(newGraph.edges)).to.eql({v: 'test', w: 'test2'})
+    expect(Graph.edges(newGraph)).to.have.length(1)
   })
 
   it('can remove an edge', () => {
-    var graph = io.jsonFromFile('test/fixtures/real_add.json')
-    var edgesCnt = graph.edges.length
-    var cS = changeSet.removeEdge({ v: 'numToStr_PORT_output', w: 'out_PORT_input' })
+    var graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertNode({id: 'a'}),
+      changeSet.insertNode({id: 'b'}),
+      changeSet.insertEdge({ from: 'a', to: 'b' })
+    ])
+    var cS = changeSet.removeEdge({ from: 'a', to: 'b' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(newGraph.edges.length).to.equal(edgesCnt - 1)
+    expect(Graph.edges(newGraph)).to.have.length(0)
+
+    graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertNode({id: 'a'}),
+      changeSet.insertNode({id: 'b'}),
+      changeSet.insertEdge({ from: 'a', to: 'b' }),
+      changeSet.insertEdge({ from: 'c', to: 'd' })
+    ])
+    cS = changeSet.removeEdge({ from: 'c', to: 'd' })
+    newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.edges(newGraph)).to.have.length(1)
+    expect(Graph.edges(newGraph)[0]).to.eql({ from: 'a', to: 'b' })
   })
 
   it('can add meta keys', () => {
-    var graph = io.jsonFromFile('test/fixtures/real_add.json')
-    var nodeCnt = graph.nodes.length
-    const cS = changeSet.addMetaInformation('version', '0.0.0')
-    var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(newGraph.nodes.length).to.equal(nodeCnt + 1)
-    expect(newGraph.nodes[nodeCnt].value).to.equal('0.0.0')
+    var graph = Graph.empty()
+    var newGraph = changeSet.applyChangeSet(graph, changeSet.addMetaInformation({metaID: 'ABC'}))
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('ABC')
   })
 
   it('can update meta keys', () => {
-    var graph = io.jsonFromFile('test/fixtures/real_add.json')
-    const cS1 = changeSet.addMetaInformation('version', '0.0.0')
-    graph = changeSet.applyChangeSet(graph, cS1)
-    var nodeCnt = graph.nodes.length
-    const cS2 = changeSet.addMetaInformation('version', '0.1.0')
-    var newGraph = changeSet.applyChangeSet(graph, cS2)
-    expect(newGraph.nodes.length).to.equal(nodeCnt)
-    expect(newGraph.nodes[nodeCnt - 1].value).to.equal('0.1.0')
+    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.addMetaInformation({metaID: 'ABC'}))
+    const cS = changeSet.addMetaInformation({metaID: 'DEF'})
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('DEF')
   })
 
   it('can apply multiple change sets', () => {
-    var graph = empty()
+    var graph = Graph.empty()
     var newGraph = changeSet.applyChangeSets(graph, [
-      changeSet.addMetaInformation('version', '0.1.0'),
-      changeSet.addMetaInformation('name', 'test')
+      changeSet.addMetaInformation({metaID: 'ABC'}),
+      changeSet.addMetaInformation({name: 'test'})
     ])
-    expect(newGraph.nodes).to.have.length(2)
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph)).to.have.property('name')
   })
 })

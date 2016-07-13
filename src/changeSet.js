@@ -17,15 +17,19 @@ import {toJSON} from './io'
  * @returns {ChangeSet} A change set containing the operation.
  */
 export function updateNode (node, mergeValue) {
-  return {type: 'changeSet', operation: 'merge', query: 'nodes[v=' + node + '].value', value: mergeValue}
+  return {type: 'changeSet', operation: 'merge', query: 'nodes[id=' + node + '].value', value: mergeValue}
 }
 
-export function insertNode (node, value) {
-  return {type: 'changeSet', operation: 'insert', query: 'nodes', value: {v: node, value}}
+export function insertNode (value) {
+  return {type: 'changeSet', operation: 'insert', query: 'nodes', value}
 }
 
-export function addMetaInformation (key, value) {
-  return {type: 'changeSet', operation: 'set', query: 'nodes[v=meta»' + key + '].value', value: {value, v: 'meta»' + key}}
+export function removeNode (id) {
+  return {type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => n.id === id}
+}
+
+export function addMetaInformation (value) {
+  return {type: 'changeSet', operation: 'set', query: 'metaInformation', value}
 }
 
 /**
@@ -97,8 +101,12 @@ const applyInsert = (refs, insertValue) => {
 }
 
 const applyRemove = (refs, removeFilter) => {
+  const findFunc = (typeof (removeFilter) === 'function')
+    ? removeFilter
+    : (r) => _.isEqual(r, removeFilter)
+
   _.each(refs, (ref) => {
-    var idx = _.findIndex(ref, (r) => _.isEqual(r, removeFilter))
+    var idx = _.findIndex(ref, findFunc)
     if (idx > -1) {
       ref.splice(idx, 1)
     }
@@ -106,11 +114,7 @@ const applyRemove = (refs, removeFilter) => {
 }
 
 const applySet = (refs, value) => {
-  if (Array.isArray(refs[0])) {
-    applyInsert(refs, value)
-  } else {
-    applyMerge(refs, value)
-  }
+  _.each(refs, (r) => _.merge(r, value))
 }
 
 const getReferences = (graph, changeSet) => {

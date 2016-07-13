@@ -1,10 +1,8 @@
 
-import graphlib from 'graphlib'
 import _ from 'lodash'
-import deprecate from 'deprecate'
-import * as io from './io'
-import * as algorithm from './algorithm'
-import {isMetaKey} from './utils'
+import {packageVersion} from './internals'
+import changeSet from './changeSet'
+import {id} from './node'
 
 /**
  * Compares two graphs for structural equality.
@@ -13,7 +11,7 @@ import {isMetaKey} from './utils'
  * @returns {boolean} True if both graphs are structually equal, false otherwise.
  */
 export const equal = (graph1, graph2) => {
-  return _.isEqual(toJSON(graph1), toJSON(graph2))
+  return _.isEqual(graph1, graph2)
 }
 
 /**
@@ -22,11 +20,7 @@ export const equal = (graph1, graph2) => {
  * @returns {Graphlib} A clone of the input graph.
  */
 export function clone (graph) {
-  if (typeof (graph.graph) === 'function') {
-    return graphlib.json.read(graphlib.json.write(graph))
-  } else {
-    return _.clone(graph)
-  }
+  return _.clone(graph)
 }
 
 /**
@@ -35,19 +29,60 @@ export function clone (graph) {
  * @returns {Nodes[]} A list of nodes.
  */
 export function nodes (graph) {
-  return _(graph.nodes())
-    .reject(isMetaKey)
-    .map((n) => ({v: n, parent: graph.parent(n), value: graph.node(n)}))
-    .value()
+  return graph.nodes
 }
 
 /**
- * Returns a list of node names.
+ * Returns a list of node names. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
  * @returns {string[]} A list of node names.
  */
 export function nodeNames (graph) {
-  return _.reject(graph.nodes(), isMetaKey)
+  return _.map(graph.nodes, id)
+}
+
+/**
+ * Returns the node with the given id. [Performance O(|V|)]
+ * @param {PortGraph} graph The graph.
+ * @param {string} nodeId The id of the node.
+ * @returns {Node} The node in the graph
+ * @throws {Error} If no node with the given id exists
+ */
+export function node (graph, nodeId) {
+  var node = _.find(graph.nodes, (n) => id(n) === nodeId)
+  if (!node) {
+    throw new Error(`Node with id '${nodeId}' does not exist in the graph.`)
+  }
+  return node
+}
+
+/**
+ * Add a node to the graph, returns a new node. [Performance O(|V| + |E|)]
+ * @param {PortGraph} graph The graph.
+ * @param {Node} node The node object that should be added.
+ * @returns {PortGraph} A new graph that includes the node.
+ */
+export function addNode (graph, node) {
+  return changeSet.applyChangeSet(graph, changeSet.insertNode(node))
+}
+
+/**
+ * Removes a node from the graph. [Performance O(|V| + |E|)]
+ * @param {PortGraph} graph The graph.
+ * @param {Node|string} node The node that shall be removed, either the node object or the id.
+ * @returns {PortGraph} A new graph without the given node.
+ */
+export function removeNode (graph, node) {
+  return changeSet.applyChangeSet(graph, changeSet.removeNode(id(node)))
+}
+
+/**
+ * Returns a list of edges in the graph.
+ * @param {PortGraph} graph The graph.
+ * @returns {Edges[]} A list of edges.
+ */
+export function edges (graph) {
+  return graph.edges
 }
 
 /**
@@ -55,11 +90,71 @@ export function nodeNames (graph) {
  * @param {PortGraph} graph The graph.
  * @returns {object} An object with all meta information keys.
  */
-export function metaInformation (graph) {
-  return _(graph.nodes())
-    .filter(isMetaKey)
-    .map((n) => [n.slice(5), graph.node(n)])
-    .fromPairs()
+export function meta (graph) {
+  return graph.metaInformation
+}
+
+/**
+ * Sets the meta information in the graph for the given key to the value
+ * @param {PortGraph} graph The graph.
+ * @param {string} key The meta key for the value.
+ * @param value Any possible value for the key.
+ * @returns A new graph with the applied changes.
+ */
+export function setMeta (graph, key, value) {
+  return changeSet.applyChangeSet(graph, changeSet.addMetaInformation(key, value))
+}
+
+/**
+ * Returns a list of defined components. Components are not part of the program flow, but are defined
+ * procedures that can be used in the resolve process.
+ * @param {PortGraph} graph The graph.
+ * @retuns {Components[]} A list of components that are defined in the graph.
+ */
+export function components (graph) {
+  return graph.components
+}
+
+/**
+ * Returns a list of predecessors for a node including the input port. Each node can only have exactly one
+ * predecessor for every port.
+ * @param {PortGraph} graph The graph.
+ * @param {string} node The node for which we look for predecessors.
+ * @returns {Port[]} A list of ports with their corresponding nodes
+ */
+export function predecessors (graph, node) {
+  return _(graph.edges)
+    .filter((e) => e.to === node)
+    .map((e) => ({node: e.from, port: e.outPort, succeedingNode: e.from, succeedingPort: e.outPort}))
+    .value()
+}
+
+/**
+ * Returns the predecessors for a node including the input port. Each node can only have exactly one
+ * predecessor for every port.
+ * @param {PortGraph} graph The graph.
+ * @param {string} node The node for which we look for predecessors.
+ * @param {string} port The port to follow.
+ * @returns {Port} The preceeding port with the corresponding node
+ */
+export function predecessor (graph, node, port) {
+  return _(graph.edges)
+    .filter((e) => e.to === node && e.inPort === port)
+    .map((e) => ({node: e.from, port: e.outPort, succeedingNode: e.from, succeedingPort: e.outPort}))
+    .first()
+}
+
+/**
+ * Get the successors of one node in the graph, optionally for a specific port.
+ * @param {PortGraph} graph The graph.
+ * @param {string} node The node id.
+ * @param {string|null} port An optional port, if you need only successors for the specific port.
+ * @returns {Port[]} A list of ports that succeed the node with their corresponding nodes.
+ */
+export function successors (graph, node, port) {
+  return _(graph.edges)
+    .filter((e) => e.from === node && (!port || e.outPort === port))
+    .map((e) => ({node: e.to, port: e.inPort, preceedingNode: e.from, preceedingPort: e.outPort}))
     .value()
 }
 
@@ -68,79 +163,10 @@ export function metaInformation (graph) {
  * @returns {PortGraph} A new empty port graph.
  */
 export function empty () {
-  return new graphlib.Graph({directed: true, compound: true, multigraph: true})
-}
-
-// DEPRECATED METHODS --- will be removed in the future.
-
-/**
- * Parses the pure JSON format to return a graphlib version of the graph.
- * @param {Object} json A JSON representation (e.g. created by toJSON) of a graph.
- * @returns {Graphlib} A graphlib graph of the editGraph
- */
-export const importJSON = (json) => {
-  deprecate('`graph.importJSON` is deprecated. Please use `io.importJSON` instead')
-  return io.importJSON(json)
-}
-
-/**
- * Returns the pure JSON representation of the graph without all the graphlib features.
- * @param {Graphlib} graph The graph in graphlib format to convert
- * @returns {Object} A JSON representation of the graph.
- */
-export const toJSON = (graph) => {
-  deprecate('`graph.toJSON` is deprecated. Please use `io.toJSON` instead')
-  // make sure all references are gone!
-  return io.toJSON(graph)
-}
-
-/**
- * Parses a graphlib graph from the given string.
- * @param {string} graphStr The graph represented as a string
- * @returns {Graphlib} The graph in graphlib format
- */
-export const readFromString = (graphStr) => {
-  deprecate('`graph.readFromString` is deprecated. Please use `io.readFromString` instead')
-  return io.readFromString(graphStr)
-}
-
-/**
- * Reads a graph from a file
- * @param {string} file The filename to read.
- * @returns {Graphlib} The graph in graphlib format.
- */
-export const readFromFile = (file) => {
-  deprecate('`graph.readFromFile` is deprecated. Please use `io.readFromFile` instead')
-  return io.readFromFile(file)
-}
-
-/**
- * Reads a graph in JSON format from a file
- * @param {string} file The filename to read.
- * @returns {JSON} The graph in JSON format.
- */
-export const jsonFromFile = (file) => {
-  deprecate('`graph.jsonFromFile` is deprecated. Please use `io.jsonFromFile` instead')
-  return io.jsonFromFile(file)
-}
-
-/**
- * Removes all continuations from a graph (only for debug purposes)
- * @param {Graphlib} graph The graph
- * @returns {Graphlib} A graph that has no continuations edges
- */
-export function removeContinuations (graph) {
-  deprecate('`removeContinuations` is deprecated. Please use `algorithm.removeContinuations` instead.')
-  return algorithm.removeContinuations(graph)
-}
-
-/**
- * Returns a topological sorting of the graph. Removes all continuations before calculating the topological sorting.
- * @param {Graphlib} graph The graph.
- * @return {string[]} A sorting of the nodes.
- * @throws {Error} If the graph has loops.
- */
-export function topoSort (graph) {
-  deprecate('`graph.topoSort` is deprecated. Please use `algorithm.topologicalSort` instead.')
-  return algorithm.topologicalSort(graph)
+  return {
+    nodes: [],
+    metaInformation: {version: packageVersion()},
+    edges: [],
+    components: []
+  }
 }
