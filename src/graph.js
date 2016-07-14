@@ -57,6 +57,16 @@ export function node (graph, nodeId) {
 }
 
 /**
+ * Checks whether the graph has a node with the given id. [Performance O(|V|)]
+ * @param {PortGraph} graph The graph.
+ * @param {string} nodeId The id of the node.
+ * @returns {boolean} True if the graph has a node with the given id, false otherwise.
+ */
+export function hasNode (graph, nodeId) {
+  return !!_.find(graph.nodes, (n) => id(n) === nodeId)
+}
+
+/**
  * Add a node to the graph, returns a new node. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
  * @param {Node} node The node object that should be added.
@@ -83,6 +93,40 @@ export function removeNode (graph, node) {
  */
 export function edges (graph) {
   return graph.edges
+}
+
+/**
+ * Add an edge to the graph, either by specifying the edge object.
+ * @param {PortGraph} graph The graph.
+ * @param {Edge} edge The edge data type in the format {from: <nodeId>, to: <nodeId>, outPort: <fromPortName>, inPort: <toPortName>} or
+ * using the colon separator like this: {from: `<nodeId>:<portName>`, to: `<nodeId>:<portName>`}.
+ * @returns {PortGraph} A new graph containing the edge.
+ *//**
+ * Add an edge to the graph, either by specifying the ports to connect.
+ * @param {PortGraph} graph The graph.
+ * @param {Port} from The port from where to draw the connection.
+ * @param {Port} to The port to the target of the connection.
+ * @param {string} [type] An optional type of the edge.
+ * @returns {PortGraph} A new graph containing the edge.
+ */
+export function addEdge (graph, from, to, type) {
+  if (arguments.length === 2) {
+    if (!hasNode(from.from)) {
+      throw new Error('Cannot create edge connection from not existing node: ' + from.from + ' to: ' + from.to)
+    }
+    if (!hasNode(from.to)) {
+      throw new Error('Cannot create edge connection from not existing node: ' + from.from + ' to: ' + from.to)
+    }
+    return changeSet.applyChangeSet(graph, changeSet.insertEdge(from))
+  } else {
+    return addEdge({
+      from: from.node,
+      outPort: from.port,
+      to: to.node,
+      inPort: to.port,
+      type
+    })
+  }
 }
 
 /**
