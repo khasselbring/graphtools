@@ -16,6 +16,7 @@
   "author": "Maximilian Klein",
   "license": "MIT",
   "dependencies": {
+    "debug": "^2.2.0",
     "deprecate": "^0.1.0",
     "graphlib": "^2.1.0",
     "json-query": "^2.1.0",

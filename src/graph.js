@@ -1,8 +1,11 @@
 
 import _ from 'lodash'
 import {packageVersion} from './internals'
-import changeSet from './changeSet'
-import {id} from './node'
+import * as changeSet from './changeSet'
+import * as Node from './node'
+import debugLog from 'debug'
+
+const debug = debugLog('graphtools')
 
 /**
  * Compares two graphs for structural equality.
@@ -38,22 +41,27 @@ export function nodes (graph) {
  * @returns {string[]} A list of node names.
  */
 export function nodeNames (graph) {
-  return _.map(graph.nodes, id)
+  return _.map(graph.nodes, Node.id)
 }
 
 /**
  * Returns the node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @param {string} nodeId The id of the node.
+ * @param {Node} node The node.
  * @returns {Node} The node in the graph
- * @throws {Error} If no node with the given id exists
+ * @throws {Error} If the queried node does not exist in the graph.
  */
-export function node (graph, nodeId) {
-  var node = _.find(graph.nodes, (n) => id(n) === nodeId)
-  if (!node) {
-    throw new Error(`Node with id '${nodeId}' does not exist in the graph.`)
+export function node (graph, node) {
+  var res = _.find(graph.nodes, (n) => Node.equal(n, node))
+  if (!res) {
+    debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
+    throw new Error(`Node with id '${node}' does not exist in the graph.`)
   }
-  return node
+  return res
+}
+
+export function hasNode (graph, node) {
+  return !!_.find(graph.nodes, (n) => Node.equal(n, node))
 }
 
 /**
@@ -83,7 +91,7 @@ export function addNode (graph, node) {
  * @returns {PortGraph} A new graph without the given node.
  */
 export function removeNode (graph, node) {
-  return changeSet.applyChangeSet(graph, changeSet.removeNode(id(node)))
+  return changeSet.applyChangeSet(graph, changeSet.removeNode(Node.id(node)))
 }
 
 /**
@@ -127,6 +135,50 @@ export function addEdge (graph, from, to, type) {
       type
     })
   }
+}
+
+/**
+ * Add an edge to the graph.
+ * @param {PortGraph} graph The graph.
+ * @param {Edge} edge The edge that should be added. This needn't be in standard format.
+ * @param {Node} parent The parent of the edge.
+ * @returns {PortGraph} A new port graph that has the specified edge.
+ * @throws {Error} If:
+ *  - the edge already exists
+ *  - ports that the edge connects do not exists
+ *  - nodes that the edge connects do not exists
+ *  - the edge is not in normalizable form.
+ */
+export function addEdge (graph, edge) {
+  // var normEdge = Edge.normalize(graph, edge, parent)
+}
+
+/**
+ * Sets the parent of a node.
+ * @param {PortGraph} graph The graph.
+ * @param {Node} node The node for which you want to set the parent
+ * @param {Node} [parent] Optional: The new parent of the node. If this is not defined
+ * the new parent will be the root element, i.e. the node is not contained in any compound.
+ * @returns {PortGraph} The new graph in which the parent is set.
+ */
+export function setParent (graph, n, parent) {
+  if (!hasNode(graph, parent)) {
+    debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
+    throw new Error('Cannot set the parent of a node to a non-existing node.\nParent: ' + parent)
+  }
+  node(graph, n).parent = parent
+  return graph
+}
+
+/**
+ * Checks whether the two nodes are connected via an edge.
+ * @param {PortGraph} graph The graph in which we want to find the connection.
+ * @param {Node} nodeFrom The starting point of our connection.
+ * @param {Node} nodeTo The target of our connection.
+ * @returns {boolean} True if the graph has an edge going from "nodeFrom" to "nodeTo".
+ */
+export function areConnected (graph, nodeFrom, nodeTo) {
+  return !!_.find(graph.edges, (e) => e.from === nodeFrom && e.to === nodeTo)
 }
 
 /**

@@ -2,7 +2,6 @@
 
 import chai from 'chai'
 import * as changeSet from '../src/changeSet'
-import {importJSON} from '../src/io'
 import * as Graph from '../src/graph'
 import _ from 'lodash'
 import semver from 'semver'
@@ -32,13 +31,34 @@ describe('Basic graph functions', () => {
     expect(Graph.nodes(graph)).to.have.length(2)
   })
 
+  it('adds nodes to the graph', () => {
+    var graph = Graph.addNode(Graph.empty(), {id: 'a'})
+    expect(Graph.hasNode(graph, 'a')).to.be.true
+  })
+
+  it('can set the parent of a node', () => {
+    var graph = Graph.addNode(
+      Graph.addNode(Graph.empty(), {id: 'a'}), {id: 'b'})
+    Graph.setParent(graph, 'b', 'a')
+    expect(Graph.node(graph, 'b').parent).to.equal('a')
+  })
+
+  it('can check whether a node exists in the graph', () => {
+    var graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertNode({id: 'a'}),
+      changeSet.insertNode({id: 'b'})
+    ])
+    expect(Graph.hasNode(graph, 'a')).to.be.true
+    expect(Graph.hasNode(graph, {id: 'b'})).to.be.true
+  })
+
   it('does not include meta information', () => {
-    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.addMetaInformation('a', 'b'))
+    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.addMetaInformation({a: 'b'}))
     expect(Graph.nodes(graph)).to.have.length(0)
   })
 
   it('returns a map of all meta information', () => {
-    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.addMetaInformation('a', 'b'))
+    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.addMetaInformation({a: 'b'}))
     var meta = Graph.meta(graph)
     expect(meta).to.be.an('object')
     expect(meta).to.have.property('a')

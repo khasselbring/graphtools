@@ -6,7 +6,7 @@ import * as Graph from '../src/graph'
 
 var expect = chai.expect
 
-describe.only('Change Sets', () => {
+describe('Change Sets', () => {
   it('can add new nodes', () => {
     var graph = Graph.empty()
     var cS = changeSet.insertNode({ id: 'a', prop: 'test' })
