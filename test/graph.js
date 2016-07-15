@@ -36,6 +36,16 @@ describe('Basic graph functions', () => {
     expect(Graph.hasNode(graph, 'a')).to.be.true
   })
 
+  it('should throw an error if the node data is not valid', () => {
+    expect(() => Graph.addNode(Graph.empty())).to.throw(Error)
+    expect(() => Graph.addNode(Graph.empty(), {})).to.throw(Error)
+  })
+
+  it('should throw an error if an node gets added twice', () => {
+    var graph = Graph.addNode(Graph.empty(), {id: 'a'})
+    expect(() => Graph.addNode(graph, {id: 'a', prop: 'p'})).to.throw(Error)
+  })
+
   it('can set the parent of a node', () => {
     var graph = Graph.addNode(
       Graph.addNode(Graph.empty(), {id: 'a'}), {id: 'b'})

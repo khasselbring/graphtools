@@ -31,3 +31,12 @@ export function id (node) {
 export function equal (node1, node2) {
   return id(node1) === id(node2)
 }
+
+/**
+ * Checks whether a node is in a valid format, i.e. if it has an id field.
+ * @param {Node} node The node to test.
+ * @returns {boolean} True if the node is valid, false otherwise.
+ */
+export function isValid (node) {
+  return typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0
+}

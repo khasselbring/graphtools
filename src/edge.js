@@ -1,5 +1,6 @@
 
 import * as Graph from './graph'
+import _ from 'lodash'
 
 function isPortNotation (port) {
   return port.indexOf('@') !== -1
@@ -47,18 +48,21 @@ export function normalize (graph, edge, parent) {
   if (!edge.from || !edge.to) {
     throw new Error('The edge format is not valid. You need to have a from and to value in.\n\n' + JSON.stringify(edge, null, 2) + '\n')
   }
+  parent = parent || edge.parent
   if (edge.outPort && edge.inPort) {
-    if (!edge.parent && (!parent || !Graph.hasNode(parent))) {
+    if (parent && !Graph.hasNode(graph, parent)) {
       throw new Error('No valid information about the parent of the edge given.\nEdge ' + JSON.stringify(edge) + '\nParent: ' + parent)
     }
-    return edge
-  } else if (edge.fromPort && edge.inPort) {
-    return { from: edge.from, to: edge.to, outPort: edge.fromPort, inPort: edge.toPort }
+    return _.merge({}, edge, {parent})
+  } else if (edge.fromPort && edge.toPort) {
+    return { from: edge.from, to: edge.to, outPort: edge.fromPort, inPort: edge.toPort, parent }
   } else if (!edge.outPort && !edge.inPort && !edge.fromPort && !edge.toPort &&
     isPortNotation(edge.from) && isPortNotation(edge.to)) {
-    var from = parsePortNotation(edge.from)
-    var to = parsePortNotation(edge.to)
-    return { from: from.node, to: to.node, outPort: from.port, inPort: to.port }
+    var from = parsePortNotation(graph, edge.from, parent)
+    var to = parsePortNotation(graph, edge.to, parent)
+    return { from: from.node, to: to.node, outPort: from.port, inPort: to.port, parent }
+  } else {
+    throw new Error('Malformed edge. Cannot translate format into standard format.\nEdge: ' + JSON.stringify(edge))
   }
 }
 

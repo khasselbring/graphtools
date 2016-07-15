@@ -11,10 +11,22 @@ describe.only('Edge API', () => {
   it('Normalizes an edge correctly', () => {
     var graph = Graph.addNode(
       Graph.addNode(
-        Graph.addNode(Graph.empty(), {id: 'a'}), {id: 'b'}, {id: 'P'}))
+        Graph.addNode(Graph.empty(), {id: 'a'}), {id: 'b'}), {id: 'P'})
     expect(Edge.normalize(graph, {from: 'a', to: 'b', outPort: 'out', inPort: 'in'}))
       .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in'})
     expect(Edge.normalize(graph, {from: 'a', to: 'b', fromPort: 'out', toPort: 'in'}))
-      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in'})
+      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: undefined})
+    expect(Edge.normalize(graph, {from: 'a@out', to: 'b@in'}))
+      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: undefined})
+  })
+
+  it('Can handle parents correctly', () => {
+    var graph = Graph.addNode(
+      Graph.addNode(
+        Graph.addNode(Graph.empty(), {id: 'a'}), {id: 'b'}), {id: 'P'})
+    expect(Edge.normalize(graph, {from: 'a', to: 'b', outPort: 'out', inPort: 'in'}, 'P'))
+      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: 'P'})
+    expect(Edge.normalize(graph, {from: 'a', to: 'b', fromPort: 'out', toPort: 'in', parent: 'P'}))
+      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: 'P'})
   })
 })

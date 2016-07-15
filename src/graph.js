@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {packageVersion} from './internals'
 import * as changeSet from './changeSet'
 import * as Node from './node'
+import * as Edge from './edge'
 import debugLog from 'debug'
 
 const debug = debugLog('graphtools')
@@ -60,18 +61,14 @@ export function node (graph, node) {
   return res
 }
 
-export function hasNode (graph, node) {
-  return !!_.find(graph.nodes, (n) => Node.equal(n, node))
-}
-
 /**
  * Checks whether the graph has a node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @param {string} nodeId The id of the node.
+ * @param {Node} node The node you want to check for.
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
-export function hasNode (graph, nodeId) {
-  return !!_.find(graph.nodes, (n) => id(n) === nodeId)
+export function hasNode (graph, node) {
+  return !!_.find(graph.nodes, (n) => Node.equal(n, node))
 }
 
 /**
@@ -81,6 +78,13 @@ export function hasNode (graph, nodeId) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export function addNode (graph, node) {
+  if (!node) {
+    throw new Error('Cannot add undefined node to graph.')
+  } else if (hasNode(graph, node)) {
+    throw new Error('Cannot add already existing node: ' + Node.id(node))
+  } else if (!Node.isValid(node)) {
+    throw new Error('Cannot add invalid node to graph.\nNode: ' + JSON.stringify(node))
+  }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(node))
 }
 
@@ -104,53 +108,29 @@ export function edges (graph) {
 }
 
 /**
- * Add an edge to the graph, either by specifying the edge object.
- * @param {PortGraph} graph The graph.
- * @param {Edge} edge The edge data type in the format {from: <nodeId>, to: <nodeId>, outPort: <fromPortName>, inPort: <toPortName>} or
- * using the colon separator like this: {from: `<nodeId>:<portName>`, to: `<nodeId>:<portName>`}.
- * @returns {PortGraph} A new graph containing the edge.
- *//**
  * Add an edge to the graph, either by specifying the ports to connect.
- * @param {PortGraph} graph The graph.
- * @param {Port} from The port from where to draw the connection.
- * @param {Port} to The port to the target of the connection.
- * @param {string} [type] An optional type of the edge.
- * @returns {PortGraph} A new graph containing the edge.
- */
-export function addEdge (graph, from, to, type) {
-  if (arguments.length === 2) {
-    if (!hasNode(from.from)) {
-      throw new Error('Cannot create edge connection from not existing node: ' + from.from + ' to: ' + from.to)
-    }
-    if (!hasNode(from.to)) {
-      throw new Error('Cannot create edge connection from not existing node: ' + from.from + ' to: ' + from.to)
-    }
-    return changeSet.applyChangeSet(graph, changeSet.insertEdge(from))
-  } else {
-    return addEdge({
-      from: from.node,
-      outPort: from.port,
-      to: to.node,
-      inPort: to.port,
-      type
-    })
-  }
-}
-
-/**
- * Add an edge to the graph.
  * @param {PortGraph} graph The graph.
  * @param {Edge} edge The edge that should be added. This needn't be in standard format.
  * @param {Node} parent The parent of the edge.
- * @returns {PortGraph} A new port graph that has the specified edge.
+ * @returns {PortGraph} A new graph containing the edge.
  * @throws {Error} If:
  *  - the edge already exists
  *  - ports that the edge connects do not exists
  *  - nodes that the edge connects do not exists
  *  - the edge is not in normalizable form.
  */
-export function addEdge (graph, edge) {
-  // var normEdge = Edge.normalize(graph, edge, parent)
+export function addEdge (graph, edge, parent) {
+  var normEdge = Edge.normalize(edge)
+  parent = parent || edge.parent
+  if (!hasNode(normEdge.from)) {
+    throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
+  } else if (!hasNode(normEdge.to)) {
+    throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
+  } else if (parent && !hasNode(parent)) {
+    throw new Error('Invalid parent for edge (' + normEdge.from + ' → ' + normEdge.to + '). The parent: ' + parent + ' does not exist in the graph.')
+  }
+  edge.parent = parent
+  return changeSet.applyChangeSet(graph, changeSet.insertEdge(edge))
 }
 
 /**

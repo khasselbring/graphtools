@@ -35,4 +35,12 @@ describe('Node API', () => {
     expect(() => Node.equal({idd: 'a'}, {ID: 'b'})).to.throw(Error)
     expect(() => Node.equal({idd: 'a'}, 'b')).to.throw(Error)
   })
+
+  it('can check the validity of a node', () => {
+    expect(Node.isValid({id: 'a'})).to.be.true
+    expect(Node.isValid({id: 'a', prop: 'p'})).to.be.true
+    expect(Node.isValid({idd: 'a'})).to.be.false
+    expect(Node.isValid({})).to.be.false
+    expect(Node.isValid()).to.be.false
+  })
 })
