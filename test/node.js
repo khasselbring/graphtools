@@ -6,7 +6,7 @@ import * as Node from '../src/node.js'
 
 var expect = chai.expect
 
-describe('Node API', () => {
+describe.only('Node API', () => {
   it('Gets the id of a node', () => {
     expect(Node.id('a')).to.equal('a')
     expect(Node.id({id: 'b'})).to.equal('b')
@@ -37,10 +37,30 @@ describe('Node API', () => {
   })
 
   it('can check the validity of a node', () => {
-    expect(Node.isValid({id: 'a'})).to.be.true
-    expect(Node.isValid({id: 'a', prop: 'p'})).to.be.true
-    expect(Node.isValid({idd: 'a'})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{name: 'p'}]})).to.be.true
+    expect(Node.isValid({id: 'a', ports: [{name: 'p'}], prop: 'p'})).to.be.true
+    expect(Node.isValid({id: 'a'})).to.be.false
+    expect(Node.isValid({idd: 'a', ports: [{name: 'p'}]})).to.be.false
     expect(Node.isValid({})).to.be.false
+    expect(Node.isValid({ports: [{name: 'p'}]})).to.be.false
     expect(Node.isValid()).to.be.false
+  })
+
+  it('can get different port types', () => {
+    expect(Node.ports({ports: [{name: 'a', type: 'outputPort'}]})).to.have.length(1)
+    expect(Node.outputPorts({ports: [{name: 'a', type: 'outputPort'}]})).to.have.length(1)
+    expect(Node.outputPorts({ports: [{name: 'a', type: 'inputPort'}]})).to.have.length(0)
+    expect(Node.outputPorts({ports: [
+      {name: 'a', type: 'outputPort'},
+      {name: 'b', type: 'inputPort'},
+      {name: 'c', type: 'outputPort'}
+    ]})).to.have.length(2)
+    expect(Node.inputPorts({ports: [{name: 'a', type: 'outputPort'}]})).to.have.length(0)
+    expect(Node.inputPorts({ports: [{name: 'a', type: 'inputPort'}]})).to.have.length(1)
+    expect(Node.inputPorts({ports: [
+      {name: 'a', type: 'outputPort'},
+      {name: 'b', type: 'inputPort'},
+      {name: 'c', type: 'inputPort'}
+    ]})).to.have.length(2)
   })
 })

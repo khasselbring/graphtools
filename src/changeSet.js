@@ -133,7 +133,6 @@ const getReferences = (graph, changeSet) => {
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
 export function applyChangeSet (graph, changeSet) {
-  graph = toJSON(graph)
   var newGraph = clone(graph)
   if (!isChangeSet(changeSet)) {
     throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))

@@ -7,7 +7,7 @@ import * as Edge from '../src/edge.js'
 
 var expect = chai.expect
 
-describe.only('Edge API', () => {
+describe('Edge API', () => {
   it('Normalizes an edge correctly', () => {
     var graph = Graph.addNode(
       Graph.addNode(
@@ -28,5 +28,13 @@ describe.only('Edge API', () => {
       .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: 'P'})
     expect(Edge.normalize(graph, {from: 'a', to: 'b', fromPort: 'out', toPort: 'in', parent: 'P'}))
       .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: 'P'})
+  })
+
+  it('Assigns the parent for ports if only the port name is given', () => {
+    var graph = Graph.addNode(
+      Graph.addNode(
+        Graph.addNode(Graph.empty(), {id: 'a'}), {id: 'b'}), {id: 'P'})
+    expect(Edge.normalize(graph, {from: '@out', to: 'b@in'}, 'P'))
+      .to.eql({from: 'P', to: 'b', outPort: 'out', inPort: 'in', parent: 'P'})
   })
 })

@@ -24,7 +24,7 @@ export const equal = (graph1, graph2) => {
  * @returns {Graphlib} A clone of the input graph.
  */
 export function clone (graph) {
-  return _.clone(graph)
+  return _.cloneDeep(graph)
 }
 
 /**
@@ -120,17 +120,58 @@ export function edges (graph) {
  *  - the edge is not in normalizable form.
  */
 export function addEdge (graph, edge, parent) {
-  var normEdge = Edge.normalize(edge)
+  var normEdge = Edge.normalize(graph, edge)
   parent = parent || edge.parent
-  if (!hasNode(normEdge.from)) {
+  if (!hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
-  } else if (!hasNode(normEdge.to)) {
-    throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
-  } else if (parent && !hasNode(parent)) {
+  } else if (!hasNode(graph, normEdge.to)) {
+    throw new Error('Cannot create edge connection from: ' + normEdge.from + ' to not existing node: ' + normEdge.to)
+  } else if (parent && !hasNode(graph, parent)) {
     throw new Error('Invalid parent for edge (' + normEdge.from + ' → ' + normEdge.to + '). The parent: ' + parent + ' does not exist in the graph.')
+  } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
+    throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)
   }
-  edge.parent = parent
-  return changeSet.applyChangeSet(graph, changeSet.insertEdge(edge))
+  normEdge.parent = parent
+  return changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge))
+}
+
+/**
+ * Checks whether the graph has the given edge.
+ * @params {PortGraph} graph The graph.
+ * @params {Edge} edge The edge to look for.
+ * @returns {boolean} True if the edge is contained in the graph, false otherwise.
+ */
+export function hasEdge (graph, edge) {
+  var normEdge = Edge.normalize(graph, edge)
+  return !!_.find(graph.edges, (e) => Edge.equal(e, normEdge))
+}
+
+/**
+ * Returns the queried edge.
+ * @params {PortGraph} graph The graph.
+ * @params {Edge} edge A edge mock that only contains the connecting ports but not necessarily further information.
+ * @returns {Edge} The edge as it is stored in the graph.
+ * @throws {Error} If the edge is not contained in the graph.
+ */
+export function edge (graph, edge) {
+  var normEdge = Edge.normalize(graph, edge)
+  var retEdge = _.find(graph.edges, (e) => Edge.equal(e, normEdge))
+  if (!retEdge) {
+    throw new Error('Edge is not defined in the graph: ' + JSON.stringify(edge))
+  }
+  return retEdge
+}
+
+/**
+ * Returns the parent of an edge.
+ * @params {PortGraph} graph The graph.
+ * @params {Edge} edge A edge mock that only contains the connecting ports but not necessarily further information.
+ * @returns {Node} The parent node identifier.
+ * @throws {Error} If the edge is not contained in the graph.
+ */
+export function edgeParent (graph, inEdge) {
+  var e = edge(graph, inEdge)
+  return e.parent
 }
 
 /**
