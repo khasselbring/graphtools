@@ -83,7 +83,7 @@ export function addNode (graph, node) {
   } else if (hasNode(graph, node)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   } else if (!Node.isValid(node)) {
-    throw new Error('Cannot add invalid node to graph.\nNode: ' + JSON.stringify(node))
+    throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
   }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(node))
 }
@@ -130,6 +130,10 @@ export function addEdge (graph, edge, parent) {
     throw new Error('Invalid parent for edge (' + normEdge.from + ' → ' + normEdge.to + '). The parent: ' + parent + ' does not exist in the graph.')
   } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
     throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)
+  } else if (!Node.hasPort(node(graph, normEdge.from), normEdge.outPort)) {
+    throw new Error('The source node "' + normEdge.from + '" does not have the outgoing port "' + normEdge.outPort + '".')
+  } else if (!Node.hasPort(node(graph, normEdge.to), normEdge.inPort)) {
+    throw new Error('The target node "' + normEdge.to + '" does not have the ingoing port "' + normEdge.inPort + '".')
   }
   normEdge.parent = parent
   return changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge))

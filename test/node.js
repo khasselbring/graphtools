@@ -6,7 +6,7 @@ import * as Node from '../src/node.js'
 
 var expect = chai.expect
 
-describe.only('Node API', () => {
+describe('Node API', () => {
   it('Gets the id of a node', () => {
     expect(Node.id('a')).to.equal('a')
     expect(Node.id({id: 'b'})).to.equal('b')
@@ -62,5 +62,12 @@ describe.only('Node API', () => {
       {name: 'b', type: 'inputPort'},
       {name: 'c', type: 'inputPort'}
     ]})).to.have.length(2)
+  })
+
+  it('can check if a node has a port', () => {
+    expect(Node.hasPort({ports: [{name: 'a'}]}, 'a')).to.be.true
+    expect(Node.hasPort({ports: [{name: 'b'}]}, 'a')).to.be.false
+    expect(Node.hasPort({}, 'a')).to.be.false
+    expect(Node.hasPort({})).to.be.false
   })
 })

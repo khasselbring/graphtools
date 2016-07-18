@@ -80,6 +80,16 @@ export function port (node, name) {
 }
 
 /**
+ * Checks whether the node has the specific port.
+ * @param {Node} node The node which has the port.
+ * @param {String} name The name of the port.
+ * @returns {Port} True if the port has a port with the given name, false otherwise.
+ */
+export function hasPort (node, name) {
+  return !!_.find(node.ports, (p) => p.name === name)
+}
+
+/**
  * Checks whether a node is in a valid format, i.e. if it has an id field and at least one port.
  * @param {Node} node The node to test.
  * @returns {boolean} True if the node is valid, false otherwise.
