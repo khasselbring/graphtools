@@ -47,21 +47,21 @@ describe('Node API', () => {
   })
 
   it('can get different port types', () => {
-    expect(Node.ports({ports: [{name: 'a', type: 'outputPort'}]})).to.have.length(1)
-    expect(Node.outputPorts({ports: [{name: 'a', type: 'outputPort'}]})).to.have.length(1)
-    expect(Node.outputPorts({ports: [{name: 'a', type: 'inputPort'}]})).to.have.length(0)
+    expect(Node.ports({ports: [{name: 'a', type: 'output'}], atomic: true})).to.have.length(1)
+    expect(Node.outputPorts({ports: [{name: 'a', type: 'output'}], atomic: true})).to.have.length(1)
+    expect(Node.outputPorts({ports: [{name: 'a', type: 'input'}], atomic: true})).to.have.length(0)
     expect(Node.outputPorts({ports: [
-      {name: 'a', type: 'outputPort'},
-      {name: 'b', type: 'inputPort'},
-      {name: 'c', type: 'outputPort'}
-    ]})).to.have.length(2)
-    expect(Node.inputPorts({ports: [{name: 'a', type: 'outputPort'}]})).to.have.length(0)
-    expect(Node.inputPorts({ports: [{name: 'a', type: 'inputPort'}]})).to.have.length(1)
+      {name: 'a', type: 'output'},
+      {name: 'b', type: 'input'},
+      {name: 'c', type: 'output'}
+    ], atomic: true})).to.have.length(2)
+    expect(Node.inputPorts({ports: [{name: 'a', type: 'output'}], atomic: true})).to.have.length(0)
+    expect(Node.inputPorts({ports: [{name: 'a', type: 'input'}], atomic: true})).to.have.length(1)
     expect(Node.inputPorts({ports: [
-      {name: 'a', type: 'outputPort'},
-      {name: 'b', type: 'inputPort'},
-      {name: 'c', type: 'inputPort'}
-    ]})).to.have.length(2)
+      {name: 'a', type: 'output'},
+      {name: 'b', type: 'input'},
+      {name: 'c', type: 'input'}
+    ], atomic: true})).to.have.length(2)
   })
 
   it('can check if a node has a port', () => {

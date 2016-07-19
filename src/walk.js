@@ -2,23 +2,23 @@
 /** @module walk */
 
 import _ from 'lodash'
-import * as utils from './utils'
-import * as walkNPG from './walkNetworkPortGraph'
-import * as walkNG from './walkNetworkGraph'
 
 /**
  * Gets the predecessors of the node over the port `port`.
  * @param {Graphlib} graph The graph
  * @param {string} node A string identifying the node.
  * @param {string} port The port to use to find predecessors
+ * @param {string} [layer] The connection layer on which to look for the connection. Default is the 'dataflow' layer.
  * @returns {Object[]} It returns an array of objects in the following
  * format: `{node: 'NODE_ID', port: 'OUTPUT_PORT', edge: EDGE}`. It contains the predecessor node, the output
  * port it came in through (the port is always one of the predecessor) and the edge.
  */
-export function predecessor (graph, node, port, options) {
-  return (utils.isNPG(graph))
-      ? walkNPG.predecessor(graph, node, port, options)
-      : walkNG.predecessor(graph, node, port, options)
+export function predecessor (graph, node, port, layer = 'dataflow') {
+  return _(graph.edges)
+    .filter((e) => e.layer === layer)
+    .filter((e) => e.to === node && e.inPort === port)
+    .map((e) => ({node: e.from, port: e.outPort, edge: e}))
+    .value()
 }
 
 /**
@@ -26,14 +26,17 @@ export function predecessor (graph, node, port, options) {
  * @param {Graphlib} graph The graph
  * @param {string} node A string identifying the node.
  * @param {string} port The port to use to find successors
+ * @param {string} [layer] The connection layer on which to look for the connection. Default is the 'dataflow' layer.
  * @returns {Object[]} It returns an array of objects in the following
  * format: `{node: 'NODE_ID', port: 'OUTPUT_PORT', edge: EDGE}`. It contains the successor node, the output
  * port it came in through (the port is always one of the successor) and the edge.
  */
-export function successor (graph, node, port, options) {
-  return (utils.isNPG(graph))
-      ? walkNPG.successor(graph, node, port, options)
-      : walkNG.successor(graph, node, port, options)
+export function successor (graph, node, port, layer = 'dataflow') {
+  return _(graph.edges)
+    .filter((e) => e.layer === layer)
+    .filter((e) => e.from === node && e.outPort === port)
+    .map((e) => ({node: e.to, port: e.inPort, edge: e}))
+    .value()
 }
 
 /**

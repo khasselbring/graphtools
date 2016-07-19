@@ -7,7 +7,7 @@ import fs from 'fs'
 // import _ from 'lodash'
 
 var expect = chai.expect
-
+/*
 describe('Path tools', () => {
   describe('Path splitting', () => {
     it('can recognize a graph that has only conform edges', () => {
@@ -54,3 +54,4 @@ describe('Path tools', () => {
     })
   })
 })
+*/

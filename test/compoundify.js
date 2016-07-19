@@ -7,7 +7,7 @@ import fs from 'fs'
 // import _ from 'lodash'
 
 var expect = chai.expect
-
+/*
 describe('Compoundification Property Check', () => {
   var simple = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/compoundify/simple.json')))
   it('empty subset of simple graph', () => {
@@ -96,3 +96,4 @@ describe('Compoundification of Subset of Nodes', () => {
     console.log(subset)
   })
 })
+*/

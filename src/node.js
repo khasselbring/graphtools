@@ -1,3 +1,4 @@
+/** @module node */
 
 import _ from 'lodash'
 
@@ -6,8 +7,8 @@ import _ from 'lodash'
  * @typedef {(string|Object)} Node
  */
 
-const OUTPUT = 'outputPort'
-const INPUT = 'inputPort'
+const OUTPUT = 'output'
+const INPUT = 'input'
 
 /**
  * Returns the unique identifier of a node
@@ -51,8 +52,12 @@ export function ports (node) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of output ports.
  */
-export function outputPorts (node) {
-  return node.ports.filter((p) => p.type === OUTPUT)
+export function outputPorts (node, ignoreCompounds = false) {
+  if (!ignoreCompounds && !node.atomic) {
+    return node.ports
+  } else {
+    return node.ports.filter((p) => p.type === OUTPUT)
+  }
 }
 
 /**
@@ -60,8 +65,12 @@ export function outputPorts (node) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of input ports.
  */
-export function inputPorts (node) {
-  return node.ports.filter((p) => p.type === INPUT)
+export function inputPorts (node, ignoreCompounds = false) {
+  if (!ignoreCompounds && !node.atomic) {
+    return node.ports
+  } else {
+    return node.ports.filter((p) => p.type === INPUT)
+  }
 }
 
 /**

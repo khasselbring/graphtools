@@ -7,10 +7,10 @@ import fs from 'fs'
 import _ from 'lodash'
 
 var expect = chai.expect
-
+/*
 describe('Graph utilities', () => {
   var pGraph1 = grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/partial_apply.json')))
-  it('can return the (compound) hierarchy of a node', () =>{
+  it('can return the (compound) hierarchy of a node', () => {
     var h = utils.hierarchy(pGraph1, 'a:add')
     expect(h).to.have.length(2)
     expect(h[0]).to.equal('a')
@@ -54,3 +54,4 @@ describe('Graph utilities', () => {
 
   // TODO: Test for utils.getAll
 })
+*/

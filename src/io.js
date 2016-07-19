@@ -1,3 +1,4 @@
+/** @module io */
 /**
  * This file contains all the input / output methods for graphs
  */

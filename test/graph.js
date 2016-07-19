@@ -8,7 +8,7 @@ import semver from 'semver'
 
 var expect = chai.expect
 
-describe.only('Basic graph functions', () => {
+describe('Basic graph functions', () => {
   it('can create an empty graph', () => {
     var graph = Graph.empty()
     expect(Graph.nodes(graph)).to.have.length(0)

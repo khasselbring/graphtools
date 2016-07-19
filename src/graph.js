@@ -1,3 +1,4 @@
+/** @module graph */
 
 import _ from 'lodash'
 import {packageVersion} from './internals'
@@ -120,13 +121,12 @@ export function edges (graph) {
  *  - the edge is not in normalizable form.
  */
 export function addEdge (graph, edge, parent) {
-  var normEdge = Edge.normalize(graph, edge)
-  parent = parent || edge.parent
+  var normEdge = Edge.normalize(graph, edge, parent)
   if (!hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
   } else if (!hasNode(graph, normEdge.to)) {
     throw new Error('Cannot create edge connection from: ' + normEdge.from + ' to not existing node: ' + normEdge.to)
-  } else if (parent && !hasNode(graph, parent)) {
+  } else if (normEdge.parent && !hasNode(graph, normEdge.parent)) {
     throw new Error('Invalid parent for edge (' + normEdge.from + ' → ' + normEdge.to + '). The parent: ' + parent + ' does not exist in the graph.')
   } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
     throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)
@@ -135,7 +135,6 @@ export function addEdge (graph, edge, parent) {
   } else if (!Node.hasPort(node(graph, normEdge.to), normEdge.inPort)) {
     throw new Error('The target node "' + normEdge.to + '" does not have the ingoing port "' + normEdge.inPort + '".')
   }
-  normEdge.parent = parent
   return changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge))
 }
 
@@ -193,6 +192,16 @@ export function setParent (graph, n, parent) {
   }
   node(graph, n).parent = parent
   return graph
+}
+
+/**
+ * Gets the parent of a node.
+ * @param {PortGraph} graph The graph.
+ * @param {Node} node The node for which you want to get the parent.
+ * @returns {Node} The node id of the parent node or undefined if the node has no parent.
+ */
+export function parent (graph, n) {
+  return node(graph, n).parent
 }
 
 /**
