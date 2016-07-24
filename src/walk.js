@@ -61,7 +61,7 @@ export function successor (graph, node, port, layer = 'dataflow') {
  * @returns {string[]|object[]} It returns the list of nodes on the path.
  */
 export function walk (graph, node, path, options = {keepPorts: false}) {
-  return generalWalk(graph, node, path, _.partial(successor, _, _, _, options), options)
+  return generalWalk(graph, node, path, _.partial(successor, _, _, _, _, options), options)
 }
 
 /**
@@ -86,7 +86,7 @@ export function walk (graph, node, path, options = {keepPorts: false}) {
  * @returns {string[]|object[]} It returns the list of nodes on the path.
  */
 export function walkBack (graph, node, path, options = {keepPorts: false}) {
-  return _.map(generalWalk(graph, node, path, _.partial(predecessor, _, _, _, options), options), _.reverse)
+  return _.map(generalWalk(graph, node, path, _.partial(predecessor, _, _, _, _, options), options), _.reverse)
 }
 
 /**

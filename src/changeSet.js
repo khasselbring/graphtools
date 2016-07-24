@@ -7,6 +7,8 @@
 import jq from 'json-query'
 import _ from 'lodash'
 import {clone} from './graph'
+import * as Node from './node'
+import * as Component from './component'
 import {toJSON} from './io'
 
 /**
@@ -20,16 +22,38 @@ export function updateNode (node, mergeValue) {
   return {type: 'changeSet', operation: 'merge', query: 'nodes[id=' + node + '].value', value: mergeValue}
 }
 
+/**
+ * Creates a change set that creates a new node.
+ * @param {Object} value The new node.
+ * @returns {ChangeSet} A change set containing the new node.
+ */
 export function insertNode (value) {
   return {type: 'changeSet', operation: 'insert', query: 'nodes', value}
 }
 
 export function removeNode (id) {
-  return {type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => n.id === id}
+  return {type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => Node.equal(n, id)}
+}
+
+/**
+ * Creates a change set that creates a new component.
+ * @param {Object} value The new component.
+ * @returns {ChangeSet} A change set containing the new component.
+ */
+export function insertComponent (value) {
+  return {type: 'changeSet', operation: 'insert', query: 'components', value}
+}
+
+export function removeComponent (id) {
+  return {type: 'changeSet', operation: 'remove', query: 'components', filter: (n) => Component.equal(n, id)}
 }
 
 export function addMetaInformation (value) {
   return {type: 'changeSet', operation: 'set', query: 'metaInformation', value}
+}
+
+export function empty () {
+  return {type: 'changeSet', opertaion: 'none'}
 }
 
 /**

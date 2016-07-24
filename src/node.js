@@ -56,7 +56,7 @@ export function outputPorts (node, ignoreCompounds = false) {
   if (!ignoreCompounds && !node.atomic) {
     return node.ports
   } else {
-    return node.ports.filter((p) => p.type === OUTPUT)
+    return node.ports.filter((p) => p.kind === OUTPUT)
   }
 }
 
@@ -69,7 +69,7 @@ export function inputPorts (node, ignoreCompounds = false) {
   if (!ignoreCompounds && !node.atomic) {
     return node.ports
   } else {
-    return node.ports.filter((p) => p.type === INPUT)
+    return node.ports.filter((p) => p.kind === INPUT)
   }
 }
 

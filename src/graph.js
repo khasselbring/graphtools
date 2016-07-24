@@ -4,6 +4,7 @@ import _ from 'lodash'
 import {packageVersion} from './internals'
 import * as changeSet from './changeSet'
 import * as Node from './node'
+import * as Component from './component'
 import * as Edge from './edge'
 import debugLog from 'debug'
 
@@ -49,7 +50,7 @@ export function nodeNames (graph) {
 /**
  * Returns the node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @param {Node} node The node.
+ * @param {Node|string} node The node or its id.
  * @returns {Node} The node in the graph
  * @throws {Error} If the queried node does not exist in the graph.
  */
@@ -65,7 +66,7 @@ export function node (graph, node) {
 /**
  * Checks whether the graph has a node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @param {Node} node The node you want to check for.
+ * @param {Node|string} node The node or its id you want to check for.
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
 export function hasNode (graph, node) {
@@ -73,7 +74,7 @@ export function hasNode (graph, node) {
 }
 
 /**
- * Add a node to the graph, returns a new node. [Performance O(|V| + |E|)]
+ * Add a node to the graph, returns a new graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
  * @param {Node} node The node object that should be added.
  * @returns {PortGraph} A new graph that includes the node.
@@ -97,6 +98,78 @@ export function addNode (graph, node) {
  */
 export function removeNode (graph, node) {
   return changeSet.applyChangeSet(graph, changeSet.removeNode(Node.id(node)))
+}
+
+/**
+ * Returns a list of defined components. Components are not part of the program flow, but are defined
+ * procedures that can be used in the resolve process.
+ * @param {PortGraph} graph The graph.
+ * @retuns {Components[]} A list of components that are defined in the graph.
+ */
+export function components (graph) {
+  return graph.components
+}
+
+/**
+ * Returns a list of component ids. [Performance O(|V|)]
+ * @param {PortGraph} graph The graph.
+ * @returns {string[]} A list of component ids.
+ */
+export function componentIds (graph) {
+  return _.map(graph.components, Component.id)
+}
+
+/**
+ * Returns the component with the given meta id. [Performance O(|V|)]
+ * @param {PortGraph} graph The graph.
+ * @param {Component|string} comp The component or its meta id.
+ * @returns {Component} The component in the graph
+ * @throws {Error} If the queried component does not exist in the graph.
+ */
+export function component (graph, comp) {
+  var res = _.find(graph.components, (n) => Component.equal(n, comp))
+  if (!res) {
+    debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
+    throw new Error(`Component with id '${comp}' does not exist in the graph.`)
+  }
+  return res
+}
+
+/**
+ * Checks whether the graph has a component with the given meta id. [Performance O(|V|)]
+ * @param {PortGraph} graph The graph.
+ * @param {Component|string} comp The component or its meta id you want to check for.
+ * @returns {boolean} True if the graph has a component with the given meta id, false otherwise.
+ */
+export function hasComponent (graph, comp) {
+  return !!_.find(graph.components, (n) => Component.equal(n, comp))
+}
+
+/**
+ * Add a component to the graph. [Performance O(|V| + |E|)]
+ * @param {PortGraph} graph The graph.
+ * @param {Component} comp The component object that should be added.
+ * @returns {PortGraph} A new graph that includes the component.
+ */
+export function addComponent (graph, comp) {
+  if (!comp) {
+    throw new Error('Cannot add undefined component to graph.')
+  } else if (hasComponent(graph, comp)) {
+    throw new Error('Cannot add already existing component: ' + Component.id(comp))
+  } else if (!Component.isValid(comp)) {
+    throw new Error('Cannot add invalid component to graph. Are you missing the id or a port?\nComponent: ' + JSON.stringify(comp))
+  }
+  return changeSet.applyChangeSet(graph, changeSet.insertComponent(comp))
+}
+
+/**
+ * Removes a component from the graph. [Performance O(|V| + |E|)]
+ * @param {PortGraph} graph The graph.
+ * @param {Component|string} comp The component that shall be removed, either the component object or the meta id.
+ * @returns {PortGraph} A new graph without the given component.
+ */
+export function removeComponent (graph, comp) {
+  return changeSet.applyChangeSet(graph, changeSet.removeComponent(Component.id(comp)))
 }
 
 /**
@@ -233,16 +306,6 @@ export function meta (graph) {
  */
 export function setMeta (graph, key, value) {
   return changeSet.applyChangeSet(graph, changeSet.addMetaInformation(key, value))
-}
-
-/**
- * Returns a list of defined components. Components are not part of the program flow, but are defined
- * procedures that can be used in the resolve process.
- * @param {PortGraph} graph The graph.
- * @retuns {Components[]} A list of components that are defined in the graph.
- */
-export function components (graph) {
-  return graph.components
 }
 
 /**
