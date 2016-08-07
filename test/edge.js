@@ -15,9 +15,9 @@ describe('Edge API', () => {
     expect(Edge.normalize(graph, {from: 'a', to: 'b', outPort: 'out', inPort: 'in'}))
       .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', layer: 'dataflow'})
     expect(Edge.normalize(graph, {from: 'a', to: 'b', fromPort: 'out', toPort: 'in'}))
-      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: undefined, layer: 'dataflow'})
+      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', layer: 'dataflow'})
     expect(Edge.normalize(graph, {from: 'a@out', to: 'b@in'}))
-      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', parent: undefined, layer: 'dataflow'})
+      .to.eql({from: 'a', to: 'b', outPort: 'out', inPort: 'in', layer: 'dataflow'})
   })
 
   it('Can handle parents correctly', () => {

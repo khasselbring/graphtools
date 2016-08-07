@@ -9,7 +9,7 @@ import grlib from 'graphlib'
 
 var expect = chai.expect
 
-describe.only('Graphlib Conversion API', () => {
+describe('Graphlib Conversion API', () => {
   it('can convert nodes with ports', () => {
     var graph = new grlib.Graph({multigraph: true, directed: true, compound: true})
     graph.setNode('name', {inputPorts: {a: 'string'}, outputPorts: {b: 'number'}, atomic: true})
@@ -27,7 +27,7 @@ describe.only('Graphlib Conversion API', () => {
     graph.setNode('to', {inputPorts: {a: 'string'}, atomic: true})
     graph.setEdge({v: 'from', w: 'to'}, {outPort: 'b', inPort: 'a'})
     var conv = Convert.fromGraphlib(graph)
-    expect(Graph.edges(conv)).to.have.length(1)
+    expect(Graph.allEdges(conv)).to.have.length(1)
     expect(Graph.hasEdge(conv, {from: 'from', to: 'to', outPort: 'b', inPort: 'a'})).to.be.true
   })
 
@@ -35,8 +35,8 @@ describe.only('Graphlib Conversion API', () => {
     var graph = new grlib.Graph({multigraph: true, directed: true, compound: true})
     graph.setNode('defco_fn', {outputPorts: {b: 'string'}, implementation: {}})
     var conv = Convert.fromGraphlib(graph)
-    expect(Graph.nodes(conv)).to.have.length(0)
-    expect(Graph.components(conv)).to.have.length(1)
+    expect(Graph.allNodes(conv)).to.have.length(0)
+    expect(Graph.allComponents(conv)).to.have.length(1)
     expect(Graph.hasComponent(conv, 'fn')).to.be.true
   })
 

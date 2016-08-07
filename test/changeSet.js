@@ -36,7 +36,7 @@ describe('Change Sets', () => {
       changeSet.insertNode({id: 'a', prop: 'test'}))
     var cS = changeSet.removeNode('a')
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.nodes(newGraph)).to.have.length(0)
+    expect(Graph.allNodes(newGraph)).to.have.length(0)
   })
 
   it('can insert a new edge', () => {
@@ -46,7 +46,7 @@ describe('Change Sets', () => {
     ])
     var cS = changeSet.insertEdge({ from: 'a', to: 'b' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.edges(newGraph)).to.have.length(1)
+    expect(Graph.allEdges(newGraph)).to.have.length(1)
   })
 
   it('can remove an edge', () => {
@@ -57,7 +57,7 @@ describe('Change Sets', () => {
     ])
     var cS = changeSet.removeEdge({ from: 'a', to: 'b' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.edges(newGraph)).to.have.length(0)
+    expect(Graph.allEdges(newGraph)).to.have.length(0)
 
     graph = changeSet.applyChangeSets(Graph.empty(), [
       changeSet.insertNode({id: 'a'}),
@@ -67,8 +67,8 @@ describe('Change Sets', () => {
     ])
     cS = changeSet.removeEdge({ from: 'c', to: 'd' })
     newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.edges(newGraph)).to.have.length(1)
-    expect(Graph.edges(newGraph)[0]).to.eql({ from: 'a', to: 'b' })
+    expect(Graph.allEdges(newGraph)).to.have.length(1)
+    expect(Graph.allEdges(newGraph)[0]).to.eql({ from: 'a', to: 'b' })
   })
 
   it('can add meta keys', () => {

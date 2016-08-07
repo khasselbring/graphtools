@@ -99,11 +99,21 @@ export function hasPort (node, name) {
 }
 
 /**
+ * Checks whether the node is a reference.
+ * @param {Node} node The node.
+ * @returns {boolean} True if the node is a reference, false otherwise.
+ */
+export function isReference (node) {
+  return _.has(node, 'ref')
+}
+
+/**
  * Checks whether a node is in a valid format, i.e. if it has an id field and at least one port.
  * @param {Node} node The node to test.
  * @returns {boolean} True if the node is valid, false otherwise.
  */
 export function isValid (node) {
-  return typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
-    ports(node).length !== 0
+  return isReference(node) ||
+    (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
+    ports(node).length !== 0)
 }

@@ -6,9 +6,13 @@ import * as changeSet from './changeSet'
 import * as Node from './node'
 import * as Component from './component'
 import * as Edge from './edge'
+import * as ObjectAPI from './objectAPI'
 import debugLog from 'debug'
 
 const debug = debugLog('graphtools')
+var apiMethods = _.omit(module.exports, 'empty')
+const addAPI = _.partial(ObjectAPI.addObjectAPI, _, apiMethods)
+const remAPI = _.partial(ObjectAPI.removeObjectAPI, _, apiMethods)
 
 /**
  * Compares two graphs for structural equality.
@@ -16,17 +20,40 @@ const debug = debugLog('graphtools')
  * @param {Graphlib} graph2 The other the graph to compare.
  * @returns {boolean} True if both graphs are structually equal, false otherwise.
  */
-export const equal = (graph1, graph2) => {
+export function equal (graph1, graph2) {
   return _.isEqual(graph1, graph2)
 }
 
 /**
  * Creates a new graph that has the exact same nodes and edges.
- * @param {Graphlib} graph The graph to clone
- * @returns {Graphlib} A clone of the input graph.
+ * @param {PortGraph} graph The graph to clone
+ * @returns {PortGraph} A clone of the input graph.
  */
 export function clone (graph) {
-  return _.cloneDeep(graph)
+  return addAPI(_.cloneDeep(remAPI(graph, apiMethods)))
+}
+
+/**
+ * Checks whether the graph allows references to components. This is usally disabled after the graph is resolved.
+ * Resolving a graph replaces all references with their components.
+ * @params {PortGraph} graph The graph
+ * @returns {boolean} True if the graph allows references, false otherwise.
+ */
+export function allowsReferences (graph) {
+  return !graph.blockReferences
+}
+
+/**
+ * Stops references from being inserted into the graph. After references are disallowed they cannot and should not be reallowed.
+ * @params {PortGraph} graph The graph.
+ * @returns {PortGraph} The graph given as an argument where references are now disallowed.
+ * @throws {Error} If the graph has references it throws an error. Only graphs without references can disallow them.
+ */
+export function disallowReferences (graph) {
+  if (_.filter(graph.nodes, Node.isReference).length !== 0) {
+    throw new Error('Graph still contains referencens. Impossible to disallow references.')
+  }
+  return _.set(graph, 'blockReferences', true)
 }
 
 /**
@@ -34,7 +61,7 @@ export function clone (graph) {
  * @param {PortGraph} graph The graph.
  * @returns {Nodes[]} A list of nodes.
  */
-export function nodes (graph) {
+export function allNodes (graph) {
   return graph.nodes
 }
 
@@ -63,6 +90,10 @@ export function node (graph, node) {
   return res
 }
 
+export function references (graph) {
+  return _.filter(graph.nodes, Node.isReference)
+}
+
 /**
  * Checks whether the graph has a node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
@@ -80,6 +111,9 @@ export function hasNode (graph, node) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export function addNode (graph, node) {
+  if (allowsReferences(graph) && Node.isReference(node)) {
+    addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(node)))
+  }
   if (!node) {
     throw new Error('Cannot add undefined node to graph.')
   } else if (hasNode(graph, node)) {
@@ -87,7 +121,7 @@ export function addNode (graph, node) {
   } else if (!Node.isValid(node)) {
     throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
   }
-  return changeSet.applyChangeSet(graph, changeSet.insertNode(node))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(node)))
 }
 
 /**
@@ -97,7 +131,7 @@ export function addNode (graph, node) {
  * @returns {PortGraph} A new graph without the given node.
  */
 export function removeNode (graph, node) {
-  return changeSet.applyChangeSet(graph, changeSet.removeNode(Node.id(node)))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.removeNode(Node.id(node))))
 }
 
 /**
@@ -106,17 +140,17 @@ export function removeNode (graph, node) {
  * @param {PortGraph} graph The graph.
  * @retuns {Components[]} A list of components that are defined in the graph.
  */
-export function components (graph) {
+export function allComponents (graph) {
   return graph.components
 }
 
 /**
- * Returns a list of component ids. [Performance O(|V|)]
+ * Returns a list of component meta ids. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @returns {string[]} A list of component ids.
+ * @returns {string[]} A list of component meta ids.
  */
 export function componentIds (graph) {
-  return _.map(graph.components, Component.id)
+  return _.map(graph.components, Component.meta)
 }
 
 /**
@@ -159,7 +193,7 @@ export function addComponent (graph, comp) {
   } else if (!Component.isValid(comp)) {
     throw new Error('Cannot add invalid component to graph. Are you missing the id or a port?\nComponent: ' + JSON.stringify(comp))
   }
-  return changeSet.applyChangeSet(graph, changeSet.insertComponent(comp))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertComponent(comp)))
 }
 
 /**
@@ -169,7 +203,7 @@ export function addComponent (graph, comp) {
  * @returns {PortGraph} A new graph without the given component.
  */
 export function removeComponent (graph, comp) {
-  return changeSet.applyChangeSet(graph, changeSet.removeComponent(Component.id(comp)))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.removeComponent(Component.id(comp))))
 }
 
 /**
@@ -177,7 +211,7 @@ export function removeComponent (graph, comp) {
  * @param {PortGraph} graph The graph.
  * @returns {Edges[]} A list of edges.
  */
-export function edges (graph) {
+export function allEdges (graph) {
   return graph.edges
 }
 
@@ -208,7 +242,7 @@ export function addEdge (graph, edge, parent) {
   } else if (!Node.hasPort(node(graph, normEdge.to), normEdge.inPort)) {
     throw new Error('The target node "' + normEdge.to + '" does not have the ingoing port "' + normEdge.inPort + '".')
   }
-  return changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge)))
 }
 
 /**
@@ -305,7 +339,7 @@ export function meta (graph) {
  * @returns A new graph with the applied changes.
  */
 export function setMeta (graph, key, value) {
-  return changeSet.applyChangeSet(graph, changeSet.addMetaInformation(key, value))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.addMetaInformation(key, value)))
 }
 
 /**
@@ -356,10 +390,10 @@ export function successors (graph, node, port) {
  * @returns {PortGraph} A new empty port graph.
  */
 export function empty () {
-  return {
+  return addAPI({
     nodes: [],
     metaInformation: {version: packageVersion()},
     edges: [],
     components: []
-  }
+  }, apiMethods)
 }

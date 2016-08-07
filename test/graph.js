@@ -11,9 +11,9 @@ var expect = chai.expect
 describe('Basic graph functions', () => {
   it('can create an empty graph', () => {
     var graph = Graph.empty()
-    expect(Graph.nodes(graph)).to.have.length(0)
-    expect(Graph.edges(graph)).to.have.length(0)
-    expect(Graph.components(graph)).to.have.length(0)
+    expect(Graph.allNodes(graph)).to.have.length(0)
+    expect(Graph.allEdges(graph)).to.have.length(0)
+    expect(Graph.allComponents(graph)).to.have.length(0)
     expect(_.keys(Graph.meta(graph))).to.have.length(1)
     expect(Graph.meta(graph)).to.have.property('version')
     expect(semver.valid(Graph.meta(graph).version)).to.be.ok
@@ -38,12 +38,19 @@ describe('Basic graph functions', () => {
         changeSet.insertNode({id: 'a'}),
         changeSet.insertNode({id: 'b'})
       ])
-      expect(Graph.nodes(graph)).to.have.length(2)
+      expect(Graph.allNodes(graph)).to.have.length(2)
     })
 
     it('adds nodes to the graph', () => {
       var graph = Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'p'}]})
       expect(Graph.hasNode(graph, 'a')).to.be.true
+    })
+
+    it('can chain adding nodes', () => {
+      var graph = Graph.empty()
+        .addNode({id: 'a', ports: [{name: 'p'}]})
+        .addNode({id: 'b', ports: [{name: 'p'}]})
+      expect(graph.allNodes()).to.have.length(2)
     })
 
     it('should throw an error if the node data is not valid', () => {
@@ -78,11 +85,11 @@ describe('Basic graph functions', () => {
       var graph = Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out'}]}), {id: 'b', ports: [{name: 'in'}]})
       var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in'})
-      expect(Graph.edges(newGraph)).to.have.length(1)
-      expect(Graph.edges(newGraph)[0].from).to.equal('a')
-      expect(Graph.edges(newGraph)[0].outPort).to.equal('out')
-      expect(Graph.edges(newGraph)[0].to).to.equal('b')
-      expect(Graph.edges(newGraph)[0].inPort).to.equal('in')
+      expect(Graph.allEdges(newGraph)).to.have.length(1)
+      expect(Graph.allEdges(newGraph)[0].from).to.equal('a')
+      expect(Graph.allEdges(newGraph)[0].outPort).to.equal('out')
+      expect(Graph.allEdges(newGraph)[0].to).to.equal('b')
+      expect(Graph.allEdges(newGraph)[0].inPort).to.equal('in')
     })
 
     it('Throws an error if at least one node in the edge does not exist', () => {

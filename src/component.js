@@ -1,6 +1,7 @@
 /** @module node */
 
 import _ from 'lodash'
+import semver from 'semver'
 
 /**
  * A node either as an identifier, or as an object containing the property `node` as its identifier.
@@ -105,7 +106,7 @@ export function hasPort (comp, name) {
  */
 export function isValid (comp) {
   return typeof (comp) === 'object' && typeof (comp.meta) === 'string' && comp.meta.length > 0 &&
-    ports(comp).length !== 0
+    ports(comp).length !== 0 && typeof (comp.version) === 'string' && semver.valid(comp.version)
 }
 
 /**
