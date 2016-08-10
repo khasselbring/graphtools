@@ -266,10 +266,16 @@ export function addEdge (graph, edge, parent) {
     throw new Error('The source node "' + normEdge.from + '" does not have the outgoing port "' + normEdge.outPort + '".')
   } else if (!Node.hasPort(node(graph, normEdge.to), normEdge.inPort)) {
     throw new Error('The target node "' + normEdge.to + '" does not have the ingoing port "' + normEdge.inPort + '".')
-  } else if (Node.port(node(graph, normEdge.from), normEdge.outPort).kind !== ((normEdge.innerCompoundEdge) ? 'input' : 'output')) {
-    throw new Error('The source port "' + normEdge.outPort + '" = "' + JSON.stringify(Node.port(node(graph, normEdge.from), normEdge.outPort)) + '" must be an output port for the edge: ' + JSON.stringify(normEdge))
-  } else if (Node.port(node(graph, normEdge.to), normEdge.inPort).kind !== ((normEdge.innerCompoundEdge) ? 'output' : 'input')) {
-    throw new Error('The target port "' + normEdge.to + '" must be an input port for the edge: ' + JSON.stringify(normEdge))
+  } else if (Node.port(node(graph, normEdge.from), normEdge.outPort).kind !== ((normEdge.innerCompoundOutput) ? 'input' : 'output')) {
+    throw new Error('The source port "' + normEdge.outPort + '" = "' + JSON.stringify(Node.port(node(graph, normEdge.from), normEdge.outPort)) + '" must be ' +
+    ((normEdge.innerCompoundEdge)
+    ? 'an inner input port of the compound node ' + normEdge.parent
+    : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
+  } else if (Node.port(node(graph, normEdge.to), normEdge.inPort).kind !== ((normEdge.innerCompoundInput) ? 'output' : 'input')) {
+    throw new Error('The target port "' + normEdge.inPort + '" = "' + JSON.stringify(Node.port(node(graph, normEdge.to), normEdge.inPort)) + ' must be ' +
+      ((normEdge.innerCompoundEdge)
+      ? 'an inner output port of the compound node ' + normEdge.parent
+      : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
   }
   return addAPI(changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge)))
 }

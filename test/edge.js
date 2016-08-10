@@ -33,9 +33,9 @@ describe('Edge API', () => {
   it('Assigns the parent for ports if only the port name is given', () => {
     var graph = Graph.addNode(
       Graph.addNode(
-        Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'out', kind: 'input', type: 'a'}]}), {id: 'P', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+        Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]}), {id: 'P', ports: [{name: 'out', kind: 'output', type: 'a'}]})
     expect(Edge.normalize(graph, {from: '@out', to: 'b@in'}, 'P'))
-      .to.eql({from: 'P', to: 'b', outPort: 'out', inPort: 'in', parent: 'P', layer: 'dataflow'})
+      .to.eql({from: 'P', to: 'b', outPort: 'out', inPort: 'in', parent: 'P', layer: 'dataflow', innerCompoundOutput: true})
   })
 
   it('is possible to set the layer explicitly', () => {
@@ -43,7 +43,7 @@ describe('Edge API', () => {
       Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'out', kind: 'input', type: 'a'}]}), {id: 'P', ports: [{name: 'out', kind: 'output', type: 'a'}]})
     expect(Edge.normalize(graph, {from: '@out', to: 'b@in', layer: 'errorHandling'}, 'P'))
-      .to.eql({from: 'P', to: 'b', outPort: 'out', inPort: 'in', parent: 'P', layer: 'errorHandling'})
+      .to.eql({from: 'P', to: 'b', outPort: 'out', inPort: 'in', parent: 'P', layer: 'errorHandling', innerCompoundOutput: true})
   })
 
   var cmpGraph =

@@ -75,23 +75,23 @@ describe('Adjacent nodes', () => {
   it('`adjacentNode` can handle compound nodes', () => {
     var preds = walk.adjacentNodes(cmpGraph, 'add', 's1', walk.predecessor)
     expect(preds).to.have.length(1)
-    expect(preds[0]).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', layer: 'dataflow', parent: 'inc'}})
+    expect(preds[0]).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
     var succs = walk.adjacentNodes(cmpGraph, 'inc', 'i', walk.successor)
     expect(succs).to.have.length(1)
-    expect(succs[0]).to.deep.equal({node: 'add', port: 's1', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', layer: 'dataflow', parent: 'inc'}})
+    expect(succs[0]).to.deep.equal({node: 'add', port: 's1', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
   })
 
   it('`adjacentNodes` can process multiple ports', () => {
     var preds = walk.adjacentNodes(cmpGraph, 'add', ['s1', 's2'], walk.predecessor)
     expect(preds).to.have.length(2)
     expect(preds).to.deep.include({node: 'const', port: 'output', edge: {from: 'const', outPort: 'output', to: 'add', inPort: 's2', layer: 'dataflow', parent: 'inc'}})
-    expect(preds).to.deep.include({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', layer: 'dataflow', parent: 'inc'}})
+    expect(preds).to.deep.include({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
   })
 
   it('`adjacentNodes` removes not usable paths', () => {
     var preds = walk.adjacentNodes(cmpGraph, 'add', ['s1', '-'], walk.predecessor)
     expect(preds).to.have.length(1)
-    expect(preds[0]).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', layer: 'dataflow', parent: 'inc'}})
+    expect(preds[0]).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
   })
 })
 

@@ -137,17 +137,19 @@ describe('Basic graph functions', () => {
     it('Get an edge in the graph', () => {
       var graph = Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
-      var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in', parent: 'a'})
+        .addNode({id: 'c', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+      var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in', parent: 'c'})
       expect(Graph.edge(newGraph, {from: 'a@out', to: 'b@in'})).to.be.ok
-      expect(Graph.edge(newGraph, {from: 'a@out', to: 'b@in'}).parent).to.equal('a')
+      expect(Graph.edge(newGraph, {from: 'a@out', to: 'b@in'}).parent).to.equal('c')
       expect(() => Graph.edge(graph, {from: 'a@out', to: 'b@in'})).to.throw(Error)
     })
 
     it('Can get the parent of an edge', () => {
       var graph = Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
-      var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in', parent: 'a'})
-      expect(Graph.edgeParent(newGraph, {from: 'a@out', to: 'b@in'})).to.equal('a')
+        .addNode({id: 'c', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+      var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in', parent: 'c'})
+      expect(Graph.edgeParent(newGraph, {from: 'a@out', to: 'b@in'})).to.equal('c')
     })
 
     it('Fails if the connecting ports do not exist', () => {

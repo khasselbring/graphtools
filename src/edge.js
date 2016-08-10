@@ -94,8 +94,11 @@ export function normalize (graph, edge, parent) {
   if (!newEdge.parent) {
     newEdge = _.merge({}, newEdge, {parent: determineParent(graph, newEdge)})
   }
-  if (newEdge.parent === newEdge.from || newEdge.parent === newEdge.to) {
-    newEdge.innerCompoundEdge = true
+  if (newEdge.parent === newEdge.from) {
+    newEdge.innerCompoundOutput = true
+  }
+  if (newEdge.parent === newEdge.to) {
+    newEdge.innerCompoundInput = true
   }
   return newEdge
 }
