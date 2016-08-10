@@ -32,6 +32,15 @@ export function clone (graph) {
 }
 
 /**
+ * Adds the API to the JSON document to work with the graph.
+ * @param {object} jsonGraph The json representing the port graph.
+ * @returns {PortGraph} The port graph with its functions.
+ */
+export function fromJSON (jsonGraph) {
+  return addAPI(jsonGraph)
+}
+
+/**
  * Checks whether the graph allows references to components. This is usally disabled after the graph is resolved.
  * Resolving a graph replaces all references with their components.
  * @params {PortGraph} graph The graph
