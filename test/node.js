@@ -37,18 +37,21 @@ describe('Node API', () => {
   })
 
   it('can check the validity of a node', () => {
-    expect(Node.isValid({id: 'a', ports: [{name: 'p'}]})).to.be.true
-    expect(Node.isValid({id: 'a', ports: [{name: 'p'}], prop: 'p'})).to.be.true
+    expect(Node.isValid({id: 'a', ports: [{name: 'p', kind: 'output', type: 'number'}]})).to.be.true
+    expect(Node.isValid({id: 'a', ports: [{name: 'p'}]})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{name: 'p', kind: 'nop', type: 'A'}]})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{name: 'p', type: 'A'}]})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{name: 'p', kind: 'output'}]})).to.be.false
     expect(Node.isValid({id: 'a'})).to.be.false
-    expect(Node.isValid({idd: 'a', ports: [{name: 'p'}]})).to.be.false
+    expect(Node.isValid({idd: 'a', ports: [{name: 'p', kind: 'output', type: 'number'}]})).to.be.false
     expect(Node.isValid({})).to.be.false
-    expect(Node.isValid({ports: [{name: 'p'}]})).to.be.false
+    expect(Node.isValid({ports: [{name: 'p', kind: 'output', type: 'number'}]})).to.be.false
     expect(Node.isValid()).to.be.false
   })
 
   it('can get different port types', () => {
     expect(Node.ports({ports: [{name: 'a', kind: 'output'}], atomic: true})).to.have.length(1)
-    expect(Node.outputPorts({ports: [{name: 'a', kind: 'output'}], atomic: true})).to.have.length(1)
+    expect(Node.outputPorts({ports: [{name: 'a', kind: 'output', type: 'number'}], atomic: true})).to.have.length(1)
     expect(Node.outputPorts({ports: [{name: 'a', kind: 'input'}], atomic: true})).to.have.length(0)
     expect(Node.outputPorts({ports: [
       {name: 'a', kind: 'output'},

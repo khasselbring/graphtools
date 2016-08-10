@@ -1,4 +1,4 @@
-/** @module node */
+/** @module Node */
 
 import _ from 'lodash'
 
@@ -125,6 +125,10 @@ export function isAtomic (node) {
   return !isReference(node) && node.atomic
 }
 
+function validPort (port) {
+  return typeof (port) === 'object' && port.name && (port.kind === INPUT || port.kind === OUTPUT) && port.type
+}
+
 /**
  * Checks whether a node is in a valid format, i.e. if it has an id field and at least one port.
  * @param {Node} node The node to test.
@@ -133,5 +137,5 @@ export function isAtomic (node) {
 export function isValid (node) {
   return isReference(node) ||
     (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
-    ports(node).length !== 0)
+    ports(node).length !== 0 && _.every(ports(node), validPort))
 }

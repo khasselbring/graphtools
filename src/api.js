@@ -1,16 +1,10 @@
 
-/*
-import * as walk from './walk'
-import * as graph from './graph'
-import * as utils from './utils'
-import * as changeSet from './changeSet'
-import * as compoundify from './compoundify'
-import * as path from './path'
-
-export {walk, utils, compoundify, path, graph, changeSet}
-*/
+import * as ChangeSet from './changeSet'
+import * as Conversion from './conversion'
 import * as Component from './component'
+import * as Edge from './edge'
 import * as Node from './node'
+import * as Walk from './walk'
 
 export * from './graph'
-export {Component, Node}
+export {ChangeSet, Conversion, Component, Edge, Node, Walk}

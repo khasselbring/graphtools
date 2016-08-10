@@ -1,4 +1,4 @@
-/** @module node */
+/** @module Component */
 
 import _ from 'lodash'
 import semver from 'semver'

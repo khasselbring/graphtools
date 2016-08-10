@@ -1,3 +1,4 @@
+/** @module Conversion */
 
 import grlib from 'graphlib'
 import * as Graph from './graph'

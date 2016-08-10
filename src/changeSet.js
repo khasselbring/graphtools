@@ -1,3 +1,4 @@
+/** @module ChangeSet */
 
 /**
  * A change set contains information about how to transform a graph, e.g. insert an edge or modify a node.

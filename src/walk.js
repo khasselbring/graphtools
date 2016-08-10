@@ -1,5 +1,5 @@
 
-/** @module walk */
+/** @module Walk */
 
 import _ from 'lodash'
 

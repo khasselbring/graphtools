@@ -15,8 +15,8 @@ chai.use(sinonChai)
 
 describe('Adjacent nodes', () => {
   var pGraph1 = Graph.empty()
-    .addNode({id: '2_STDOUT', ports: [{name: 'input', type: 'input'}]})
-    .addNode({id: '1_INC', ports: [{name: 'inc', type: 'output'}]})
+    .addNode({id: '2_STDOUT', ports: [{name: 'input', kind: 'input', type: 'a'}]})
+    .addNode({id: '1_INC', ports: [{name: 'inc', kind: 'output', type: 'a'}]})
     .addEdge({from: '1_INC@inc', to: '2_STDOUT@input'})
 
   it('can get the predecessor of a node for', () => {
@@ -33,7 +33,7 @@ describe('Adjacent nodes', () => {
 
   var doubleOut =
     Graph.addEdge(
-    Graph.addNode(pGraph1, {id: '3_STDOUT', ports: [{name: 'input', type: 'input'}]}),
+    Graph.addNode(pGraph1, {id: '3_STDOUT', ports: [{name: 'input', kind: 'input', type: 'a'}]}),
     { from: '1_INC@inc', to: '3_STDOUT@input' })
 
   it('can get multiple successor from one port', () => {
@@ -65,10 +65,10 @@ describe('Adjacent nodes', () => {
     Graph.addEdge(Graph.addEdge(Graph.addEdge(Graph.addEdge(Graph.addNode(Graph.addNode(
     Graph.addNode(
     Graph.addNode(
-      Graph.empty(), {id: 'inc', ports: [{name: 'i', type: 'input'}, {name: 'inc', type: 'output'}]}),
-      {id: 'add', ports: [{name: 's1', type: 'input'}, {name: 's2', type: 'input'}, {name: 'sum', type: 'output'}], parent: 'inc'}),
-      {id: 'stdout', ports: [{name: 'input', type: 'input'}]}),
-      {id: 'const', ports: [{name: 'output', type: 'output'}], parent: 'inc'}),
+      Graph.empty(), {id: 'inc', ports: [{name: 'i', kind: 'input', type: 'a'}, {name: 'inc', kind: 'output', type: 'a'}]}),
+      {id: 'add', ports: [{name: 's1', kind: 'input', type: 'a'}, {name: 's2', kind: 'input', type: 'a'}, {name: 'sum', kind: 'output', type: 'a'}], parent: 'inc'}),
+      {id: 'stdout', ports: [{name: 'input', kind: 'input', type: 'a'}]}),
+      {id: 'const', ports: [{name: 'output', kind: 'output', type: 'a'}], parent: 'inc'}),
     {from: 'inc@i', to: 'add@s1'}), {from: 'add@sum', to: 'inc@inc'}),
     {from: 'inc@inc', to: 'stdout@input'}), {from: 'const@output', to: 'add@s2'})
 

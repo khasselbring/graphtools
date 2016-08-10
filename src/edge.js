@@ -1,4 +1,4 @@
-/** @module edge */
+/** @module Edge */
 
 import * as Graph from './graph'
 import _ from 'lodash'
@@ -93,6 +93,9 @@ export function normalize (graph, edge, parent) {
   var newEdge = normalizeStructure(graph, edge, parent)
   if (!newEdge.parent) {
     newEdge = _.merge({}, newEdge, {parent: determineParent(graph, newEdge)})
+  }
+  if (newEdge.parent === newEdge.from || newEdge.parent === newEdge.to) {
+    newEdge.innerCompoundEdge = true
   }
   return newEdge
 }
