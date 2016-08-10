@@ -108,6 +108,24 @@ export function isReference (node) {
 }
 
 /**
+ * Checks whether a node is a compound node.
+ * @param {Node} node The node.
+ * @returns {boolean} True if the node is a compound node, false otherwise.
+ */
+export function isCompound (node) {
+  return !isReference(node) && !node.atomic && node.implementation
+}
+
+/**
+ * Checks whether a node is an atomic node.
+ * @param {Node} node The node.
+ * @returns {boolean} True if the node is an atomic node, false otherwise.
+ */
+export function isAtomic (node) {
+  return !isReference(node) && node.atomic
+}
+
+/**
  * Checks whether a node is in a valid format, i.e. if it has an id field and at least one port.
  * @param {Node} node The node to test.
  * @returns {boolean} True if the node is valid, false otherwise.

@@ -9,7 +9,8 @@ import * as path from './path'
 
 export {walk, utils, compoundify, path, graph, changeSet}
 */
-
 import * as Component from './component'
+import * as Node from './node'
+
 export * from './graph'
-export {Component}
+export {Component, Node}

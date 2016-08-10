@@ -14,11 +14,10 @@ var expect = chai.expect
 chai.use(sinonChai)
 
 describe('Adjacent nodes', () => {
-  var pGraph1 =
-    Graph.addEdge(
-    Graph.addNode(
-    Graph.addNode(Graph.empty(), {id: '2_STDOUT', ports: [{name: 'input', type: 'input'}]}),
-    {id: '1_INC', ports: [{name: 'inc', type: 'output'}]}), {from: '1_INC@inc', to: '2_STDOUT@input'})
+  var pGraph1 = Graph.empty()
+    .addNode({id: '2_STDOUT', ports: [{name: 'input', type: 'input'}]})
+    .addNode({id: '1_INC', ports: [{name: 'inc', type: 'output'}]})
+    .addEdge({from: '1_INC@inc', to: '2_STDOUT@input'})
 
   it('can get the predecessor of a node for', () => {
     var pred = walk.predecessor(pGraph1, '2_STDOUT', 'input')

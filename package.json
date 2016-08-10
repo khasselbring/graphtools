@@ -7,7 +7,7 @@
     "test": "node node_modules/standard/bin/cmd.js src/**/*.js && node_modules/mocha/bin/mocha --compilers js:babel-register",
     "build": "babel src -d lib",
     "doc": "jsdoc -c .jsdoc.json",
-    "publish-docs": "jsdoc -c .jsdoc.json && git subtree split --prefix jsdoc -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages",
+    "publish-docs": "jsdoc -c .jsdoc.json && (git diff --exit-code > /dev/null || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1))  && (git diff --cached --exit-code  > /dev/null  || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1)) && git add -f jsdoc/* && git commit -m '(doc) New documentation.' && git subtree split --prefix jsdoc -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages && git reset HEAD~1",
     "prepublish": "babel src -d lib"
   },
   "keywords": [

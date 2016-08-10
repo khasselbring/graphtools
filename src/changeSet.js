@@ -9,7 +9,6 @@ import _ from 'lodash'
 import {clone} from './graph'
 import * as Node from './node'
 import * as Component from './component'
-import {toJSON} from './io'
 
 /**
  * Creates a change set to update a node with a given value
@@ -19,7 +18,7 @@ import {toJSON} from './io'
  * @returns {ChangeSet} A change set containing the operation.
  */
 export function updateNode (node, mergeValue) {
-  return {type: 'changeSet', operation: 'merge', query: 'nodes[id=' + node + '].value', value: mergeValue}
+  return {type: 'changeSet', operation: 'merge', query: 'Nodes[id=' + node + '].value', value: mergeValue}
 }
 
 /**
@@ -28,11 +27,11 @@ export function updateNode (node, mergeValue) {
  * @returns {ChangeSet} A change set containing the new node.
  */
 export function insertNode (value) {
-  return {type: 'changeSet', operation: 'insert', query: 'nodes', value}
+  return {type: 'changeSet', operation: 'insert', query: 'Nodes', value}
 }
 
 export function removeNode (id) {
-  return {type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => Node.equal(n, id)}
+  return {type: 'changeSet', operation: 'remove', query: 'Nodes', filter: (n) => Node.equal(n, id)}
 }
 
 /**
@@ -41,15 +40,15 @@ export function removeNode (id) {
  * @returns {ChangeSet} A change set containing the new component.
  */
 export function insertComponent (value) {
-  return {type: 'changeSet', operation: 'insert', query: 'components', value}
+  return {type: 'changeSet', operation: 'insert', query: 'Components', value}
 }
 
 export function removeComponent (id) {
-  return {type: 'changeSet', operation: 'remove', query: 'components', filter: (n) => Component.equal(n, id)}
+  return {type: 'changeSet', operation: 'remove', query: 'Components', filter: (n) => Component.equal(n, id)}
 }
 
 export function addMetaInformation (value) {
-  return {type: 'changeSet', operation: 'set', query: 'metaInformation', value}
+  return {type: 'changeSet', operation: 'set', query: 'MetaInformation', value}
 }
 
 export function empty () {
@@ -62,7 +61,7 @@ export function empty () {
  * @returns {ChangeSet} A change set containing the insertion operation.
  */
 export function insertEdge (newEdge) {
-  return {type: 'changeSet', operation: 'insert', query: 'edges', value: newEdge}
+  return {type: 'changeSet', operation: 'insert', query: 'Edges', value: newEdge}
 }
 
 /**
@@ -71,7 +70,7 @@ export function insertEdge (newEdge) {
  * @returns {ChangeSet} The change set containing the deletion operation.
  */
 export function removeEdge (edge) {
-  return {type: 'changeSet', operation: 'remove', query: 'edges', filter: edge}
+  return {type: 'changeSet', operation: 'remove', query: 'Edges', filter: edge}
 }
 
 /**
@@ -181,13 +180,12 @@ export function applyChangeSet (graph, changeSet) {
 
 /**
  * Apply an array of changeSets on the given graph. All changes are applied sequentially.
- * @param {Object} graph The graph in JSON format that should be changed.
+ * @param {PortGraph} graph The graph that should be changed.
  * @param {ChangeSet[]} changeSets The change sets that should be applied. The order might influence the resulting graph, they are processesed sequentially.
  * @returns {Graphlib} A new graph with the applied change set graph.
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
 export function applyChangeSets (graph, changeSets) {
-  graph = toJSON(graph)
   var newGraph = clone(graph)
   _.each(changeSets, (c) => applyChangeSetInplace(newGraph, c))
   return newGraph
@@ -195,13 +193,12 @@ export function applyChangeSets (graph, changeSets) {
 
 /**
  * Apply a changeSet on the given graph inplace.
- * @param {Object} graph The graph in JSON format that should be changed.
+ * @param {PortGraph} graph The graph that should be changed.
  * @param {ChangeSet} changeSet The change set that should be applied.
  * @returns {Graphlib} The changed graph. Currently the changes are all made inplace so the return value is equal to the input graph.
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
 export function applyChangeSetInplace (graph, changeSet) {
-  graph = toJSON(graph)
   if (!isChangeSet(changeSet)) {
     throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
   }

@@ -14,7 +14,7 @@ import _ from 'lodash'
  * port it came in through (the port is always one of the predecessor) and the edge.
  */
 export function predecessor (graph, node, port, layer = 'dataflow') {
-  return _(graph.edges)
+  return _(graph.Edges)
     .filter((e) => e.layer === layer)
     .filter((e) => e.to === node && e.inPort === port)
     .map((e) => ({node: e.from, port: e.outPort, edge: e}))
@@ -32,7 +32,7 @@ export function predecessor (graph, node, port, layer = 'dataflow') {
  * port it came in through (the port is always one of the successor) and the edge.
  */
 export function successor (graph, node, port, layer = 'dataflow') {
-  return _(graph.edges)
+  return _(graph.Edges)
     .filter((e) => e.layer === layer)
     .filter((e) => e.from === node && e.outPort === port)
     .map((e) => ({node: e.to, port: e.inPort, edge: e}))

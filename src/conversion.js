@@ -44,8 +44,8 @@ function mapToGrlibEdges (edge) {
 export function toGraphlib (portGraph) {
   var graph = {
     options: {directed: true, compound: true, multigraph: true},
-    nodes: _.map(portGraph.nodes, mapToGrlibNode),
-    edges: _.map(portGraph.edges, mapToGrlibEdges)
+    nodes: _.map(portGraph.Nodes, mapToGrlibNode),
+    edges: _.map(portGraph.Edges, mapToGrlibEdges)
   }
   return grlib.json.read(graph)
 }

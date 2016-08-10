@@ -30,7 +30,7 @@ export function equal (graph1, graph2) {
  * @returns {PortGraph} A clone of the input graph.
  */
 export function clone (graph) {
-  return addAPI(_.cloneDeep(remAPI(graph, apiMethods)))
+  return addAPI(remAPI(_.cloneDeep(graph)))
 }
 
 /**
@@ -50,7 +50,7 @@ export function allowsReferences (graph) {
  * @throws {Error} If the graph has references it throws an error. Only graphs without references can disallow them.
  */
 export function disallowReferences (graph) {
-  if (_.filter(graph.nodes, Node.isReference).length !== 0) {
+  if (_.filter(graph.Nodes, Node.isReference).length !== 0) {
     throw new Error('Graph still contains referencens. Impossible to disallow references.')
   }
   return _.set(graph, 'blockReferences', true)
@@ -59,10 +59,14 @@ export function disallowReferences (graph) {
 /**
  * Returns a list of node objects.
  * @param {PortGraph} graph The graph.
+ * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
  * @returns {Nodes[]} A list of nodes.
  */
-export function allNodes (graph) {
-  return graph.nodes
+export function nodes (graph, predicate) {
+  if (predicate) {
+    return _.filter(graph.Nodes, predicate)
+  }
+  return graph.Nodes
 }
 
 /**
@@ -71,7 +75,7 @@ export function allNodes (graph) {
  * @returns {string[]} A list of node names.
  */
 export function nodeNames (graph) {
-  return _.map(graph.nodes, Node.id)
+  return _.map(graph.Nodes, Node.id)
 }
 
 /**
@@ -82,7 +86,7 @@ export function nodeNames (graph) {
  * @throws {Error} If the queried node does not exist in the graph.
  */
 export function node (graph, node) {
-  var res = _.find(graph.nodes, (n) => Node.equal(n, node))
+  var res = _.find(graph.Nodes, (n) => Node.equal(n, node))
   if (!res) {
     debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
     throw new Error(`Node with id '${node}' does not exist in the graph.`)
@@ -90,8 +94,31 @@ export function node (graph, node) {
   return res
 }
 
+/**
+ * Gets a list of all reference nodes.
+ * @param {PortGraph} graph The graph.
+ * @returns {References[]} A list of all defined reference nodes in the graph.
+ */
 export function references (graph) {
-  return _.filter(graph.nodes, Node.isReference)
+  return nodes(graph, Node.isReference)
+}
+
+/**
+ * Gets a list of all compound nodes.
+ * @param {PortGraph} graph The graph.
+ * @returns {References[]} A list of all defined compound nodes in the graph.
+ */
+export function compounds (graph) {
+  return nodes(graph, Node.isCompound)
+}
+
+/**
+ * Gets a list of all atomic nodes.
+ * @param {PortGraph} graph The graph.
+ * @returns {References[]} A list of all defined atomci nodes in the graph.
+ */
+export function atomics (graph) {
+  return nodes(graph, Node.isAtomic)
 }
 
 /**
@@ -101,7 +128,7 @@ export function references (graph) {
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
 export function hasNode (graph, node) {
-  return !!_.find(graph.nodes, (n) => Node.equal(n, node))
+  return !!_.find(graph.Nodes, (n) => Node.equal(n, node))
 }
 
 /**
@@ -140,8 +167,8 @@ export function removeNode (graph, node) {
  * @param {PortGraph} graph The graph.
  * @retuns {Components[]} A list of components that are defined in the graph.
  */
-export function allComponents (graph) {
-  return graph.components
+export function components (graph) {
+  return graph.Components
 }
 
 /**
@@ -150,7 +177,7 @@ export function allComponents (graph) {
  * @returns {string[]} A list of component meta ids.
  */
 export function componentIds (graph) {
-  return _.map(graph.components, Component.meta)
+  return _.map(graph.Components, Component.meta)
 }
 
 /**
@@ -161,7 +188,7 @@ export function componentIds (graph) {
  * @throws {Error} If the queried component does not exist in the graph.
  */
 export function component (graph, comp) {
-  var res = _.find(graph.components, (n) => Component.equal(n, comp))
+  var res = _.find(graph.Components, (n) => Component.equal(n, comp))
   if (!res) {
     debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
     throw new Error(`Component with id '${comp}' does not exist in the graph.`)
@@ -176,7 +203,7 @@ export function component (graph, comp) {
  * @returns {boolean} True if the graph has a component with the given meta id, false otherwise.
  */
 export function hasComponent (graph, comp) {
-  return !!_.find(graph.components, (n) => Component.equal(n, comp))
+  return !!_.find(graph.Components, (n) => Component.equal(n, comp))
 }
 
 /**
@@ -211,8 +238,8 @@ export function removeComponent (graph, comp) {
  * @param {PortGraph} graph The graph.
  * @returns {Edges[]} A list of edges.
  */
-export function allEdges (graph) {
-  return graph.edges
+export function edges (graph) {
+  return graph.Edges
 }
 
 /**
@@ -253,7 +280,7 @@ export function addEdge (graph, edge, parent) {
  */
 export function hasEdge (graph, edge) {
   var normEdge = Edge.normalize(graph, edge)
-  return !!_.find(graph.edges, (e) => Edge.equal(e, normEdge))
+  return !!_.find(graph.Edges, (e) => Edge.equal(e, normEdge))
 }
 
 /**
@@ -265,7 +292,7 @@ export function hasEdge (graph, edge) {
  */
 export function edge (graph, edge) {
   var normEdge = Edge.normalize(graph, edge)
-  var retEdge = _.find(graph.edges, (e) => Edge.equal(e, normEdge))
+  var retEdge = _.find(graph.Edges, (e) => Edge.equal(e, normEdge))
   if (!retEdge) {
     throw new Error('Edge is not defined in the graph: ' + JSON.stringify(edge))
   }
@@ -319,7 +346,7 @@ export function parent (graph, n) {
  * @returns {boolean} True if the graph has an edge going from "nodeFrom" to "nodeTo".
  */
 export function areConnected (graph, nodeFrom, nodeTo) {
-  return !!_.find(graph.edges, (e) => e.from === nodeFrom && e.to === nodeTo)
+  return !!_.find(graph.Edges, (e) => e.from === nodeFrom && e.to === nodeTo)
 }
 
 /**
@@ -328,7 +355,7 @@ export function areConnected (graph, nodeFrom, nodeTo) {
  * @returns {object} An object with all meta information keys.
  */
 export function meta (graph) {
-  return graph.metaInformation
+  return graph.MetaInformation
 }
 
 /**
@@ -350,7 +377,7 @@ export function setMeta (graph, key, value) {
  * @returns {Port[]} A list of ports with their corresponding nodes
  */
 export function predecessors (graph, node) {
-  return _(graph.edges)
+  return _(graph.Edges)
     .filter((e) => e.to === node)
     .map((e) => ({node: e.from, port: e.outPort, succeedingNode: e.from, succeedingPort: e.outPort}))
     .value()
@@ -365,7 +392,7 @@ export function predecessors (graph, node) {
  * @returns {Port} The preceeding port with the corresponding node
  */
 export function predecessor (graph, node, port) {
-  return _(graph.edges)
+  return _(graph.Edges)
     .filter((e) => e.to === node && e.inPort === port)
     .map((e) => ({node: e.from, port: e.outPort, succeedingNode: e.from, succeedingPort: e.outPort}))
     .first()
@@ -379,7 +406,7 @@ export function predecessor (graph, node, port) {
  * @returns {Port[]} A list of ports that succeed the node with their corresponding nodes.
  */
 export function successors (graph, node, port) {
-  return _(graph.edges)
+  return _(graph.Edges)
     .filter((e) => e.from === node && (!port || e.outPort === port))
     .map((e) => ({node: e.to, port: e.inPort, preceedingNode: e.from, preceedingPort: e.outPort}))
     .value()
@@ -391,9 +418,9 @@ export function successors (graph, node, port) {
  */
 export function empty () {
   return addAPI({
-    nodes: [],
-    metaInformation: {version: packageVersion()},
-    edges: [],
-    components: []
+    Nodes: [],
+    MetaInformation: {version: packageVersion()},
+    Edges: [],
+    Components: []
   }, apiMethods)
 }
