@@ -28,6 +28,30 @@ describe('Basic graph functions', () => {
     expect(newGraph.arr).to.have.length(1)
   })
 
+  it('imports a graph from json', () => {
+    var graph = {
+      Nodes: [{id: 'a', ports: [{name: 'b', kind: 'output', type: 'c'}]}, {id: 'b', ports: [{name: 'b', kind: 'input', type: 'c'}]}],
+      Edges: [{from: 'a@b', to: 'b@b'}],
+      Components: [{meta: 'c', version: '0.1.0', ports: [{name: 'b', kind: 'output', type: 'c'}]}]
+    }
+    expect(Graph.fromJSON(graph)).to.be.ok
+  })
+
+  it('fails if the json graph is not valid', () => {
+    var graph1 = {
+      Nodes: [{id: 'a', ports: [{name: 'b', koind: 'output', type: 'c'}]}, {id: 'b', ports: [{name: 'b', kind: 'input', type: 'c'}]}],
+      Edges: [{from: 'a@b', to: 'b@b'}],
+      Components: [{meta: 'c', version: '0.1.0', ports: [{name: 'b', kind: 'output', type: 'c'}]}]
+    }
+    expect(() => Graph.fromJSON(graph1)).to.throw(Error)
+    var graph2 = {
+      Nodes: [{id: 'a', ports: [{name: 'b', kind: 'output', type: 'c'}]}, {id: 'b', ports: [{name: 'c', kind: 'input', type: 'c'}]}],
+      Edges: [{from: 'a@b', to: 'b@b'}],
+      Components: [{meta: 'c', version: '0.1.0', ports: [{name: 'b', kind: 'output', type: 'c'}]}]
+    }
+    expect(() => Graph.fromJSON(graph2)).to.throw(Error)
+  })
+
   describe('Node functions', () => {
     it('fails if a non existend node is queried', () => {
       expect(() => Graph.node(Graph.empty(), 'a')).to.throw(Error)

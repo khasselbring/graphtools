@@ -37,6 +37,10 @@ export function clone (graph) {
  * @returns {PortGraph} The port graph with its functions.
  */
 export function fromJSON (jsonGraph) {
+  jsonGraph.Edges = _.map(jsonGraph.Edges, _.partial(Edge.normalize, jsonGraph))
+  _.each(jsonGraph.Nodes, _.partial(checkNode, jsonGraph))
+  _.each(jsonGraph.Edges, _.partial(checkEdge, jsonGraph))
+  _.each(jsonGraph.Components, _.partial(checkComponent, jsonGraph))
   return addAPI(jsonGraph)
 }
 
@@ -138,6 +142,17 @@ export function hasNode (graph, node) {
   return !!_.find(graph.Nodes, (n) => Node.equal(n, node))
 }
 
+function checkNode (graph, node) {
+  if (allowsReferences(graph) && Node.isReference(node)) {
+    return
+  }
+  if (!node) {
+    throw new Error('Cannot add undefined node to graph.')
+  } else if (!Node.isValid(node)) {
+    throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
+  }
+}
+
 /**
  * Add a node to the graph, returns a new graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
@@ -145,16 +160,10 @@ export function hasNode (graph, node) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export function addNode (graph, node) {
-  if (allowsReferences(graph) && Node.isReference(node)) {
-    addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(node)))
-  }
-  if (!node) {
-    throw new Error('Cannot add undefined node to graph.')
-  } else if (hasNode(graph, node)) {
+  if (hasNode(graph, node)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
-  } else if (!Node.isValid(node)) {
-    throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
   }
+  checkNode(graph, node)
   return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(node)))
 }
 
@@ -213,6 +222,14 @@ export function hasComponent (graph, comp) {
   return !!_.find(graph.Components, (n) => Component.equal(n, comp))
 }
 
+function checkComponent (graph, comp) {
+  if (!comp) {
+    throw new Error('Cannot add undefined component to graph.')
+  } else if (!Component.isValid(comp)) {
+    throw new Error('Cannot add invalid component to graph. Are you missing the meta-id, the version or a port?\nComponent: ' + JSON.stringify(comp))
+  }
+}
+
 /**
  * Add a component to the graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
@@ -220,13 +237,10 @@ export function hasComponent (graph, comp) {
  * @returns {PortGraph} A new graph that includes the component.
  */
 export function addComponent (graph, comp) {
-  if (!comp) {
-    throw new Error('Cannot add undefined component to graph.')
-  } else if (hasComponent(graph, comp)) {
+  if (hasComponent(graph, comp)) {
     throw new Error('Cannot add already existing component: ' + Component.id(comp))
-  } else if (!Component.isValid(comp)) {
-    throw new Error('Cannot add invalid component to graph. Are you missing the id or a port?\nComponent: ' + JSON.stringify(comp))
   }
+  checkComponent()
   return addAPI(changeSet.applyChangeSet(graph, changeSet.insertComponent(comp)))
 }
 
@@ -249,19 +263,7 @@ export function edges (graph) {
   return graph.Edges
 }
 
-/**
- * Add an edge to the graph, either by specifying the ports to connect.
- * @param {PortGraph} graph The graph.
- * @param {Edge} edge The edge that should be added. This needn't be in standard format.
- * @param {Node} parent The parent of the edge.
- * @returns {PortGraph} A new graph containing the edge.
- * @throws {Error} If:
- *  - the edge already exists
- *  - ports that the edge connects do not exists
- *  - nodes that the edge connects do not exists
- *  - the edge is not in normalizable form.
- */
-export function addEdge (graph, edge, parent) {
+function checkEdge (graph, edge, parent) {
   var normEdge = Edge.normalize(graph, edge, parent)
   if (!hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
@@ -286,6 +288,26 @@ export function addEdge (graph, edge, parent) {
       ? 'an inner output port of the compound node ' + normEdge.parent
       : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
   }
+}
+
+/**
+ * Add an edge to the graph, either by specifying the ports to connect.
+ * @param {PortGraph} graph The graph.
+ * @param {Edge} edge The edge that should be added. This needn't be in standard format.
+ * @param {Node} parent The parent of the edge.
+ * @returns {PortGraph} A new graph containing the edge.
+ * @throws {Error} If:
+ *  - the edge already exists
+ *  - ports that the edge connects do not exists
+ *  - nodes that the edge connects do not exists
+ *  - the edge is not in normalizable form.
+ */
+export function addEdge (graph, edge, parent) {
+  if (hasEdge(graph, edge)) {
+    throw new Error('Cannot create already existing edge: ' + JSON.stringify(edge))
+  }
+  var normEdge = Edge.normalize(graph, edge, parent)
+  checkEdge(graph, edge, parent)
   return addAPI(changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge)))
 }
 
