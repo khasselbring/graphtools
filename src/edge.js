@@ -91,7 +91,7 @@ function determineParent (graph, edge) {
  */
 export function normalize (graph, edge, parent) {
   var newEdge = normalizeStructure(graph, edge, parent)
-  if (!newEdge.parent) {
+  if (newEdge.parent === undefined) {
     newEdge = _.merge({}, newEdge, {parent: determineParent(graph, newEdge)})
   }
   if (newEdge.parent === newEdge.from) {
