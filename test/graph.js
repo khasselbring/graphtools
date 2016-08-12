@@ -52,6 +52,17 @@ describe('Basic graph functions', () => {
     expect(() => Graph.fromJSON(graph2)).to.throw(Error)
   })
 
+  it('can have edges between references', () => {
+    var graph = Graph.empty().addNode({ref: 'a', id: 'a'}).addNode({ref: 'a', id: 'b'})
+      .addEdge({from: 'a@a', to: 'b@other'})
+    expect(graph).to.be.ok
+  })
+
+  it('cannot add two nodes with the same id', () => {
+    var graph = Graph.empty().addNode({ref: 'a', id: 'a'})
+    expect(() => graph.addNode({ref: 'a', id: 'a'})).to.throw(Error)
+  })
+
   describe('Node functions', () => {
     it('fails if a non existend node is queried', () => {
       expect(() => Graph.node(Graph.empty(), 'a')).to.throw(Error)

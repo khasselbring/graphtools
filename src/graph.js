@@ -274,6 +274,8 @@ export function edges (graph) {
 
 function checkEdge (graph, edge, parent) {
   var normEdge = Edge.normalize(graph, edge, parent)
+  var from = node(graph, normEdge.from)
+  var to = node(graph, normEdge.to)
   if (!hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
   } else if (!hasNode(graph, normEdge.to)) {
@@ -282,17 +284,17 @@ function checkEdge (graph, edge, parent) {
     throw new Error('Invalid parent for edge (' + normEdge.from + ' → ' + normEdge.to + '). The parent: ' + parent + ' does not exist in the graph.')
   } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
     throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)
-  } else if (!Node.hasPort(node(graph, normEdge.from), normEdge.outPort)) {
+  } else if (!Node.isReference(from) && !Node.hasPort(node(graph, normEdge.from), normEdge.outPort)) {
     throw new Error('The source node "' + normEdge.from + '" does not have the outgoing port "' + normEdge.outPort + '".')
-  } else if (!Node.hasPort(node(graph, normEdge.to), normEdge.inPort)) {
+  } else if (!Node.isReference(from) && !Node.hasPort(node(graph, normEdge.to), normEdge.inPort)) {
     throw new Error('The target node "' + normEdge.to + '" does not have the ingoing port "' + normEdge.inPort + '".')
-  } else if (Node.port(node(graph, normEdge.from), normEdge.outPort).kind !== ((normEdge.innerCompoundOutput) ? 'input' : 'output')) {
-    throw new Error('The source port "' + normEdge.outPort + '" = "' + JSON.stringify(Node.port(node(graph, normEdge.from), normEdge.outPort)) + '" must be ' +
+  } else if (!Node.isReference(from) && (Node.port(from, normEdge.outPort).kind !== ((normEdge.innerCompoundOutput) ? 'input' : 'output'))) {
+    throw new Error('The source port "' + normEdge.outPort + '" = "' + JSON.stringify(Node.port(from, normEdge.outPort)) + '" must be ' +
     ((normEdge.innerCompoundEdge)
     ? 'an inner input port of the compound node ' + normEdge.parent
     : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
-  } else if (Node.port(node(graph, normEdge.to), normEdge.inPort).kind !== ((normEdge.innerCompoundInput) ? 'output' : 'input')) {
-    throw new Error('The target port "' + normEdge.inPort + '" = "' + JSON.stringify(Node.port(node(graph, normEdge.to), normEdge.inPort)) + ' must be ' +
+  } else if (!Node.isReference(from) && (Node.port(to, normEdge.inPort).kind !== ((normEdge.innerCompoundInput) ? 'output' : 'input'))) {
+    throw new Error('The target port "' + normEdge.inPort + '" = "' + JSON.stringify(Node.port(to, normEdge.inPort)) + ' must be ' +
       ((normEdge.innerCompoundEdge)
       ? 'an inner output port of the compound node ' + normEdge.parent
       : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
