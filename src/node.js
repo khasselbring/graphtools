@@ -104,7 +104,7 @@ export function hasPort (node, name) {
  * @returns {boolean} True if the node is a reference, false otherwise.
  */
 export function isReference (node) {
-  return _.has(node, 'ref')
+  return _.has(node, 'ref') && node.id
 }
 
 /**

@@ -111,10 +111,10 @@ export function isValid (comp) {
 
 /**
  * Create a node from a component.
- * @param {string} name The name of the new node.
+ * @param {Reference} reference The reference to the component.
  * @param {Component} comp The component that is the basis for the new node.
  * @returns {Node} A node with the given name representing the component.
  */
-export function createNode (name, comp) {
-  return _.merge({id: name}, comp)
+export function createNode (reference, comp) {
+  return _.merge({}, reference, comp)
 }
