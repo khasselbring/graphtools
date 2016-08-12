@@ -23,7 +23,7 @@ export function id (component) {
   } else if (component == null) {
     throw new Error('Cannot determine id of undefined component.')
   } else if (!component.meta) {
-    throw new Error('Malformed component. The component must either be a string that represents the id. Or it must be an object with an id field.\n Component: ' + JSON.stringify(component))
+    throw new Error('Malformed component. The component must either be a string that represents the id. Or it must be an object with an meta field.\n Component: ' + JSON.stringify(component))
   }
   return component.meta
 }

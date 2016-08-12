@@ -45,6 +45,15 @@ export function fromJSON (jsonGraph) {
 }
 
 /**
+ * Returns a JSON object for the graph
+ * @param {PortGraph} graph The graph to convert
+ * @returns {object} A JSON representation of the graph.
+ */
+export function toJSON (graph) {
+  return remAPI(_.cloneDeep(graph))
+}
+
+/**
  * Checks whether the graph allows references to components. This is usally disabled after the graph is resolved.
  * Resolving a graph replaces all references with their components.
  * @params {PortGraph} graph The graph
