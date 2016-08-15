@@ -186,6 +186,10 @@ export function removeNode (graph, node) {
   return addAPI(changeSet.applyChangeSet(graph, changeSet.removeNode(Node.id(node))))
 }
 
+export function replaceNode (graph, newNode) {
+  return addNode(removeNode(graph, newNode), newNode)
+}
+
 /**
  * Returns a list of defined components. Components are not part of the program flow, but are defined
  * procedures that can be used in the resolve process.
@@ -249,7 +253,7 @@ export function addComponent (graph, comp) {
   if (hasComponent(graph, comp)) {
     throw new Error('Cannot add already existing component: ' + Component.id(comp))
   }
-  checkComponent()
+  checkComponent(graph, comp)
   return addAPI(changeSet.applyChangeSet(graph, changeSet.insertComponent(comp)))
 }
 
