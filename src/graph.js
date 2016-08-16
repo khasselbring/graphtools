@@ -3,6 +3,7 @@ import {packageVersion} from './internals'
 import * as changeSet from './changeSet'
 import * as Node from './node'
 import * as Component from './component'
+import * as Compound from './compound'
 import * as Edge from './edge'
 import * as ObjectAPI from './objectAPI'
 import debugLog from 'debug'
@@ -77,7 +78,7 @@ export function disallowReferences (graph) {
 }
 
 /**
- * Returns a list of node objects.
+ * Returns a list of node objects on the root level.
  * @param {PortGraph} graph The graph.
  * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
  * @returns {Nodes[]} A list of nodes.
@@ -87,6 +88,19 @@ export function nodes (graph, predicate) {
     return _.filter(graph.Nodes, predicate)
   }
   return graph.Nodes
+}
+
+function nodesDeepRec (graph, parents) {
+  return _.flatten(parents.map((p) => nodesDeep(p.implementation)))
+}
+
+/**
+ * Returns a list of node objects on all levels.
+ * @param {PortGraph} graph The graph.
+ * @returns {Nodes[]} A list of nodes.
+ */
+export function nodesDeep (graph) {
+  return nodes(graph).concat(nodesDeepRec(graph, nodes(graph, Compound.isCompound)))
 }
 
 /**
