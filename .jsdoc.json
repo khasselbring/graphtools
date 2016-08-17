@@ -2,7 +2,7 @@
   "plugins": ["plugins/markdown"],
   "source": {
     "include": ["src/path.js", "src/utils.js", "src/walk.js", "src/graph.js", "src/changeSet.js", "src/edge.js", "src/walk.js", "src/algorithm.js", "src/conversion.js",
-      "src/node.js", "src/component.js"]
+      "src/node.js", "src/component.js". "README.md"]
   },
   "opts": {
     "encoding": "utf8",
