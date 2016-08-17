@@ -31,7 +31,8 @@ for a graph is JSON which contains five basic fields:
   "Components": [
     {"meta": "<meta-id>", "ports": [...], "atomic": true},
     {"meta": "<meta-id>", "ports": [...], "implementation": <Graph>}
-  ]
-  "meta": {"some-key": "some-value"}
+  ],
+  "meta": {"some-key": "some-value"},
+  "parent": <Graph>
 }
 ```
