@@ -9,6 +9,7 @@ import jq from 'json-query'
 import _ from 'lodash'
 import {clone} from './graph'
 import * as Node from './node'
+import * as Edge from './edge'
 import * as Component from './component'
 
 /**
@@ -71,7 +72,7 @@ export function insertEdge (newEdge) {
  * @returns {ChangeSet} The change set containing the deletion operation.
  */
 export function removeEdge (edge) {
-  return {type: 'changeSet', operation: 'remove', query: 'Edges', filter: edge}
+  return {type: 'changeSet', operation: 'remove', query: 'Edges', filter: _.partial(Edge.equal, edge)}
 }
 
 /**

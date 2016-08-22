@@ -17,7 +17,7 @@ describe('Change Sets', () => {
 
   it('can set a field in a node', () => {
     var graph = changeSet.applyChangeSet(Graph.empty(),
-      changeSet.insertNode({id: 'a', prop: 'test'}))
+      changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
     var cS = changeSet.updateNode('a', { NEW_PROP: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.node(newGraph, 'a').NEW_PROP).to.equal('test')
@@ -25,7 +25,7 @@ describe('Change Sets', () => {
 
   it('can update a field in a node', () => {
     var graph = changeSet.applyChangeSet(Graph.empty(),
-      changeSet.insertNode({id: 'a', prop: 'test'}))
+      changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
     var cS = changeSet.updateNode('a', { prop: 'new_test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.node(newGraph, 'a').prop).to.equal('new_test')
@@ -33,7 +33,7 @@ describe('Change Sets', () => {
 
   it('can remove a node', () => {
     var graph = changeSet.applyChangeSet(Graph.empty(),
-      changeSet.insertNode({id: 'a', prop: 'test'}))
+      changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
     var cS = changeSet.removeNode('a')
     var newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.nodes(newGraph)).to.have.length(0)
@@ -41,8 +41,8 @@ describe('Change Sets', () => {
 
   it('can insert a new edge', () => {
     var graph = changeSet.applyChangeSets(Graph.empty(), [
-      changeSet.insertNode({id: 'a'}),
-      changeSet.insertNode({id: 'b'})
+      changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'b', ports: [{name: 'a', kind: 'output', type: 'number'}]})
     ])
     var cS = changeSet.insertEdge({ from: 'a', to: 'b' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
@@ -51,24 +51,26 @@ describe('Change Sets', () => {
 
   it('can remove an edge', () => {
     var graph = changeSet.applyChangeSets(Graph.empty(), [
-      changeSet.insertNode({id: 'a'}),
-      changeSet.insertNode({id: 'b'}),
-      changeSet.insertEdge({ from: 'a', to: 'b' })
+      changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'b', ports: [{name: 'a', kind: 'input', type: 'number'}]}),
+      changeSet.insertEdge({ from: 'a', outPort: 'a', to: 'b', inPort: 'a' })
     ])
-    var cS = changeSet.removeEdge({ from: 'a', to: 'b' })
+    var cS = changeSet.removeEdge({ from: 'a', outPort: 'a', to: 'b', inPort: 'a' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.edges(newGraph)).to.have.length(0)
 
     graph = changeSet.applyChangeSets(Graph.empty(), [
-      changeSet.insertNode({id: 'a'}),
-      changeSet.insertNode({id: 'b'}),
-      changeSet.insertEdge({ from: 'a', to: 'b' }),
-      changeSet.insertEdge({ from: 'c', to: 'd' })
+      changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'b', ports: [{name: 'a', kind: 'input', type: 'number'}]}),
+      changeSet.insertNode({id: 'c', ports: [{name: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'd', ports: [{name: 'a', kind: 'input', type: 'number'}]}),
+      changeSet.insertEdge({ from: 'a', outPort: 'a', to: 'b', inPort: 'a' }),
+      changeSet.insertEdge({ from: 'c', outPort: 'a', to: 'd', inPort: 'a' })
     ])
-    cS = changeSet.removeEdge({ from: 'c', to: 'd' })
+    cS = changeSet.removeEdge({ from: 'c', outPort: 'a', to: 'd', inPort: 'a' })
     newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.edges(newGraph)).to.have.length(1)
-    expect(Graph.edges(newGraph)[0]).to.eql({ from: 'a', to: 'b' })
+    expect(Graph.edges(newGraph)[0].from).to.equal('a')
   })
 
   it('can add meta keys', () => {

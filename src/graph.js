@@ -6,6 +6,7 @@ import * as Component from './component'
 import * as Compound from './compound'
 import * as Edge from './edge'
 import * as ObjectAPI from './objectAPI'
+import omitDeep from 'omit-deep-lodash'
 import debugLog from 'debug'
 
 const debug = debugLog('graphtools')
@@ -29,7 +30,7 @@ export function equal (graph1, graph2) {
  * @returns {PortGraph} A clone of the input graph.
  */
 export function clone (graph) {
-  return addAPI(remAPI(_.cloneDeep(graph)))
+  return fromJSON(toJSON(graph))
 }
 
 /**
@@ -42,7 +43,20 @@ export function fromJSON (jsonGraph) {
   _.each(jsonGraph.Nodes, _.partial(checkNode, jsonGraph))
   _.each(jsonGraph.Edges, _.partial(checkEdge, jsonGraph))
   _.each(jsonGraph.Components, _.partial(checkComponent, jsonGraph))
+  // add parents
   return addAPI(jsonGraph)
+}
+
+function subGraphs (graph) {
+  return _.flatten(nodes(graph)
+    .filter((n) => n.implementation)
+    .map((n) => ([{graph, id: n.id, subgraph: n.implementation}, subGraphs(n.implementation)])))
+}
+
+function removeGraphInternals (graph) {
+  var graphs = subGraphs(graph)
+  graphs.forEach((gr) => replaceNode(gr.subgraph, gr.id, omitDeep(node(gr.graph, gr.id), '_internals')))
+  return graph
 }
 
 /**
@@ -51,7 +65,8 @@ export function fromJSON (jsonGraph) {
  * @returns {object} A JSON representation of the graph.
  */
 export function toJSON (graph) {
-  return remAPI(_.cloneDeep(graph))
+  var exportGraph = removeGraphInternals(graph)
+  return remAPI(_.cloneDeep(exportGraph))
 }
 
 /**
@@ -78,29 +93,46 @@ export function disallowReferences (graph) {
 }
 
 /**
- * Returns a list of node objects on the root level.
+ * Sets the implementation of a node defined in a compound node to a new implementation.
+ * @param {Compound} comp The compound node that should be changed.
+ * @param {string|String[]} idOrPath The id of the node in the graph or a path object.
+ * @param {Node} newNode The new node that updates the node with the given id.
+ * @reutrns {Compound} The compound node with the updated node.
+ */
+export function replaceReference (graph, idOrPath, newNode) {
+  var idx = _.findIndex(graph.Nodes, (n) => equal(idOrPath, n))
+  return _.set(graph, 'Nodes[' + idx + ']', newNode)
+}
+
+/**
+ * Returns a list of nodes on the root level.
  * @param {PortGraph} graph The graph.
  * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
  * @returns {Nodes[]} A list of nodes.
  */
 export function nodes (graph, predicate) {
   if (predicate) {
-    return _.filter(graph.Nodes, predicate)
+    return _.filter(graph.Nodes, predicate) || []
   }
-  return graph.Nodes
+  return graph.Nodes || []
 }
 
-function nodesDeepRec (graph, parents) {
-  return _.flatten(parents.map((p) => nodesDeep(p.implementation)))
+function nodesDeepRec (graph, parents, cPath) {
+  return _.flatten(parents.map((p) => nodesDeep(p.implementation, cPath.concat([p.id]))))
 }
 
 /**
- * Returns a list of node objects on all levels.
- * @param {PortGraph} graph The graph.
- * @returns {Nodes[]} A list of nodes.
+ * Get all nodes at all depths. It will go into every compound node and return their nodes
+ * and the nodes of their compound nodes, etc.
+ * @param {PortGraph} graph The graph to work on
+ * @param {String[]} baseCPath The base compound path for the node paths. This path specifies a list of parents and the actual node.
+ * @returns {Pair<Compound Path, Node>[]} A list of pairs. Each containing a compound path as the first element specifying a list of parents
+ * that lead to the node in the graph. The second element is the corresponding node.
  */
-export function nodesDeep (graph) {
-  return nodes(graph).concat(nodesDeepRec(graph, nodes(graph, Compound.isCompound)))
+export function nodesDeep (graph, baseCPath = []) {
+  return nodes(graph)
+    .map((node) => [baseCPath.concat([node.id]), node])
+    .concat(nodesDeepRec(graph, nodes(graph, Compound.isCompound), baseCPath))
 }
 
 /**
@@ -113,6 +145,28 @@ export function nodeNames (graph) {
 }
 
 /**
+ * Returns the node given by the compound path.
+ * @param {PortGraph} graph The graph.
+ * @param {String[]} path A compound path specifying the node in the graph.
+ * @returns {Node} The node in the graph
+ * @throws {Error} If the compound path is invalid.
+ */
+export function nodeByPath (graph, path) {
+  if (!Array.isArray(path)) {
+    throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
+  }
+  var curNode = node(graph, path[0])
+  if (path.length > 1) {
+    if (!curNode.implementation) {
+      throw new Error('Expected "' + path[0] + '" to be a node with an implementation.')
+    }
+    return nodeByPath(curNode.implementation, path.slice(1))
+  } else {
+    return curNode
+  }
+}
+
+/**
  * Returns the node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
  * @param {Node|string} node The node or its id.
@@ -120,10 +174,13 @@ export function nodeNames (graph) {
  * @throws {Error} If the queried node does not exist in the graph.
  */
 export function node (graph, node) {
+  if (Node.isValid(graph) && Node.equal(graph, node)) {
+    return graph
+  }
   var res = _.find(graph.Nodes, (n) => Node.equal(n, node))
   if (!res) {
     debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
-    throw new Error(`Node with id '${node}' does not exist in the graph.`)
+    throw new Error(`Node with id '${Node.id(node)}' does not exist in the graph.`)
   }
   return res
 }
@@ -147,6 +204,15 @@ export function compounds (graph) {
 }
 
 /**
+ * Create a new compound node. Each compound node is itself a graph that can contain further nodes.
+ * @param {Node} node The node that should be converted into a compound node.
+ * @returns {PortGraph} The graph representing the compound node.
+ */
+export function compound (node) {
+  return addAPI(_.merge({}, node, emptyGraph(), {atomic: false}))
+}
+
+/**
  * Gets a list of all atomic nodes.
  * @param {PortGraph} graph The graph.
  * @returns {References[]} A list of all defined atomci nodes in the graph.
@@ -162,7 +228,7 @@ export function atomics (graph) {
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
 export function hasNode (graph, node) {
-  return !!_.find(graph.Nodes, (n) => Node.equal(n, node))
+  return (Node.isValid(graph) && Node.equal(graph, node)) || !!_.find(graph.Nodes, (n) => Node.equal(n, node))
 }
 
 function checkNode (graph, node) {
@@ -187,7 +253,7 @@ export function addNode (graph, node) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
   checkNode(graph, node)
-  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(node)))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge(toJSON(node), {parent: graph}))))
 }
 
 /**
@@ -298,8 +364,6 @@ function checkEdge (graph, edge, parent) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
   } else if (!hasNode(graph, normEdge.to)) {
     throw new Error('Cannot create edge connection from: ' + normEdge.from + ' to not existing node: ' + normEdge.to)
-  } else if (normEdge.parent && !hasNode(graph, normEdge.parent)) {
-    throw new Error('Invalid parent for edge (' + normEdge.from + ' → ' + normEdge.to + '). The parent: ' + parent + ' does not exist in the graph.')
   } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
     throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)
   } else if (!Node.isReference(from) && !Node.hasPort(node(graph, normEdge.from), normEdge.outPort)) {
@@ -331,12 +395,12 @@ function checkEdge (graph, edge, parent) {
  *  - nodes that the edge connects do not exists
  *  - the edge is not in normalizable form.
  */
-export function addEdge (graph, edge, parent) {
+export function addEdge (graph, edge) {
   if (hasEdge(graph, edge)) {
     throw new Error('Cannot create already existing edge: ' + JSON.stringify(edge))
   }
-  var normEdge = Edge.normalize(graph, edge, parent)
-  checkEdge(graph, edge, parent)
+  var normEdge = Edge.normalize(graph, edge)
+  checkEdge(graph, edge)
   return addAPI(changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge)))
 }
 
@@ -480,15 +544,19 @@ export function successors (graph, node, port) {
     .value()
 }
 
+function emptyGraph () {
+  return {
+    Nodes: [],
+    MetaInformation: {version: packageVersion()},
+    Edges: [],
+    Components: []
+  }
+}
+
 /**
  * Returns a new empty graph.
  * @returns {PortGraph} A new empty port graph.
  */
 export function empty () {
-  return addAPI({
-    Nodes: [],
-    MetaInformation: {version: packageVersion()},
-    Edges: [],
-    Components: []
-  }, apiMethods)
+  return addAPI(emptyGraph(), apiMethods)
 }

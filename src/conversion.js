@@ -64,15 +64,19 @@ function mapToPortNodePorts (node) {
   )
 }
 
-function mapToPortNode (node) {
-  if (node.v.indexOf('defco_') === 0) {
-    return CS.insertComponent(_.merge({}, node.value, {meta: node.v.slice('defco_'.length)}))
-  }
-  return CS.insertNode(_.merge({id: node.v}, _.omit(node.value, ['outputPorts', 'inputPorts', 'id']),
+function replacePorts (node) {
+  return _.merge({}, _.omit(node.value, ['outputPorts', 'inputPorts', 'id']),
     {
       ports: mapToPortNodePorts(node.value),
       meta: node.value.id
-    }))
+    })
+}
+
+function mapToPortNode (node) {
+  if (node.v.indexOf('defco_') === 0) {
+    return CS.insertComponent(_.merge({}, replacePorts(node), {meta: node.v.slice('defco_'.length)}))
+  }
+  return CS.insertNode(_.merge({id: node.v}, replacePorts(node)))
 }
 
 function mapToPortEdges (graph, edge) {

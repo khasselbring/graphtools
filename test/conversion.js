@@ -33,7 +33,7 @@ describe('Graphlib Conversion API', () => {
 
   it('finds defco_ components', () => {
     var graph = new grlib.Graph({multigraph: true, directed: true, compound: true})
-    graph.setNode('defco_fn', {outputPorts: {b: 'string'}, implementation: {}})
+    graph.setNode('defco_fn', {outputPorts: {b: 'string'}, implementation: {}, version: '0.0.0'})
     var conv = Convert.fromGraphlib(graph)
     expect(Graph.nodes(conv)).to.have.length(0)
     expect(Graph.components(conv)).to.have.length(1)

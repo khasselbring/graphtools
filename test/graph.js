@@ -3,6 +3,7 @@
 import chai from 'chai'
 import * as changeSet from '../src/changeSet'
 import * as Graph from '../src/graph'
+import * as Node from '../src/node'
 import _ from 'lodash'
 import semver from 'semver'
 
@@ -122,9 +123,17 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode(graph, 'a')).to.be.true
       expect(Graph.hasNode(graph, {id: 'b'})).to.be.true
     })
+
+    it('gets nodes by compound path', () => {
+      var impl = Graph.empty().addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      var graph = Graph.empty().addNode({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}], implementation: impl})
+      var n = Graph.nodeByPath(graph, ['b', 'a'])
+      expect(n).to.be.ok
+      expect(n.id).to.equal('a')
+    })
   })
 
-  describe('Edge functions', () => {
+  describe.only('Edge functions', () => {
     it('Can add edges to the graph', () => {
       var graph = Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
@@ -170,21 +179,23 @@ describe('Basic graph functions', () => {
     })
 
     it('Get an edge in the graph', () => {
-      var graph = Graph.addNode(
-        Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
-        .addNode({id: 'c', ports: [{name: 'out', kind: 'output', type: 'a'}]})
-      var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in', parent: 'c'})
-      expect(Graph.edge(newGraph, {from: 'a@out', to: 'b@in'})).to.be.ok
-      expect(Graph.edge(newGraph, {from: 'a@out', to: 'b@in'}).parent).to.equal('c')
+      var cmpd = Graph.compound({id: 'c', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+        .addNode({id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+        .addNode({id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
+        .addEdge({from: 'a@out', to: 'b@in'})
+      var graph = Graph.empty()
+        .addNode(cmpd)
+      expect(Graph.edge(cmpd, {from: 'a@out', to: 'b@in'})).to.be.ok
+      expect(Node.equal(Graph.edge(cmpd, {from: 'a@out', to: 'b@in'}).parent, cmpd)).to.be.true
       expect(() => Graph.edge(graph, {from: 'a@out', to: 'b@in'})).to.throw(Error)
     })
 
     it('Can get the parent of an edge', () => {
-      var graph = Graph.addNode(
-        Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
-        .addNode({id: 'c', ports: [{name: 'out', kind: 'output', type: 'a'}]})
-      var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in', parent: 'c'})
-      expect(Graph.edgeParent(newGraph, {from: 'a@out', to: 'b@in'})).to.equal('c')
+      var cmpd = Graph.compound({id: 'c', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+        .addNode({id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+        .addNode({id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
+        .addEdge({from: 'a@out', to: 'b@in'})
+      expect(Node.id(Graph.edgeParent(cmpd, {from: 'a@out', to: 'b@in'}))).to.equal('c')
     })
 
     it('Fails if the connecting ports do not exist', () => {

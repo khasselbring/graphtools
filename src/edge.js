@@ -1,7 +1,7 @@
 /** @module Edge */
 
-import * as Graph from './graph'
 import _ from 'lodash'
+import * as Node from './node'
 
 function isPortNotation (port) {
   return port.indexOf('@') !== -1
@@ -13,7 +13,7 @@ function parsePortNotation (graph, port, parent) {
   if (split[0] !== '') {
     res.node = split[0]
   } else if (parent) {
-    res.node = parent
+    res.node = Node.id(parent)
   } else {
     throw new Error('Cannot process port notation. Parent required, but not specified. Parsed port: ' + port)
   }
@@ -29,12 +29,8 @@ function normalizeStructure (graph, edge, parent) {
   if (!edge.from || !edge.to) {
     throw new Error('The edge format is not valid. You need to have a from and to value in.\n\n' + JSON.stringify(edge, null, 2) + '\n')
   }
-  parent = parent || edge.parent
   var layer = edge.layer || 'dataflow'
   if (edge.outPort && edge.inPort) {
-    if (parent && !Graph.hasNode(graph, parent)) {
-      throw new Error('No valid information about the parent of the edge given.\nEdge ' + JSON.stringify(edge) + '\nParent: ' + parent)
-    }
     return _.merge({}, edge, {parent, layer})
   } else if (edge.fromPort && edge.toPort) {
     return { from: edge.from, to: edge.to, outPort: edge.fromPort, inPort: edge.toPort, parent, layer }
@@ -48,6 +44,7 @@ function normalizeStructure (graph, edge, parent) {
   }
 }
 
+/*
 function determineParent (graph, edge) {
   var fromParent = Graph.parent(graph, edge.from)
   var toParent = Graph.parent(graph, edge.to)
@@ -62,7 +59,7 @@ function determineParent (graph, edge) {
       '\nParent of ' + edge.from + ': ' + fromParent +
       '\nParent of ' + edge.to + ': ' + toParent)
   }
-}
+}*/
 
 /**
  * Normalizes the edge into the standard format
@@ -89,15 +86,15 @@ function determineParent (graph, edge) {
  *  - the ports do not exits,
  *  - there is no consistent parent for this edge.
  */
-export function normalize (graph, edge, parent) {
-  var newEdge = normalizeStructure(graph, edge, parent)
+export function normalize (graph, edge) {
+  var newEdge = normalizeStructure(graph, edge, graph)
   if (typeof (newEdge.parent) !== 'string') {
-    newEdge = _.merge({}, newEdge, {parent: determineParent(graph, newEdge)})
+    newEdge = _.merge({}, newEdge, {parent: graph})
   }
-  if (newEdge.parent === newEdge.from) {
+  if (Node.isValid(graph) && Node.equal(graph, newEdge.from)) {
     newEdge.innerCompoundOutput = true
   }
-  if (newEdge.parent === newEdge.to) {
+  if (Node.isValid(graph) && Node.equal(graph, newEdge.to)) {
     newEdge.innerCompoundInput = true
   }
   return newEdge
