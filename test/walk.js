@@ -9,9 +9,12 @@ import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import fs from 'fs'
 import _ from 'lodash'
+import omitDeep from 'omit-deep-lodash'
 
 var expect = chai.expect
 chai.use(sinonChai)
+
+const noParent = _.partial(omitDeep, _, 'parent')
 
 describe('Adjacent nodes', () => {
   var pGraph1 = Graph.empty()
@@ -21,13 +24,13 @@ describe('Adjacent nodes', () => {
 
   it('can get the predecessor of a node for', () => {
     var pred = walk.predecessor(pGraph1, '2_STDOUT', 'input')
-    expect(pred).to.deep.equal([{node: '1_INC', port: 'inc',
+    expect(noParent(pred)).to.deep.equal([{node: '1_INC', port: 'inc',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}}])
   })
 
   it('can get the successor of a node for', () => {
     var pred = walk.successor(pGraph1, '1_INC', 'inc')
-    expect(pred).to.deep.equal([{node: '2_STDOUT', port: 'input',
+    expect(noParent(pred)).to.deep.equal([{node: '2_STDOUT', port: 'input',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}}])
   })
 
@@ -39,9 +42,9 @@ describe('Adjacent nodes', () => {
   it('can get multiple successor from one port', () => {
     var succ = walk.successor(doubleOut, '1_INC', 'inc')
     expect(succ).to.have.length(2)
-    expect(succ).to.deep.include({node: '2_STDOUT', port: 'input',
+    expect(noParent(succ)).to.deep.include({node: '2_STDOUT', port: 'input',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}})
-    expect(succ).to.deep.include({node: '3_STDOUT', port: 'input',
+    expect(noParent(succ)).to.deep.include({node: '3_STDOUT', port: 'input',
       edge: {from: '1_INC', outPort: 'inc', to: '3_STDOUT', inPort: 'input', layer: 'dataflow'}})
   })
 
@@ -52,7 +55,7 @@ describe('Adjacent nodes', () => {
 
   it('`adjacentNode` can use successor function', () => {
     var succ = walk.adjacentNode(pGraph1, '1_INC', 'inc', walk.successor)
-    expect(succ).to.deep.equal([{node: '2_STDOUT', port: 'input',
+    expect(noParent(succ)).to.deep.equal([{node: '2_STDOUT', port: 'input',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}}])
   })
 
@@ -74,25 +77,25 @@ describe('Adjacent nodes', () => {
     .addEdge({from: 'inc@inc', to: 'stdout@input'})
 
   it('`adjacentNode` can handle compound nodes', () => {
-    var preds = walk.adjacentNodes(cmpGraph, 'add', 's1', walk.predecessor)
+    var preds = walk.adjacentNodes(incGraph, 'add', 's1', walk.predecessor)
     expect(preds).to.have.length(1)
-    expect(preds[0]).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
-    var succs = walk.adjacentNodes(cmpGraph, 'inc', 'i', walk.successor)
+    expect(noParent(preds[0])).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
+    var succs = walk.adjacentNodes(incGraph, 'inc', 'i', walk.successor)
     expect(succs).to.have.length(1)
-    expect(succs[0]).to.deep.equal({node: 'add', port: 's1', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
+    expect(noParent(succs[0])).to.deep.equal({node: 'add', port: 's1', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
   })
 
   it('`adjacentNodes` can process multiple ports', () => {
-    var preds = walk.adjacentNodes(cmpGraph, 'add', ['s1', 's2'], walk.predecessor)
+    var preds = walk.adjacentNodes(incGraph, 'add', ['s1', 's2'], walk.predecessor)
     expect(preds).to.have.length(2)
-    expect(preds).to.deep.include({node: 'const', port: 'output', edge: {from: 'const', outPort: 'output', to: 'add', inPort: 's2', layer: 'dataflow', parent: 'inc'}})
-    expect(preds).to.deep.include({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
+    expect(noParent(preds)).to.deep.include({node: 'const', port: 'output', edge: {from: 'const', outPort: 'output', to: 'add', inPort: 's2', layer: 'dataflow'}})
+    expect(noParent(preds)).to.deep.include({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
   })
 
   it('`adjacentNodes` removes not usable paths', () => {
-    var preds = walk.adjacentNodes(cmpGraph, 'add', ['s1', '-'], walk.predecessor)
+    var preds = walk.adjacentNodes(incGraph, 'add', ['s1', '-'], walk.predecessor)
     expect(preds).to.have.length(1)
-    expect(preds[0]).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow', parent: 'inc'}})
+    expect(noParent(preds[0])).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
   })
 })
 /* missing file.. not committed...
