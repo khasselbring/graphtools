@@ -11,6 +11,34 @@ const OUTPUT = 'output'
 const INPUT = 'input'
 
 /**
+ * Converts a compound path into its string representation. The seperate parts are divided by a '»'.
+ * @param {String[]} compoundPathArr An array of node IDs reperesenting the compound path.
+ * @returns {String} The string representation of the compound path.
+ */
+export function pathIDToString (compoundPathArr) {
+  if (compoundPathArr.length === 1) return compoundPathArr[0]
+  return compoundPathArr.reduce((acc, n) => acc + '»' + n, '')
+}
+
+/**
+ * Converts a compound path string into its array representation. The seperate parts must be divided by a '»'.
+ * @param {String} compoundPathStr A string reperesenting the compound path divded by '»'.
+ * @returns {String[]} An array of node IDs representing the compound path.
+ */
+export function stringToPath (compoundPathStr) {
+  return compoundPathStr.split('»').slice(1)
+}
+
+/**
+ * Returns whether a string represents a compound path or not.
+ * @param {string} path The path string to test.
+ * @returns True if the path represents a compound path, false otherwise.
+ */
+export function isCompoundPath (path) {
+  return typeof (path) === 'string' && path[0] === '»'
+}
+
+/**
  * Returns the unique identifier of a node
  * @params {Node} node The node
  * @returns {string} The unique identifier of the node
@@ -19,6 +47,8 @@ const INPUT = 'input'
 export function id (node) {
   if (typeof (node) === 'string') {
     return node
+  } else if (Array.isArray(node)) {
+    return pathIDToString(node)
   } else if (node == null) {
     throw new Error('Cannot determine id of undefined node.')
   } else if (!node.id) {

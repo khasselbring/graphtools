@@ -118,7 +118,7 @@ export function nodes (graph, predicate) {
 }
 
 function nodesDeepRec (graph, parents, cPath) {
-  return _.flatten(parents.map((p) => nodesDeep(p.implementation, cPath.concat([p.id]))))
+  return _.flatten(parents.map((p) => nodesDeep(p, cPath.concat([p.id]))))
 }
 
 /**
@@ -151,16 +151,19 @@ export function nodeNames (graph) {
  * @returns {Node} The node in the graph
  * @throws {Error} If the compound path is invalid.
  */
-export function nodeByPath (graph, path) {
-  if (!Array.isArray(path)) {
+export function nodeByPath (graph, path, basePath) {
+  if (typeof (path) === 'string' && Node.isCompoundPath(path)) {
+    path = Node.stringToPath(path)
+  } else if (!Array.isArray(path)) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
   }
+  basePath = basePath || path
   var curNode = node(graph, path[0])
   if (path.length > 1) {
-    if (!curNode.implementation) {
-      throw new Error('Expected "' + path[0] + '" to be a node with an implementation.')
+    if (!Compound.isCompound(curNode)) {
+      throw new Error('Expected "' + path[0] + '" to be a compound node in: ' + basePath)
     }
-    return nodeByPath(curNode.implementation, path.slice(1))
+    return nodeByPath(curNode, path.slice(1), basePath)
   } else {
     return curNode
   }
@@ -176,6 +179,9 @@ export function nodeByPath (graph, path) {
 export function node (graph, node) {
   if (Node.isValid(graph) && Node.equal(graph, node)) {
     return graph
+  }
+  if (Array.isArray(node) || Node.isCompoundPath(node)) {
+    return nodeByPath(graph, node)
   }
   var res = _.find(graph.Nodes, (n) => Node.equal(n, node))
   if (!res) {
@@ -221,6 +227,29 @@ export function atomics (graph) {
   return nodes(graph, Node.isAtomic)
 }
 
+export function hasNodeByPath (graph, path, basePath) {
+  if (typeof (path) === 'string' && Node.isCompoundPath(path)) {
+    path = Node.stringToPath(path)
+  } else if (!Array.isArray(path)) {
+    throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
+  }
+  basePath = basePath || path
+  const nodeExists = hasNode(graph, path[0])
+  if (path.length > 1 && nodeExists) {
+    var curNode = node(graph, path[0])
+    if (!Compound.isCompound(curNode)) {
+      return false
+//      throw new Error('Expected "' + path[0] + '" to be a compound node in query: "' + basePath + '"')
+    }
+    return hasNodeByPath(curNode, path.slice(1), basePath)
+  } else if (!nodeExists) {
+    return false
+//    throw new Error('Could not find node "' + path[0] + '" while looking for ' + basePath + ' (remaining path: "' + path + '")')
+  } else {
+    return hasNode(graph, path[0])
+  }
+}
+
 /**
  * Checks whether the graph has a node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
@@ -228,6 +257,9 @@ export function atomics (graph) {
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
 export function hasNode (graph, node) {
+  if (Array.isArray(node) || Node.isCompoundPath(node)) {
+    return hasNodeByPath(graph, node)
+  }
   return (Node.isValid(graph) && Node.equal(graph, node)) || !!_.find(graph.Nodes, (n) => Node.equal(n, node))
 }
 

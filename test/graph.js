@@ -125,15 +125,38 @@ describe('Basic graph functions', () => {
     })
 
     it('gets nodes by compound path', () => {
-      var impl = Graph.empty().addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}], implementation: impl})
-      var n = Graph.nodeByPath(graph, ['b', 'a'])
+      var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}], implementation: impl})
+        .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      var graph = Graph.empty().addNode(impl)
+      var n = Graph.node(graph, ['b', 'a'])
+      expect(n).to.be.ok
+      expect(n.id).to.equal('a')
+      n = Graph.node(graph, '»b»a')
       expect(n).to.be.ok
       expect(n.id).to.equal('a')
     })
+
+    it('checks nodes by compound path', () => {
+      var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}], implementation: impl})
+        .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      var graph = Graph.empty().addNode(impl)
+      expect(Graph.hasNode(graph, ['b', 'a'])).to.be.true
+      expect(Graph.hasNode(graph, '»b»a')).to.be.true
+      expect(Graph.hasNode(graph, ['a'])).to.be.false
+      expect(Graph.hasNode(graph, ['a', 'b'])).to.be.false
+    })
+
+    it('gets nodes deep including compound nodes', () => {
+      var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}], implementation: impl})
+        .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      var graph = Graph.empty().addNode(impl)
+      var nodes = Graph.nodesDeep(graph)
+      expect(nodes).to.have.length(2)
+      expect(nodes.map((n) => Node.id(n[0]))).to.have.members(['»b»a', 'b'])
+    })
   })
 
-  describe.only('Edge functions', () => {
+  describe('Edge functions', () => {
     it('Can add edges to the graph', () => {
       var graph = Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
