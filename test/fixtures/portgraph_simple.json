@@ -6,11 +6,6 @@
   },
   "nodes": [
     {
-      "v": "EXAMPLE1",
-      "value": {
-      }
-    },
-    {
       "v": "0_STDIN",
       "value": {
         "nodeType": "process",
@@ -22,8 +17,7 @@
         "outputPorts": {
           "output": "string"
         }
-      },
-      "parent": "EXAMPLE1"
+      }
     },
     {
       "v": "1_INC",
@@ -38,8 +32,7 @@
         "outputPorts": {
           "inc": "number"
         }
-      },
-      "parent": "EXAMPLE1"
+      }
     },
     {
       "v": "2_STDOUT",
@@ -53,8 +46,7 @@
         },
         "outputPorts": {
         }
-      },
-      "parent": "EXAMPLE1"
+      }
     }
   ],
   "edges": [

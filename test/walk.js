@@ -98,9 +98,9 @@ describe('Adjacent nodes', () => {
     expect(noParent(preds[0])).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
   })
 })
-/* missing file.. not committed...
+
 describe('Graph walks', () => {
-  var pGraph1 = Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.graphlib'))))
+  var pGraph1 = Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.json'))))
   it('can walk forward through a given path', () => {
     var path = walk.walk(pGraph1, '0_STDIN', ['output', 'inc'])
     expect(path).to.have.length(1)
@@ -113,7 +113,7 @@ describe('Graph walks', () => {
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
   })
 
-  var pGraph2 = Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph.graphlib'))))
+  var pGraph2 = Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph.json'))))
   it('can walk over a compound node', () => {
     var path = walk.walk(pGraph2, '0_STDIN', ['output', 'inc'])
     expect(path).to.have.length(1)
@@ -193,4 +193,4 @@ describe('Graph walks', () => {
     expect(paths).to.have.length(2)
   })
 })
-*/
+

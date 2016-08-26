@@ -1,0 +1,122 @@
+{
+  "options": {
+    "directed": true,
+    "multigraph": true,
+    "compound": true
+  },
+  "nodes": [
+    {
+      "v": "0_STDIN",
+      "value": {
+        "nodeType": "process",
+        "meta": "io/stdin",
+        "type": "atomic",
+        "inputPorts": {},
+        "outputPorts": {
+          "const1": "int"
+        }
+      }
+    },
+    {
+      "v": "1_INC",
+      "value": {
+        "nodeType": "process",
+        "meta": "math/inc",
+        "type": "composite",
+        "inputPorts": {
+          "i": "number"
+        },
+        "outputPorts": {
+          "inc": "number"
+        }
+      }
+    },
+    {
+      "v": "2_STDOUT",
+      "value": {
+        "nodeType": "process",
+        "meta": "io/stdout",
+        "type": "atomic",
+        "inputPorts": {
+          "input": "string"
+        },
+        "outputPorts": {
+        }
+      }
+    },
+    {
+      "v": "3_ADD",
+      "value": {
+        "nodeType": "process",
+        "meta": "math/add",
+        "type": "atomic",
+        "parent": "1_INC",
+        "inputPorts": {
+          "s1": "number",
+          "s2": "number"
+        },
+        "outputPorts": {
+          "sum": "number"
+        }
+      },
+      "parent": "1_INC"
+    },
+    {
+      "v": "4_CONST1",
+      "value": {
+        "nodeType": "process",
+        "meta": "math/const1",
+        "type": "atomic",
+        "parent": "1_INC",
+        "inputPorts": {
+        },
+        "outputPorts": {
+          "const1": "number"
+        }
+      },
+      "parent": "1_INC"
+    }
+  ],
+  "edges": [
+    {
+      "v": "0_STDIN",
+      "w": "1_INC",
+      "value": {
+        "outPort": "output",
+        "inPort": "i"
+      }
+    },
+    {
+      "v": "1_INC",
+      "w": "2_STDOUT",
+      "value": {
+        "outPort": "inc",
+        "inPort": "input"
+      }
+    },
+    {
+      "v": "1_INC",
+      "w": "3_ADD",
+      "value": {
+        "outPort": "i",
+        "inPort": "s1"
+      }
+    },
+    {
+      "v": "4_CONST1",
+      "w": "3_ADD",
+      "value": {
+        "outPort": "const1",
+        "inPort": "s2"
+      }
+    },
+    {
+      "v": "3_ADD",
+      "w": "1_INC",
+      "value": {
+        "outPort": "sum",
+        "inPort": "inc"
+      }
+    }
+  ]
+}
