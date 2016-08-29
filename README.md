@@ -19,10 +19,10 @@ for a graph is JSON which contains five basic fields:
     {"ref": "<meta-id>", "id": "<some-unique-id>"},
     {"id": "<u-id>", "version": "<semver-version>", "meta": "<meta-id>",
      "ports": [{"name": "<port-name>", "kind": "input|output", "type": "number"}],
-     "atomic": "true", "meta": {"some-key": "some-value"}},
-    {"id": "<u-id>", "version": "<semver-version>",
+     "atomic": "true", "MetaInformation": {"some-key": "some-value"}},
+    {"id": "<u-id>", "version": "<semver-version>", "atomic": false,
      "ports": [{"name": "<port-name>", "kind": "input|output", "type": "number"}],
-     "implementation": <Graph>, "meta": {"some-key": "some-value"}},
+     "Nodes": <Sub-Nodes>, "Edges": <Sub-Edges>, "MetaInformation": {"some-key": "some-value"}},
   ],
   "Edges": [
     {"from": "<node-id>:<port-name>", "to": "<node-id>:<port-name>"}
@@ -30,8 +30,8 @@ for a graph is JSON which contains five basic fields:
   "version": "<semver-version of graph API>",
   "Components": [
     {"meta": "<meta-id>", "ports": [...], "atomic": true},
-    {"meta": "<meta-id>", "ports": [...], "implementation": <Graph>}
+    {"meta": "<meta-id>", "ports": [...], "Nodes": <Sub-Nodes>, "Edges": <Sub-Edges>}
   ],
-  "meta": {"some-key": "some-value"}
+  "MetaInformation": {"some-key": "some-value"}
 }
 ```
