@@ -137,7 +137,7 @@ function nodesDeepRec (graph, parents) {
  * and the nodes of their compound nodes, etc.
  * @param {PortGraph} graph The graph to work on
  * @param {String[]} baseCPath The base compound path for the node paths. This path specifies a list of parents and the actual node.
- * @returns {Pair<Compound Path, Node>[]} A list of pairs. Each containing a compound path as the first element specifying a list of parents
+ * @returns {Node[]} A list of pairs. Each containing a compound path as the first element specifying a list of parents
  * that lead to the node in the graph. The second element is the corresponding node.
  */
 export function nodesDeep (graph) {
