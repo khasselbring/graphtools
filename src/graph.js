@@ -300,6 +300,15 @@ export function addNodeByPath (graph, parentPath, nodeData) {
 }
 
 /**
+ * Gets the compound path for a node or compound node.
+ * @param {Node|PortGraph} node The node
+ * @returns {Path} A compound path to the node, from the root element.
+ */
+export function compoundPath (node) {
+  return node.path
+}
+
+/**
  * Add a node to the graph, returns a new graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
  * @param {CompoundPath} [nodePath] The path of the parent node. Optional, if you want to add it to the root element you can omit the path.
@@ -315,7 +324,7 @@ export function addNode (graph, nodePath, node) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
   checkNode(graph, node)
-  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(toJSON(node))))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(toJSON(node), {path: Node.pathJoin(compoundPath(graph), Node.id(node))})))
 }
 
 /**

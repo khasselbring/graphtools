@@ -40,6 +40,30 @@ export function isCompoundPath (path) {
 }
 
 /**
+ * Convert a path representation into its normalized array form.
+ * @param {string|string[]} path The path as a string or array.
+ * @returns {Path} The normalized path.
+ */
+export function pathNormalize (path) {
+  if (Array.isArray(path)) {
+    return path
+  } else {
+    return stringToPath(path)
+  }
+}
+
+/**
+ * Joins two paths into one.
+ * @param {Path} base The prefix of the new path
+ * @param {Path} rest The postfix of the new path.
+ * @returns {Path} The new path in the form `<base>»<rest>`.
+ */
+export function pathJoin (base, rest) {
+  if (!base) return rest
+  return _.concat(pathNormalize(base), pathNormalize(rest))
+}
+
+/**
  * Returns whether a path points to the root element or not.
  * @param {Path} path The path to check
  * @returns {boolean} True if the path points to the root element ('', '»' or []), false otherwise.
