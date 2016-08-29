@@ -6,7 +6,7 @@ import * as Component from './component'
 import * as Compound from './compound'
 import * as Edge from './edge'
 import * as ObjectAPI from './objectAPI'
-import omitDeep from 'omit-deep-lodash'
+// import omitDeep from 'omit-deep-lodash'
 import debugLog from 'debug'
 
 const debug = debugLog('graphtools')
@@ -56,6 +56,7 @@ export function fromJSON (jsonGraph) {
   return addAPI(jsonGraph)
 }
 
+/*
 function subGraphs (graph) {
   return _.flatten(nodes(graph)
     .filter((n) => n.implementation)
@@ -67,6 +68,7 @@ function removeGraphInternals (graph) {
   graphs.forEach((gr) => replaceNode(gr.subgraph, gr.id, omitDeep(node(gr.graph, gr.id), '_internals')))
   return graph
 }
+*/
 
 /**
  * Returns a JSON object for the graph
@@ -74,8 +76,8 @@ function removeGraphInternals (graph) {
  * @returns {object} A JSON representation of the graph.
  */
 export function toJSON (graph) {
-  var exportGraph = removeGraphInternals(graph)
-  return remAPI(_.cloneDeep(exportGraph))
+  // var exportGraph = removeGraphInternals(graph)
+  return remAPI(_.cloneDeep(graph))
 }
 
 /**
@@ -126,8 +128,8 @@ export function nodes (graph, predicate) {
   return graph.Nodes || []
 }
 
-function nodesDeepRec (graph, parents, cPath) {
-  return _.flatten(parents.map((p) => nodesDeep(p, cPath.concat([p.id]))))
+function nodesDeepRec (graph, parents) {
+  return _.flatten(parents.map((p) => nodesDeep(p)))
 }
 
 /**
@@ -138,10 +140,9 @@ function nodesDeepRec (graph, parents, cPath) {
  * @returns {Pair<Compound Path, Node>[]} A list of pairs. Each containing a compound path as the first element specifying a list of parents
  * that lead to the node in the graph. The second element is the corresponding node.
  */
-export function nodesDeep (graph, baseCPath = []) {
+export function nodesDeep (graph) {
   return nodes(graph)
-    .map((node) => [baseCPath.concat([node.id]), node])
-    .concat(nodesDeepRec(graph, nodes(graph, Compound.isCompound), baseCPath))
+    .concat(nodesDeepRec(graph, nodes(graph, Compound.isCompound)))
 }
 
 /**
@@ -294,7 +295,7 @@ export function addNodeByPath (graph, parentPath, nodeData) {
   if (Node.isRootPath(parentPath)) {
     return addNode(graph, nodeData)
   } else {
-    var parentGraph = node(parentPath)
+    var parentGraph = node(graph, parentPath)
     return replaceNode(graph, parentPath, addNode(parentGraph, nodeData))
   }
 }
@@ -306,6 +307,14 @@ export function addNodeByPath (graph, parentPath, nodeData) {
  */
 export function compoundPath (node) {
   return node.path
+}
+
+function setPath (node, path) {
+  var nodePath = Node.pathJoin(path, Node.id(node))
+  if (Compound.isCompound(node)) {
+    return Compound.setPath(node, nodePath, setPath)
+  }
+  return toJSON(_.merge({}, node, {path: nodePath}))
 }
 
 /**
@@ -324,7 +333,7 @@ export function addNode (graph, nodePath, node) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
   checkNode(graph, node)
-  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(toJSON(node), {path: Node.pathJoin(compoundPath(graph), Node.id(node))})))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge({}, setPath(node, compoundPath(graph))))))
 }
 
 /**
@@ -344,7 +353,7 @@ export function removeNode (graph, path) {
 }
 
 export function replaceNode (graph, path, newNode) {
-  return addNodeByPath(removeNode(graph, path), Node.pathParent(path), _.merge({id: Node.pathNode(path)}, newNode))
+  return addNodeByPath(removeNode(graph, path), Node.pathParent(path), _.merge({id: Node.pathNode(path)}, remAPI(newNode)))
 }
 
 /**

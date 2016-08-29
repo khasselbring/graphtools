@@ -182,6 +182,10 @@ export function port (node, name) {
   return port
 }
 
+export function path (node) {
+  return node.path
+}
+
 /**
  * Checks whether the node has the specific port.
  * @param {Node} node The node which has the port.

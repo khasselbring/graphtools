@@ -1,6 +1,7 @@
 /** @module Edge */
 
 import {isReference, id as nodeID} from './node'
+import _ from 'lodash'
 
 /**
  * Checks whether a node is a compound node.
@@ -15,4 +16,11 @@ export function id (node) {
   if (node.id) {
     return nodeID(node)
   } else return null
+}
+
+export function setPath (node, path, nodeSetPath) {
+  return _.merge({}, node,
+    {path},
+    {Nodes: node.Nodes.map((n) => nodeSetPath(n, path))}
+  )
 }

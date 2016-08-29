@@ -163,13 +163,21 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode(graph, ['a', 'b'])).to.be.false
     })
 
+    it('adds nodes in compounds', () => {
+      var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}]})
+        .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      var graph = Graph.empty().addNode(impl).addNodeByPath('b', {id: 'c', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      expect(Graph.hasNode(graph, ['b', 'a'])).to.be.true
+      expect(Graph.hasNode(graph, ['b', 'c'])).to.be.true
+    })
+
     it('gets nodes deep including compound nodes', () => {
       var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}]})
         .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
       var graph = Graph.empty().addNode(impl)
       var nodes = Graph.nodesDeep(graph)
       expect(nodes).to.have.length(2)
-      expect(nodes.map((n) => Node.id(n[0]))).to.have.members(['»b»a', 'b'])
+      expect(nodes.map((n) => Node.path(n))).to.have.deep.members([['b', 'a'], 'b'])
     })
 
     it('removes a node on the root level', () => {
@@ -209,7 +217,7 @@ describe('Basic graph functions', () => {
       expect(remGraph.hasNode('b')).to.be.true
     })
 
-    it('replaces references with nodes', () => {
+    it('replaces references with a node', () => {
       var graph = Graph.empty().addNode({ref: 'abc', id: '123'})
         .replaceNode('123', {componentId: 'abc', ports: [{name: 'a', kind: 'output', type: 'string'}], atomic: true})
       expect(graph.hasNode('123')).to.be.true
@@ -217,6 +225,21 @@ describe('Basic graph functions', () => {
       expect(graph.node('123').atomic).to.be.true
       expect(graph.node('123').componentId).to.equal('abc')
       expect(graph.node('123').ref).to.be.undefined
+    })
+
+    it('replaces references with a compound node', () => {
+      var impl = Graph.compound({componentId: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}]})
+        .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+        .addNode({id: 'b', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      var graph = Graph.empty().addNode({ref: 'abc', id: '123'})
+        .replaceNode('123', impl)
+      expect(graph.hasNode('123')).to.be.true
+      expect(graph.nodes()).to.have.length(1)
+      expect(graph.nodesDeep()).to.have.length(3)
+      expect(graph.hasNode('»123»a')).to.be.true
+      expect(graph.hasNode('»123»b')).to.be.true
+      expect(graph.node('»123»a').path).to.eql(['123', 'a'])
+      expect(graph.node('»123»b').path).to.eql(['123', 'b'])
     })
   })
 
