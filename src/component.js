@@ -22,14 +22,14 @@ export function id (component) {
     return component
   } else if (component == null) {
     throw new Error('Cannot determine id of undefined component.')
-  } else if (!component.meta) {
-    throw new Error('Malformed component. The component must either be a string that represents the id. Or it must be an object with an meta field.\n Component: ' + JSON.stringify(component))
+  } else if (!component.componentId) {
+    throw new Error('Malformed component. The component must either be a string that represents the id. Or it must be an object with an componendId field.\n Component: ' + JSON.stringify(component))
   }
-  return component.meta
+  return component.componentId
 }
 
 /**
- * Tests whether two components are the same component. This tests only if their meta IDs are
+ * Tests whether two components are the same component. This tests only if their component IDs are
  * the same not if both components contain the same information.
  * @param {Component} comp1 One of the components to test.
  * @param {Component} comp2 The other one.
@@ -105,7 +105,7 @@ export function hasPort (comp, name) {
  * @returns {boolean} True if the component is valid, false otherwise.
  */
 export function isValid (comp) {
-  return typeof (comp) === 'object' && typeof (comp.meta) === 'string' && comp.meta.length > 0 &&
+  return typeof (comp) === 'object' && typeof (comp.componentId) === 'string' && comp.componentId.length > 0 &&
     ports(comp).length !== 0 && typeof (comp.version) === 'string' && semver.valid(comp.version)
 }
 

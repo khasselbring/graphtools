@@ -26,6 +26,7 @@ export function pathIDToString (compoundPathArr) {
  * @returns {String[]} An array of node IDs representing the compound path.
  */
 export function stringToPath (compoundPathStr) {
+  if (compoundPathStr.indexOf('»') === -1) return [compoundPathStr]
   return compoundPathStr.split('»').slice(1)
 }
 
@@ -36,6 +37,45 @@ export function stringToPath (compoundPathStr) {
  */
 export function isCompoundPath (path) {
   return typeof (path) === 'string' && path[0] === '»'
+}
+
+/**
+ * Returns whether a path points to the root element or not.
+ * @param {Path} path The path to check
+ * @returns {boolean} True if the path points to the root element ('', '»' or []), false otherwise.
+ */
+export function isRootPath (path) {
+  if (typeof (path) === 'string') {
+    if (path === '') return true
+    path = stringToPath(path)
+  }
+  return path.length === 0
+}
+
+/**
+ * Returns the parent of a compound path.
+ * @param {string[]|string} path The path either as a string or an array.
+ * @returns {string[]|string} The parent of the path in the same format as the input.
+ * @throws {Error} If the input format is invalid.
+ */
+export function pathParent (path) {
+  if (typeof (path) === 'string') {
+    return pathIDToString(pathParent(stringToPath(path)))
+  } else if (Array.isArray(path)) {
+    return path.slice(0, -1)
+  } else {
+    throw new Error('Malformed compound path. It must either be a string or an array of node IDs. Compounds paths was: ' + JSON.stringify(path))
+  }
+}
+
+export function pathNode (path) {
+  if (typeof (path) === 'string') {
+    return pathIDToString(pathNode(stringToPath(path)))
+  } else if (Array.isArray(path)) {
+    return path.slice(-1)
+  } else {
+    throw new Error('Malformed compound path. It must either be a string or an array of node IDs. Compounds paths was: ' + JSON.stringify(path))
+  }
 }
 
 /**

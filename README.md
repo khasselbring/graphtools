@@ -17,7 +17,7 @@ for a graph is JSON which contains five basic fields:
 {
   "Nodes": [
     {"ref": "<meta-id>", "id": "<some-unique-id>"},
-    {"id": "<u-id>", "version": "<semver-version>", "meta": "<meta-id>",
+    {"id": "<u-id>", "version": "<semver-version>", "componentId": "<component-id>",
      "ports": [{"name": "<port-name>", "kind": "input|output", "type": "number"}],
      "atomic": "true", "MetaInformation": {"some-key": "some-value"}},
     {"id": "<u-id>", "version": "<semver-version>", "atomic": false,
@@ -29,8 +29,8 @@ for a graph is JSON which contains five basic fields:
   ],
   "version": "<semver-version of graph API>",
   "Components": [
-    {"meta": "<meta-id>", "ports": [...], "atomic": true},
-    {"meta": "<meta-id>", "ports": [...], "Nodes": <Sub-Nodes>, "Edges": <Sub-Edges>}
+    {"componentId": "<component-id>", "ports": [...], "atomic": true},
+    {"componentId": "<component-id>", "ports": [...], "Nodes": <Sub-Nodes>, "Edges": <Sub-Edges>}
   ],
   "MetaInformation": {"some-key": "some-value"}
 }

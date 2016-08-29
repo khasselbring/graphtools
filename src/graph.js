@@ -39,6 +39,15 @@ export function clone (graph) {
  * @returns {PortGraph} The port graph with its functions.
  */
 export function fromJSON (jsonGraph) {
+  var nodes = _.concat(jsonGraph.Nodes || [], (Array.isArray(jsonGraph.nodes)) ? jsonGraph.nodes : [])
+  var edges = _.concat(jsonGraph.Edges || [], (Array.isArray(jsonGraph.edges)) ? jsonGraph.edges : [])
+  var components = _.concat(jsonGraph.Components || [], (Array.isArray(jsonGraph.components)) ? jsonGraph.components : [])
+  jsonGraph.Nodes = nodes
+  jsonGraph.Edges = edges
+  jsonGraph.Components = components
+  delete jsonGraph.nodes
+  delete jsonGraph.edges
+  delete jsonGraph.components
   jsonGraph.Edges = _.map(jsonGraph.Edges, _.partial(Edge.normalize, jsonGraph))
   _.each(jsonGraph.Nodes, _.partial(checkNode, jsonGraph))
   _.each(jsonGraph.Edges, _.partial(checkEdge, jsonGraph))
@@ -177,7 +186,7 @@ export function nodeByPath (graph, path, basePath) {
  * @throws {Error} If the queried node does not exist in the graph.
  */
 export function node (graph, node) {
-  if (Node.isValid(graph) && Node.equal(graph, node)) {
+  if (Compound.isCompound(graph) && Compound.id(graph) && Node.equal(graph, node)) {
     return graph
   }
   if (Array.isArray(node) || Node.isCompoundPath(node)) {
@@ -260,7 +269,7 @@ export function hasNode (graph, node) {
   if (Array.isArray(node) || Node.isCompoundPath(node)) {
     return hasNodeByPath(graph, node)
   }
-  return (Node.isValid(graph) && Node.equal(graph, node)) || !!_.find(graph.Nodes, (n) => Node.equal(n, node))
+  return !!_.find(graph.Nodes, (n) => Node.equal(n, node))
 }
 
 function checkNode (graph, node) {
@@ -275,31 +284,58 @@ function checkNode (graph, node) {
 }
 
 /**
+ * Add a node at a specific path.
+ * @param {PortGraph} graph The graph that is the root for the nodePath
+ * @param {CompoundPath} parentPath A compound path identifying the location in the compound graph.
+ * @param {Node} node The node to add to the graph.
+ * @returns {PortGraph} A new graph that contains the node at the specific path.
+ */
+export function addNodeByPath (graph, parentPath, nodeData) {
+  if (Node.isRootPath(parentPath)) {
+    return addNode(graph, nodeData)
+  } else {
+    var parentGraph = node(parentPath)
+    return replaceNode(graph, parentPath, addNode(parentGraph, nodeData))
+  }
+}
+
+/**
  * Add a node to the graph, returns a new graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
+ * @param {CompoundPath} [nodePath] The path of the parent node. Optional, if you want to add it to the root element you can omit the path.
  * @param {Node} node The node object that should be added.
  * @returns {PortGraph} A new graph that includes the node.
  */
-export function addNode (graph, node) {
+export function addNode (graph, nodePath, node) {
+  if (Node.isCompoundPath(nodePath) && Node.isValid(node)) {
+    addNodeByPath(graph, nodePath, node)
+  }
+  node = nodePath
   if (hasNode(graph, node)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
   checkNode(graph, node)
-  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge(toJSON(node), {parent: graph}))))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(toJSON(node))))
 }
 
 /**
  * Removes a node from the graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
- * @param {Node|string} node The node that shall be removed, either the node object or the id.
+ * @param {CompoundPath} path The node that shall be removed, either the node object or the id.
  * @returns {PortGraph} A new graph without the given node.
  */
-export function removeNode (graph, node) {
-  return addAPI(changeSet.applyChangeSet(graph, changeSet.removeNode(Node.id(node))))
+export function removeNode (graph, path) {
+  var parentPath = Node.pathParent(path)
+  if (parentPath.length === 0) {
+    return addAPI(changeSet.applyChangeSet(graph, changeSet.removeNode(path)))
+  }
+  var parentGraph = node(graph, parentPath)
+  // remove node in its compound and replace the graphs on the path
+  return replaceNode(graph, parentPath, removeNode(parentGraph, Node.pathNode(path)))
 }
 
-export function replaceNode (graph, newNode) {
-  return addNode(removeNode(graph, newNode), newNode)
+export function replaceNode (graph, path, newNode) {
+  return addNodeByPath(removeNode(graph, path), Node.pathParent(path), _.merge({id: Node.pathNode(path)}, newNode))
 }
 
 /**
@@ -313,18 +349,18 @@ export function components (graph) {
 }
 
 /**
- * Returns a list of component meta ids. [Performance O(|V|)]
+ * Returns a list of component ids. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @returns {string[]} A list of component meta ids.
+ * @returns {string[]} A list of component ids.
  */
 export function componentIds (graph) {
-  return _.map(graph.Components, Component.meta)
+  return _.map(graph.Components, Component.componentId)
 }
 
 /**
- * Returns the component with the given meta id. [Performance O(|V|)]
+ * Returns the component with the given component id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @param {Component|string} comp The component or its meta id.
+ * @param {Component|string} comp The component or its component id.
  * @returns {Component} The component in the graph
  * @throws {Error} If the queried component does not exist in the graph.
  */
@@ -338,10 +374,10 @@ export function component (graph, comp) {
 }
 
 /**
- * Checks whether the graph has a component with the given meta id. [Performance O(|V|)]
+ * Checks whether the graph has a component with the given component id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @param {Component|string} comp The component or its meta id you want to check for.
- * @returns {boolean} True if the graph has a component with the given meta id, false otherwise.
+ * @param {Component|string} comp The component or its component id you want to check for.
+ * @returns {boolean} True if the graph has a component with the given component id, false otherwise.
  */
 export function hasComponent (graph, comp) {
   return !!_.find(graph.Components, (n) => Component.equal(n, comp))
@@ -351,7 +387,7 @@ function checkComponent (graph, comp) {
   if (!comp) {
     throw new Error('Cannot add undefined component to graph.')
   } else if (!Component.isValid(comp)) {
-    throw new Error('Cannot add invalid component to graph. Are you missing the meta-id, the version or a port?\nComponent: ' + JSON.stringify(comp))
+    throw new Error('Cannot add invalid component to graph. Are you missing the component-id, the version or a port?\nComponent: ' + JSON.stringify(comp))
   }
 }
 
@@ -372,7 +408,7 @@ export function addComponent (graph, comp) {
 /**
  * Removes a component from the graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
- * @param {Component|string} comp The component that shall be removed, either the component object or the meta id.
+ * @param {Component|string} comp The component that shall be removed, either the component object or the component id.
  * @returns {PortGraph} A new graph without the given component.
  */
 export function removeComponent (graph, comp) {
@@ -392,9 +428,9 @@ function checkEdge (graph, edge, parent) {
   var normEdge = Edge.normalize(graph, edge, parent)
   var from = node(graph, normEdge.from)
   var to = node(graph, normEdge.to)
-  if (!hasNode(graph, normEdge.from)) {
+  if (Compound.id(graph) !== normEdge.from && !hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
-  } else if (!hasNode(graph, normEdge.to)) {
+  } else if (Compound.id(graph) !== normEdge.to && !hasNode(graph, normEdge.to)) {
     throw new Error('Cannot create edge connection from: ' + normEdge.from + ' to not existing node: ' + normEdge.to)
   } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
     throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)

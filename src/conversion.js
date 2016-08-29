@@ -23,7 +23,7 @@ function mapToGrlibNode (node) {
         .map(mapToGrlibPort)
         .fromPairs()
         .value(),
-      id: node.meta,
+      id: node.componentId,
       branchPath: node.id
     }, _.omit(node, ['id', 'ports']))
   }
@@ -68,13 +68,13 @@ function replacePorts (node) {
   return _.merge({}, _.omit(node.value, ['outputPorts', 'inputPorts', 'id']),
     {
       ports: mapToPortNodePorts(node.value),
-      meta: node.value.id
+      componentId: node.value.id
     })
 }
 
 function mapToPortNode (node) {
   if (node.v.indexOf('defco_') === 0) {
-    return CS.insertComponent(_.merge({}, replacePorts(node), {meta: node.v.slice('defco_'.length)}))
+    return CS.insertComponent(_.merge({}, replacePorts(node), {componentId: node.v.slice('defco_'.length)}))
   }
   return CS.insertNode(_.merge({id: node.v}, replacePorts(node)))
 }
