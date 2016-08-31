@@ -74,3 +74,16 @@ describe('Node API', () => {
     expect(Node.hasPort({})).to.be.false
   })
 })
+
+describe('Compound paths', () => {
+  it('Can normalize paths correctly', () => {
+    expect(Node.pathNormalize('')).to.eql([])
+    expect(Node.pathNormalize([''])).to.eql([])
+    expect(Node.pathNormalize('»')).to.eql([])
+    expect(Node.pathNormalize('a')).to.eql(['a'])
+    expect(Node.pathNormalize(['a'])).to.eql(['a'])
+    expect(Node.pathNormalize('»a')).to.eql(['a'])
+    expect(Node.pathNormalize('»a»b')).to.eql(['a', 'b'])
+    expect(Node.pathNormalize(['a', 'b'])).to.eql(['a', 'b'])
+  })
+})

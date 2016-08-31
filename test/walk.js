@@ -64,36 +64,38 @@ describe('Adjacent nodes', () => {
     expect(succ).to.be.undefined
   })
 
-  var incGraph = Graph.compound({id: 'inc', ports: [{name: 'i', kind: 'input', type: 'a'}, {name: 'inc', kind: 'output', type: 'a'}]})
+  const incGraph = () => Graph.compound({id: 'inc', ports: [{name: 'i', kind: 'input', type: 'a'}, {name: 'inc', kind: 'output', type: 'a'}]})
     .addNode({id: 'const', ports: [{name: 'output', kind: 'output', type: 'a'}]})
     .addNode({id: 'add', ports: [{name: 's1', kind: 'input', type: 'a'}, {name: 's2', kind: 'input', type: 'a'}, {name: 'sum', kind: 'output', type: 'a'}]})
     .addEdge({from: 'const@output', to: 'add@s2'})
     .addEdge({from: 'add@sum', to: '@inc'})
     .addEdge({from: '@i', to: 'add@s1'})
 
+  /*
   var cmpGraph = Graph.empty()
     .addNode(incGraph)
     .addNode({id: 'stdout', ports: [{name: 'input', kind: 'input', type: 'a'}]})
     .addEdge({from: 'inc@inc', to: 'stdout@input'})
+  */
 
   it('`adjacentNode` can handle compound nodes', () => {
-    var preds = walk.adjacentNodes(incGraph, 'add', 's1', walk.predecessor)
+    var preds = walk.adjacentNodes(incGraph(), 'add', 's1', walk.predecessor)
     expect(preds).to.have.length(1)
     expect(noParent(preds[0])).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
-    var succs = walk.adjacentNodes(incGraph, 'inc', 'i', walk.successor)
+    var succs = walk.adjacentNodes(incGraph(), 'inc', 'i', walk.successor)
     expect(succs).to.have.length(1)
     expect(noParent(succs[0])).to.deep.equal({node: 'add', port: 's1', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
   })
 
   it('`adjacentNodes` can process multiple ports', () => {
-    var preds = walk.adjacentNodes(incGraph, 'add', ['s1', 's2'], walk.predecessor)
+    var preds = walk.adjacentNodes(incGraph(), 'add', ['s1', 's2'], walk.predecessor)
     expect(preds).to.have.length(2)
     expect(noParent(preds)).to.deep.include({node: 'const', port: 'output', edge: {from: 'const', outPort: 'output', to: 'add', inPort: 's2', layer: 'dataflow'}})
     expect(noParent(preds)).to.deep.include({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
   })
 
   it('`adjacentNodes` removes not usable paths', () => {
-    var preds = walk.adjacentNodes(incGraph, 'add', ['s1', '-'], walk.predecessor)
+    var preds = walk.adjacentNodes(incGraph(), 'add', ['s1', '-'], walk.predecessor)
     expect(preds).to.have.length(1)
     expect(noParent(preds[0])).to.deep.equal({node: 'inc', port: 'i', edge: {from: 'inc', outPort: 'i', to: 'add', inPort: 's1', innerCompoundOutput: true, layer: 'dataflow'}})
   })

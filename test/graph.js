@@ -141,6 +141,11 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode(graph, {id: 'b'})).to.be.true
     })
 
+    it('sets the path when creating compounds', () => {
+      var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}]})
+      expect(impl.path).to.equal('b')
+    })
+
     it('gets nodes by compound path', () => {
       var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}]})
         .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
@@ -151,6 +156,17 @@ describe('Basic graph functions', () => {
       n = Graph.node(graph, '»b»a')
       expect(n).to.be.ok
       expect(n.id).to.equal('a')
+    })
+
+    it('does not confuse parent compounds and inner nodes', () => {
+      var impl = Graph.compound({id: 'a', ports: [{name: 'out', kind: 'output', type: 'string'}]})
+        .addNode({id: 'a', ports: [{name: 'in', kind: 'input', type: 'number'}], atomic: true})
+      var graph = Graph.empty().addNode(impl)
+      var n = Graph.node(graph, ['a', 'a'])
+      expect(n).to.be.ok
+      expect(n.id).to.equal('a')
+      expect(n.path).to.equal(['a', 'a'])
+      expect(n.atomic).to.be.true
     })
 
     it('checks nodes by compound path', () => {

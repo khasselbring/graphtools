@@ -46,9 +46,9 @@ export function isCompoundPath (path) {
  */
 export function pathNormalize (path) {
   if (Array.isArray(path)) {
-    return path
+    return _.compact(path)
   } else {
-    return stringToPath(path)
+    return _.compact(stringToPath(path))
   }
 }
 
@@ -183,7 +183,7 @@ export function port (node, name) {
 }
 
 export function path (node) {
-  return node.path
+  return pathNormalize(node.path)
 }
 
 /**

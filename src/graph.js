@@ -187,7 +187,7 @@ export function nodeByPath (graph, path, basePath) {
  * @throws {Error} If the queried node does not exist in the graph.
  */
 export function node (graph, node) {
-  if (Compound.isCompound(graph) && Compound.id(graph) && Node.equal(graph, node)) {
+  if (Compound.isCompound(graph) && node === '') {
     return graph
   }
   if (Array.isArray(node) || Node.isCompoundPath(node)) {
@@ -225,7 +225,7 @@ export function compounds (graph) {
  * @returns {PortGraph} The graph representing the compound node.
  */
 export function compound (node) {
-  return addAPI(_.merge({}, node, emptyGraph(), {atomic: false}))
+  return addAPI(_.merge({}, node, emptyGraph(), {atomic: false, path: Node.id(node)}))
 }
 
 /**
@@ -442,13 +442,14 @@ export function edges (graph) {
   return graph.Edges
 }
 
-function checkEdge (graph, edge, parent) {
-  var normEdge = Edge.normalize(graph, edge, parent)
+function checkEdge (graph, edge) {
+  var normEdge = Edge.normalize(graph, edge)
+  console.log('from', from)
   var from = node(graph, normEdge.from)
   var to = node(graph, normEdge.to)
-  if (Compound.id(graph) !== normEdge.from && !hasNode(graph, normEdge.from)) {
+  if (normEdge.from !== '' && !hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
-  } else if (Compound.id(graph) !== normEdge.to && !hasNode(graph, normEdge.to)) {
+  } else if (normEdge.to !== '' && !hasNode(graph, normEdge.to)) {
     throw new Error('Cannot create edge connection from: ' + normEdge.from + ' to not existing node: ' + normEdge.to)
   } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
     throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)
@@ -527,23 +528,6 @@ export function edge (graph, edge) {
 export function edgeParent (graph, inEdge) {
   var e = edge(graph, inEdge)
   return e.parent
-}
-
-/**
- * Sets the parent of a node.
- * @param {PortGraph} graph The graph.
- * @param {Node} node The node for which you want to set the parent
- * @param {Node} [parent] Optional: The new parent of the node. If this is not defined
- * the new parent will be the root element, i.e. the node is not contained in any compound.
- * @returns {PortGraph} The new graph in which the parent is set.
- */
-export function setParent (graph, n, parent) {
-  if (!hasNode(graph, parent)) {
-    debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
-    throw new Error('Cannot set the parent of a node to a non-existing node.\nParent: ' + parent)
-  }
-  node(graph, n).parent = parent
-  return graph
 }
 
 /**
@@ -635,7 +619,8 @@ function emptyGraph () {
     Nodes: [],
     MetaInformation: {version: packageVersion()},
     Edges: [],
-    Components: []
+    Components: [],
+    path: []
   }
 }
 

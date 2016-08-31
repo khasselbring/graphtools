@@ -1,6 +1,7 @@
 /** @module Edge */
 
 import {isReference, id as nodeID} from './node'
+import * as Edge from './edge'
 import _ from 'lodash'
 
 /**
@@ -21,6 +22,7 @@ export function id (node) {
 export function setPath (node, path, nodeSetPath) {
   return _.merge({}, node,
     {path},
-    {Nodes: node.Nodes.map((n) => nodeSetPath(n, path))}
+    {Nodes: node.Nodes.map((n) => nodeSetPath(n, path))},
+    {Edges: node.Edges.map((e) => Edge.setPath(e, path))}
   )
 }
