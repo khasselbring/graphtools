@@ -103,6 +103,16 @@ export function pathNode (path) {
 }
 
 /**
+ * Returns whether two compound paths are equal
+ * @param {CompoundPath} path1 The first path to compare.
+ * @param {CompoundPath} path2 The second path to compare.
+ * @returns {boolean} True if the paths are the same, false otherwise.
+ */
+export function pathEqual (path1, path2) {
+  return _.isEqual(path1, path2)
+}
+
+/**
  * Returns the unique identifier of a node
  * @params {Node} node The node
  * @returns {string} The unique identifier of the node

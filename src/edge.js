@@ -38,23 +38,6 @@ function normalizeStructure (graph, edge) {
   }
 }
 
-/*
-function determineParent (graph, edge) {
-  var fromParent = Graph.parent(graph, edge.from)
-  var toParent = Graph.parent(graph, edge.to)
-  if (fromParent === toParent) {
-    return fromParent
-  } else if (fromParent === edge.to) {
-    return fromParent
-  } else if (toParent === edge.from) {
-    return toParent
-  } else {
-    throw new Error('Unable to determine the parent of the edge: ' + JSON.stringify(edge) +
-      '\nParent of ' + edge.from + ': ' + fromParent +
-      '\nParent of ' + edge.to + ': ' + toParent)
-  }
-}*/
-
 /**
  * Normalizes the edge into the standard format
  *
@@ -68,7 +51,7 @@ function determineParent (graph, edge) {
  *  {from: '@<port>', to: '@<port>'}
  *  {from: '<node>', to: '<node>', fromPort: '<port>', toPort: '<port>'}
  *
- * The format must be consistent, you cannot have a mixture between from and to.
+ * The format must be consistent, you cannot have a mixture for `from` and `to`.
  *
  * @param {PortGraph} graph The graph in which the port should connect ports.
  * @param {Edge} edge The edge object that should be normalized.
@@ -80,14 +63,13 @@ function determineParent (graph, edge) {
  *  - there is no consistent parent for this edge.
  */
 export function normalize (graph, edge) {
-  var newEdge = normalizeStructure(graph, edge, graph)
+  var newEdge = normalizeStructure(graph, edge)
   if (Node.isValid(graph) && newEdge.from.length === 0) {
     newEdge.innerCompoundOutput = true
   }
   if (Node.isValid(graph) && newEdge.to.length === 0) {
     newEdge.innerCompoundInput = true
   }
-  newEdge.parent = Node.path(graph)
   return newEdge
 }
 
@@ -98,8 +80,8 @@ export function normalize (graph, edge) {
  * @returns {boolean} True if the edges are equal (i.e. they connect the same ports), false otherwise.
  */
 export function equal (edge1, edge2) {
-  return edge1.from === edge2.from && edge1.outPort === edge2.outPort &&
-    edge1.to === edge2.to && edge1.inPort === edge2.inPort
+  return Node.pathEqual(edge1.from, edge2.from) && edge1.outPort === edge2.outPort &&
+    Node.pathEqual(edge1.to, edge2.to) && edge1.inPort === edge2.inPort
 }
 
 /**

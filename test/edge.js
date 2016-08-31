@@ -3,12 +3,11 @@
 import chai from 'chai'
 import * as Graph from '../src/graph.js'
 import * as Edge from '../src/edge.js'
-import * as Node from '../src/node'
 import _ from 'lodash'
 
 var expect = chai.expect
 
-describe.only('Edge API', () => {
+describe('Edge API', () => {
   it('Normalizes an edge correctly', () => {
     var cmpd = Graph.compound({id: 'P', ports: [{name: 'out', kind: 'output', type: 'a'}]})
     var graph = Graph.empty()
@@ -34,7 +33,7 @@ describe.only('Edge API', () => {
     var graph = Graph.empty().addNode(cmpd)
     var cmpdEdge = graph.node('P').edges()[0]
     expect(cmpdEdge)
-      .to.eql({from: ['a'], to: ['b'], outPort: 'out', inPort: 'in', layer: 'dataflow', parent: ['P']})
+      .to.eql({from: ['a'], to: ['b'], outPort: 'out', inPort: 'in', layer: 'dataflow'})
   })
 
   it('Assigns the parent for ports if only the port name is given', () => {
@@ -42,9 +41,8 @@ describe.only('Edge API', () => {
       .addNode({id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]})
       .addNode({id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
     const normEdge = Edge.normalize(cmpd, {from: '@out', to: 'b@in'})
-    expect(_.omit(normEdge, 'parent'))
+    expect(normEdge)
       .to.eql({from: [], to: ['b'], outPort: 'out', inPort: 'in', layer: 'dataflow', innerCompoundOutput: true})
-    expect(Node.equal(normEdge.parent, cmpd)).to.be.true
   })
 
   it('updates the paths when a compound is added into another graph', () => {
@@ -56,5 +54,16 @@ describe.only('Edge API', () => {
       .addNode(cmpd1)
     expect(Graph.edges(cmpd2.node('P'))[0]).to.eql({from: ['P2', 'P'], to: ['P2', 'P', 'b'], outPort: 'out', inPort: 'in',
         layer: 'dataflow', innerCompoundOutput: true, parent: ['P2', 'P']})
+  })
+
+  it('can compare edges', () => {
+    var cmpd1 = Graph.compound({id: 'P', ports: [{name: 'out', kind: 'input', type: 'a'}]})
+      .addNode({id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+      .addNode({id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
+      .addEdge({from: '@out', to: 'b@in'})
+    var cmpd2 = Graph.compound({id: 'P2', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+      .addNode(cmpd1)
+    expect(Edge.equal(Graph.edges(cmpd2.node('P'))[0],
+      _.cloneDeep(Graph.edges(cmpd2.node('P'))[0]))).to.be.true
   })
 })

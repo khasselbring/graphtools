@@ -168,6 +168,9 @@ export function nodeByPath (graph, path, basePath) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
   }
   basePath = basePath || path
+  if (path.length === 0) {
+    return graph
+  }
   var curNode = node(graph, path[0])
   if (path.length > 1) {
     if (!Compound.isCompound(curNode)) {
@@ -225,7 +228,7 @@ export function compounds (graph) {
  * @returns {PortGraph} The graph representing the compound node.
  */
 export function compound (node) {
-  return addAPI(_.merge({}, node, emptyGraph(), {atomic: false, path: Node.id(node)}))
+  return addAPI(_.merge({}, node, emptyGraph(), {atomic: false, path: (Node.isValid(node)) ? [Node.id(node)] : []}))
 }
 
 /**
@@ -244,6 +247,9 @@ export function hasNodeByPath (graph, path, basePath) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
   }
   basePath = basePath || path
+  if (path.length === 0) {
+    return graph
+  }
   const nodeExists = hasNode(graph, path[0])
   if (path.length > 1 && nodeExists) {
     var curNode = node(graph, path[0])
@@ -444,9 +450,8 @@ export function edges (graph) {
 
 function checkEdge (graph, edge) {
   var normEdge = Edge.normalize(graph, edge)
-  console.log('from', from)
-  var from = node(graph, normEdge.from)
-  var to = node(graph, normEdge.to)
+  var from = nodeByPath(graph, normEdge.from)
+  var to = nodeByPath(graph, normEdge.to)
   if (normEdge.from !== '' && !hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
   } else if (normEdge.to !== '' && !hasNode(graph, normEdge.to)) {

@@ -125,13 +125,6 @@ describe('Basic graph functions', () => {
       expect(() => Graph.addNode(graph, {id: 'a', prop: 'p'})).to.throw(Error)
     })
 
-    it('can set the parent of a node', () => {
-      var graph = Graph.addNode(
-        Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'p', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'p', kind: 'output', type: 'a'}]})
-      Graph.setParent(graph, 'b', 'a')
-      expect(Graph.node(graph, 'b').parent).to.equal('a')
-    })
-
     it('can check whether a node exists in the graph', () => {
       var graph = changeSet.applyChangeSets(Graph.empty(), [
         changeSet.insertNode({id: 'a', ports: [{name: 'p', kind: 'output', type: 'a'}]}),
@@ -143,7 +136,7 @@ describe('Basic graph functions', () => {
 
     it('sets the path when creating compounds', () => {
       var impl = Graph.compound({id: 'b', ports: [{name: 'out', kind: 'output', type: 'string'}]})
-      expect(impl.path).to.equal('b')
+      expect(impl.path).to.eql(['b'])
     })
 
     it('gets nodes by compound path', () => {
@@ -165,7 +158,7 @@ describe('Basic graph functions', () => {
       var n = Graph.node(graph, ['a', 'a'])
       expect(n).to.be.ok
       expect(n.id).to.equal('a')
-      expect(n.path).to.equal(['a', 'a'])
+      expect(n.path).to.eql(['a', 'a'])
       expect(n.atomic).to.be.true
     })
 
@@ -193,7 +186,7 @@ describe('Basic graph functions', () => {
       var graph = Graph.empty().addNode(impl)
       var nodes = Graph.nodesDeep(graph)
       expect(nodes).to.have.length(2)
-      expect(nodes.map((n) => Node.path(n))).to.have.deep.members([['b', 'a'], 'b'])
+      expect(nodes.map((n) => Node.path(n))).to.have.deep.members([['b', 'a'], ['b']])
     })
 
     it('removes a node on the root level', () => {
@@ -259,7 +252,7 @@ describe('Basic graph functions', () => {
     })
   })
 
-  describe('Edge functions', () => {
+  describe.only('Edge functions', () => {
     it('Can add edges to the graph', () => {
       var graph = Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
