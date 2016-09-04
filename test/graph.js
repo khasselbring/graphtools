@@ -252,15 +252,15 @@ describe('Basic graph functions', () => {
     })
   })
 
-  describe.only('Edge functions', () => {
+  describe('Edge functions', () => {
     it('Can add edges to the graph', () => {
       var graph = Graph.addNode(
         Graph.addNode(Graph.empty(), {id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]}), {id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
       var newGraph = Graph.addEdge(graph, {from: 'a@out', to: 'b@in'})
       expect(Graph.edges(newGraph)).to.have.length(1)
-      expect(Graph.edges(newGraph)[0].from).to.equal('a')
+      expect(Graph.edges(newGraph)[0].from).to.eql(['a'])
       expect(Graph.edges(newGraph)[0].outPort).to.equal('out')
-      expect(Graph.edges(newGraph)[0].to).to.equal('b')
+      expect(Graph.edges(newGraph)[0].to).to.eql(['b'])
       expect(Graph.edges(newGraph)[0].inPort).to.equal('in')
     })
 
@@ -305,16 +305,7 @@ describe('Basic graph functions', () => {
       var graph = Graph.empty()
         .addNode(cmpd)
       expect(Graph.edge(cmpd, {from: 'a@out', to: 'b@in'})).to.be.ok
-      expect(Node.equal(Graph.edge(cmpd, {from: 'a@out', to: 'b@in'}).parent, cmpd)).to.be.true
       expect(() => Graph.edge(graph, {from: 'a@out', to: 'b@in'})).to.throw(Error)
-    })
-
-    it('Can get the parent of an edge', () => {
-      var cmpd = Graph.compound({id: 'c', ports: [{name: 'out', kind: 'output', type: 'a'}]})
-        .addNode({id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]})
-        .addNode({id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
-        .addEdge({from: 'a@out', to: 'b@in'})
-      expect(Node.id(Graph.edgeParent(cmpd, {from: 'a@out', to: 'b@in'}))).to.equal('c')
     })
 
     it('Fails if the connecting ports do not exist', () => {
