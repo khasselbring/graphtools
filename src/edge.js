@@ -2,22 +2,7 @@
 
 import _ from 'lodash'
 import * as Node from './node'
-
-function isPortNotation (port) {
-  return port.indexOf('@') !== -1
-}
-
-function parsePortNotation (graph, port) {
-  var split = port.split('@')
-  var res = {}
-  res.node = split[0]
-  if (split[1] === '') {
-    throw new Error('Invalid port notation. Port notation does not contain a port. Parsed port: ' + port)
-  } else {
-    res.port = split[1]
-  }
-  return res
-}
+import * as Port from './port'
 
 function normalizeStructure (graph, edge) {
   if (!_.has(edge, 'from') || !_.has(edge, 'to')) {
@@ -25,14 +10,10 @@ function normalizeStructure (graph, edge) {
   }
   var layer = edge.layer || 'dataflow'
   if (edge.outPort && edge.inPort) {
-    return _.merge({}, edge, {layer, from: Node.pathNormalize(edge.from), to: Node.pathNormalize(edge.to)})
-  } else if (edge.fromPort && edge.toPort) {
-    return { from: Node.pathNormalize(edge.from), to: Node.pathNormalize(edge.to), outPort: edge.fromPort, inPort: edge.toPort, layer }
-  } else if (!edge.outPort && !edge.inPort && !edge.fromPort && !edge.toPort &&
-    isPortNotation(edge.from) && isPortNotation(edge.to)) {
-    var from = parsePortNotation(graph, edge.from)
-    var to = parsePortNotation(graph, edge.to)
-    return { from: Node.pathNormalize(from.node), to: Node.pathNormalize(to.node), outPort: from.port, inPort: to.port, layer }
+    return _.merge({}, _.omit(edge, ['outPort', 'inPort']),
+      {layer, from: Port.normalize({node: edge.from, port: edge.outPort}), to: Port.normalize({node: edge.to, port: edge.inPort})})
+  } else if (!edge.outPort && !edge.inPort && Port.isPort(edge.from) && Port.isPort(edge.to)) {
+    return { from: Port.normalize(edge.from), to: Port.normalize(edge.to), layer }
   } else {
     throw new Error('Malformed edge. Cannot translate format into standard format.\nEdge: ' + JSON.stringify(edge))
   }
@@ -41,26 +22,26 @@ function normalizeStructure (graph, edge) {
 /**
  * Normalizes the edge into the standard format
  *
- *  {from: '<node>', to: '<node>', outPort: '<port>', inPort: '<port>'}
+ * ```
+ *  {from: '<node|port>', to: '<node|port>', [outPort: '<port-name>', inPort: '<port-name>']}
+ * ```
  *
  * It accepts the following short forms:
  *
+ * ```
  *  {from: '<node>@<port>', to: '<node>@<port>'}
  *  {from: '@<port>', to: '<node>@<port>'}
  *  {from: '<node>@<port>', to: '@<port>'}
  *  {from: '@<port>', to: '@<port>'}
- *  {from: '<node>', to: '<node>', fromPort: '<port>', toPort: '<port>'}
+ *  {from: '<node>', to: '<node>', fromPort: '<port-name>', toPort: '<port-name>'}
+ * ```
  *
  * The format must be consistent, you cannot have a mixture for `from` and `to`.
  *
  * @param {PortGraph} graph The graph in which the port should connect ports.
  * @param {Edge} edge The edge object that should be normalized.
  * @returns {Edge} The normalized form of the edge.
- * @throws {Error} An error is thrown if either:
- *  - the edge is not in a consistent format,
- *  - the nodes do not exist,
- *  - the ports do not exits,
- *  - there is no consistent parent for this edge.
+ * @throws {Error} An error is thrown if the edge is not in a consistent format.
  */
 export function normalize (graph, edge) {
   var newEdge = normalizeStructure(graph, edge)
@@ -74,14 +55,13 @@ export function normalize (graph, edge) {
 }
 
 /**
- * Checks whether two normalized nodes are equal.
+ * Checks whether two normalized edges are equal.
  * @param {Edge} edge1 The first edge for the comparison.
  * @param {Edge} edge2 The second edge for the comparison.
  * @returns {boolean} True if the edges are equal (i.e. they connect the same ports), false otherwise.
  */
 export function equal (edge1, edge2) {
-  return Node.pathEqual(edge1.from, edge2.from) && edge1.outPort === edge2.outPort &&
-    Node.pathEqual(edge1.to, edge2.to) && edge1.inPort === edge2.inPort
+  return Port.equal(edge1.from, edge2.from) && Port.equal(edge1.to, edge2.to) && edge1.layer === edge2.layer
 }
 
 /**
@@ -97,4 +77,17 @@ export function setPath (edge, path) {
       from: _.compact(_.concat(path, edge.from)),
       to: _.compact(_.concat(path, edge.to))
     })
+}
+
+/**
+ * Checks whether an edge points to a given target.
+ * @param {Node|Port} target The target the edge should point to. This can either be a node or a port.
+ * @returns {boolean} True if the edge points to the target, false otherwise.
+ */
+export function pointsTo (edge, target) {
+  if (Port.isPort(target)) {
+    return Port.equal(edge.to, target)
+  } else {
+    return Node.equal(Port.node(edge.to), target)
+  }
 }

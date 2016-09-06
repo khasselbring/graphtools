@@ -4,6 +4,7 @@ import * as changeSet from './changeSet'
 import * as Node from './node'
 import * as Component from './component'
 import * as Compound from './compound'
+import * as CompoundPath from './compoundPath'
 import * as Edge from './edge'
 import * as ObjectAPI from './objectAPI'
 // import omitDeep from 'omit-deep-lodash'
@@ -162,7 +163,7 @@ export function nodeNames (graph) {
  * @throws {Error} If the compound path is invalid.
  */
 export function nodeByPath (graph, path, basePath) {
-  if (typeof (path) === 'string' && Node.isCompoundPath(path)) {
+  if (typeof (path) === 'string' && CompoundPath.isCompoundPath(path)) {
     path = Node.stringToPath(path)
   } else if (!Array.isArray(path)) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
@@ -193,7 +194,7 @@ export function node (graph, node) {
   if (Compound.isCompound(graph) && node === '') {
     return graph
   }
-  if (Array.isArray(node) || Node.isCompoundPath(node)) {
+  if (Array.isArray(node) || CompoundPath.isCompoundPath(node)) {
     return nodeByPath(graph, node)
   }
   var res = _.find(graph.Nodes, (n) => Node.equal(n, node))
@@ -241,7 +242,7 @@ export function atomics (graph) {
 }
 
 export function hasNodeByPath (graph, path, basePath) {
-  if (typeof (path) === 'string' && Node.isCompoundPath(path)) {
+  if (typeof (path) === 'string' && CompoundPath.isCompoundPath(path)) {
     path = Node.stringToPath(path)
   } else if (!Array.isArray(path)) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
@@ -273,7 +274,7 @@ export function hasNodeByPath (graph, path, basePath) {
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
 export function hasNode (graph, node) {
-  if (Array.isArray(node) || Node.isCompoundPath(node)) {
+  if (Array.isArray(node) || CompoundPath.isCompoundPath(node)) {
     return hasNodeByPath(graph, node)
   }
   return !!_.find(graph.Nodes, (n) => Node.equal(n, node))
@@ -316,11 +317,19 @@ export function compoundPath (node) {
 }
 
 function setPath (node, path) {
-  var nodePath = Node.pathJoin(path, Node.id(node))
+  var nodePath = CompoundPath.join(path, Node.id(node))
   if (Compound.isCompound(node)) {
     return Compound.setPath(node, nodePath, setPath)
   }
   return toJSON(_.merge({}, node, {path: nodePath}))
+}
+
+function defaultToGenericType (port) {
+  if (!port.type) {
+    return _.merge({type: 'generic'}, port)
+  } else {
+    return port
+  }
 }
 
 /**
@@ -331,13 +340,14 @@ function setPath (node, path) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export function addNode (graph, nodePath, node) {
-  if (Node.isCompoundPath(nodePath) && Node.isValid(node)) {
+  if (CompoundPath.isCompoundPath(nodePath) && Node.isValid(node)) {
     addNodeByPath(graph, nodePath, node)
   }
   node = nodePath
   if (hasNode(graph, node)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
+  node.ports = node.ports.map(defaultToGenericType)
   checkNode(graph, node)
   return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge({}, setPath(node, compoundPath(graph))))))
 }
@@ -580,13 +590,12 @@ export function setMeta (graph, key, value) {
  * Returns a list of predecessors for a node including the input port. Each node can only have exactly one
  * predecessor for every port.
  * @param {PortGraph} graph The graph.
- * @param {string} node The node for which we look for predecessors.
+ * @param {Node|Port} target The target to which the predecessores point.
  * @returns {Port[]} A list of ports with their corresponding nodes
  */
-export function predecessors (graph, node) {
+export function predecessors (graph, target) {
   return _(graph.Edges)
-    .filter((e) => e.to === node)
-    .map((e) => ({node: e.from, port: e.outPort, succeedingNode: e.from, succeedingPort: e.outPort}))
+    .filter((e) => Edge.pointsTo(e, target))
     .value()
 }
 
@@ -594,28 +603,22 @@ export function predecessors (graph, node) {
  * Returns the predecessors for a node including the input port. Each node can only have exactly one
  * predecessor for every port.
  * @param {PortGraph} graph The graph.
- * @param {string} node The node for which we look for predecessors.
- * @param {string} port The port to follow.
+ * @param {Node|Port} target The target to which the predecessores point.
  * @returns {Port} The preceeding port with the corresponding node
  */
-export function predecessor (graph, node, port) {
-  return _(graph.Edges)
-    .filter((e) => e.to === node && e.inPort === port)
-    .map((e) => ({node: e.from, port: e.outPort, succeedingNode: e.from, succeedingPort: e.outPort}))
-    .first()
+export function predecessor (graph, node) {
+  return predecessors(graph, node)[0]
 }
 
 /**
  * Get the successors of one node in the graph, optionally for a specific port.
  * @param {PortGraph} graph The graph.
- * @param {string} node The node id.
- * @param {string|null} port An optional port, if you need only successors for the specific port.
+ * @param {Node|Port} source The source from which to follow the edges.
  * @returns {Port[]} A list of ports that succeed the node with their corresponding nodes.
  */
-export function successors (graph, node, port) {
+export function successors (graph, source) {
   return _(graph.Edges)
-    .filter((e) => e.from === node && (!port || e.outPort === port))
-    .map((e) => ({node: e.to, port: e.inPort, preceedingNode: e.from, preceedingPort: e.outPort}))
+    .filter((e) => Edge.isFrom(e, node))
     .value()
 }
 

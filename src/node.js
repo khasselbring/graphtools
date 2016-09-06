@@ -1,6 +1,8 @@
 /** @module Node */
 
 import _ from 'lodash'
+import * as Path from './path'
+import cuid from 'cuid'
 
 /**
  * A node either as an identifier, or as an object containing the property `node` as its identifier.
@@ -11,105 +13,14 @@ const OUTPUT = 'output'
 const INPUT = 'input'
 
 /**
- * Converts a compound path into its string representation. The seperate parts are divided by a '»'.
- * @param {String[]} compoundPathArr An array of node IDs reperesenting the compound path.
- * @returns {String} The string representation of the compound path.
+ * Creates a normalized node object. It makes sure, that the node has all necessary information like an id and a
+ * normalized path.
+ * @param {Node} node A protypical node object.
+ * @returns {Node} A complete node object
  */
-export function pathIDToString (compoundPathArr) {
-  if (compoundPathArr.length === 1) return compoundPathArr[0]
-  return compoundPathArr.reduce((acc, n) => acc + '»' + n, '')
-}
-
-/**
- * Converts a compound path string into its array representation. The seperate parts must be divided by a '»'.
- * @param {String} compoundPathStr A string reperesenting the compound path divded by '»'.
- * @returns {String[]} An array of node IDs representing the compound path.
- */
-export function stringToPath (compoundPathStr) {
-  if (compoundPathStr.indexOf('»') === -1) return [compoundPathStr]
-  return compoundPathStr.split('»').slice(1)
-}
-
-/**
- * Returns whether a string represents a compound path or not.
- * @param {string} path The path string to test.
- * @returns True if the path represents a compound path, false otherwise.
- */
-export function isCompoundPath (path) {
-  return typeof (path) === 'string' && path[0] === '»'
-}
-
-/**
- * Convert a path representation into its normalized array form.
- * @param {string|string[]} path The path as a string or array.
- * @returns {Path} The normalized path.
- */
-export function pathNormalize (path) {
-  if (Array.isArray(path)) {
-    return _.compact(path)
-  } else {
-    return _.compact(stringToPath(path))
-  }
-}
-
-/**
- * Joins two paths into one.
- * @param {Path} base The prefix of the new path
- * @param {Path} rest The postfix of the new path.
- * @returns {Path} The new path in the form `<base>»<rest>`.
- */
-export function pathJoin (base, rest) {
-  if (!base) return rest
-  return _.concat(pathNormalize(base), pathNormalize(rest))
-}
-
-/**
- * Returns whether a path points to the root element or not.
- * @param {Path} path The path to check
- * @returns {boolean} True if the path points to the root element ('', '»' or []), false otherwise.
- */
-export function isRootPath (path) {
-  if (typeof (path) === 'string') {
-    if (path === '') return true
-    path = stringToPath(path)
-  }
-  return path.length === 0
-}
-
-/**
- * Returns the parent of a compound path.
- * @param {string[]|string} path The path either as a string or an array.
- * @returns {string[]|string} The parent of the path in the same format as the input.
- * @throws {Error} If the input format is invalid.
- */
-export function pathParent (path) {
-  if (typeof (path) === 'string') {
-    return pathIDToString(pathParent(stringToPath(path)))
-  } else if (Array.isArray(path)) {
-    return path.slice(0, -1)
-  } else {
-    throw new Error('Malformed compound path. It must either be a string or an array of node IDs. Compounds paths was: ' + JSON.stringify(path))
-  }
-}
-
-export function pathNode (path) {
-  if (typeof (path) === 'string') {
-    return pathIDToString(pathNode(stringToPath(path)))
-  } else if (Array.isArray(path)) {
-    return path.slice(-1)
-  } else {
-    throw new Error('Malformed compound path. It must either be a string or an array of node IDs. Compounds paths was: ' + JSON.stringify(path))
-  }
-}
-
-/**
- * Returns whether two compound paths are equal
- * @param {CompoundPath} path1 The first path to compare.
- * @param {CompoundPath} path2 The second path to compare.
- * @returns {boolean} True if the paths are the same, false otherwise.
- */
-export function pathEqual (path1, path2) {
-  return _.isEqual(path1, path2)
+export function create (node) {
+  return _.merge({id: cuid()}, node,
+    {path: (node.path) ? Path.normalize(node.path) : undefined})
 }
 
 /**
@@ -121,8 +32,6 @@ export function pathEqual (path1, path2) {
 export function id (node) {
   if (typeof (node) === 'string') {
     return node
-  } else if (Array.isArray(node)) {
-    return pathIDToString(node)
   } else if (node == null) {
     throw new Error('Cannot determine id of undefined node.')
   } else if (!node.id) {
@@ -193,7 +102,7 @@ export function port (node, name) {
 }
 
 export function path (node) {
-  return pathNormalize(node.path)
+  return node.path
 }
 
 /**

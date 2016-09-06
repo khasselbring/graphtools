@@ -81,7 +81,7 @@ describe('Basic graph functions', () => {
     expect(() => graph.addNode({ref: 'a', id: 'a'})).to.throw(Error)
   })
 
-  describe('Node functions', () => {
+  describe.only('Node functions', () => {
     it('fails if a non existend node is queried', () => {
       expect(() => Graph.node(Graph.empty(), 'a')).to.throw(Error)
     })
@@ -113,6 +113,12 @@ describe('Basic graph functions', () => {
         .addNode({id: 'a', ports: [{name: 'p', kind: 'output', type: 'a'}]})
         .addNode({id: 'b', ports: [{name: 'p', kind: 'output', type: 'a'}]})
       expect(graph.nodes()).to.have.length(2)
+    })
+
+    it('sets the type of ports to `generic` if no type is given', () => {
+      var graph = Graph.empty()
+        .addNode({id: 'a', ports: [{name: 'p', kind: 'input'}]})
+      expect(graph.node('a').ports[0].type).to.equal('generic')
     })
 
     it('should throw an error if the node data is not valid', () => {
@@ -315,6 +321,26 @@ describe('Basic graph functions', () => {
       expect(() => Graph.addEdge(graph, {from: 'a@out', to: 'b@no', parent: 'a'})).to.throw(Error)
       expect(() => Graph.addEdge(graph, {from: 'a@no', to: 'b@no', parent: 'a'})).to.throw(Error)
       expect(() => Graph.addEdge(graph, {from: 'a@in', to: 'b@out', parent: 'a'})).to.throw(Error)
+    })
+
+    it('Gets the predecessors for a node', () => {
+      var graph = Graph.empty()
+        .addNode({id: 'a', ports: [{name: 'out', kind: 'output', type: 'a'}]})
+        .addNode({id: 'b', ports: [{name: 'in', kind: 'input', type: 'a'}]})
+        .addEdge({from: 'a@out', to: 'b@in'})
+      expect(graph.predecessors('b')).to.eql([{node: 'a', port: 'out'}])
+      expect(graph.predecessors({node: 'b', port: 'in'})).to.eql([{node: 'a', port: 'out'}])
+    })
+
+    it('Gets the successors for a node', () => {
+      var graph = Graph.empty()
+        .addNode({id: 'a', ports: [{name: 'out', kind: 'output'}]})
+        .addNode({id: 'b', ports: [{name: 'in', kind: 'input'}]})
+        .addNode({id: 'c', ports: [{name: 'in2', kind: 'input'}]})
+        .addEdge({from: 'a@out', to: 'b@in'})
+        .addEdge({from: 'a@out', to: 'c@in2'})
+      expect(graph.successors('a')).to.deep.have.members([{node: 'b', port: 'in'}, {node: 'c', port: 'in2'}])
+      expect(graph.successors({node: 'a', port: 'out'})).to.deep.have.members([{node: 'b', port: 'in'}, {node: 'c', port: 'in2'}])
     })
   })
 
