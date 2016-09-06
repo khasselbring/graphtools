@@ -183,10 +183,23 @@ export function nodeByPath (graph, path, basePath) {
   }
 }
 
+function isID (str) {
+  return str[0] === '#'
+}
+
+/**
+ * Returns the path that points to the node in the graph by its id. The id is preseved when moving or editing nodes.
+ * The path might change. To fixate a node one can use the ID.
+ */
+export function idToPath (graph, id) {
+  if (id[0] === '#') return idToPath(graph, id.slice(1))
+  return graph.__internals.idMap[id]
+}
+
 /**
  * Returns the node with the given id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
- * @param {Node|string} node The node or its id.
+ * @param {Node|string} node The node, its id or its local name.
  * @returns {Node} The node in the graph
  * @throws {Error} If the queried node does not exist in the graph.
  */
@@ -196,6 +209,8 @@ export function node (graph, node) {
   }
   if (Array.isArray(node) || CompoundPath.isCompoundPath(node)) {
     return nodeByPath(graph, node)
+  } else if (isID(node)) {
+    return nodeByPath(graph, idToPath(graph, node))
   }
   var res = _.find(graph.Nodes, (n) => Node.equal(n, node))
   if (!res) {
@@ -307,15 +322,6 @@ export function addNodeByPath (graph, parentPath, nodeData) {
   }
 }
 
-/**
- * Gets the compound path for a node or compound node.
- * @param {Node|PortGraph} node The node
- * @returns {Path} A compound path to the node, from the root element.
- */
-export function compoundPath (node) {
-  return node.path
-}
-
 function setPath (node, path) {
   var nodePath = CompoundPath.join(path, Node.id(node))
   if (Compound.isCompound(node)) {
@@ -349,7 +355,7 @@ export function addNode (graph, nodePath, node) {
   }
   node.ports = node.ports.map(defaultToGenericType)
   checkNode(graph, node)
-  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge({}, setPath(node, compoundPath(graph))))))
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge({}, setPath(node, Node.path(graph))))))
 }
 
 /**
@@ -460,8 +466,8 @@ export function edges (graph) {
 
 function checkEdge (graph, edge) {
   var normEdge = Edge.normalize(graph, edge)
-  var from = nodeByPath(graph, normEdge.from)
-  var to = nodeByPath(graph, normEdge.to)
+  var from = node(graph, normEdge.from)
+  var to = node(graph, normEdge.to)
   if (normEdge.from !== '' && !hasNode(graph, normEdge.from)) {
     throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
   } else if (normEdge.to !== '' && !hasNode(graph, normEdge.to)) {
