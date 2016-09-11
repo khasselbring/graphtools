@@ -17,30 +17,30 @@ chai.use(sinonChai)
 const noParent = _.partial(omitDeep, _, 'parent')
 
 describe('Adjacent nodes', () => {
-  var pGraph1 = Graph.empty()
+  var pGraph1 = () => Graph.empty()
     .addNode({id: '2_STDOUT', ports: [{name: 'input', kind: 'input', type: 'a'}]})
     .addNode({id: '1_INC', ports: [{name: 'inc', kind: 'output', type: 'a'}]})
     .addEdge({from: '1_INC@inc', to: '2_STDOUT@input'})
 
   it('can get the predecessor of a node for', () => {
-    var pred = walk.predecessor(pGraph1, '2_STDOUT', 'input')
+    var pred = walk.predecessor(pGraph1(), '2_STDOUT', 'input')
     expect(noParent(pred)).to.deep.equal([{node: '1_INC', port: 'inc',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}}])
   })
 
   it('can get the successor of a node for', () => {
-    var pred = walk.successor(pGraph1, '1_INC', 'inc')
+    var pred = walk.successor(pGraph1(), '1_INC', 'inc')
     expect(noParent(pred)).to.deep.equal([{node: '2_STDOUT', port: 'input',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}}])
   })
 
-  var doubleOut =
+  var doubleOut = () =>
     Graph.addEdge(
-    Graph.addNode(pGraph1, {id: '3_STDOUT', ports: [{name: 'input', kind: 'input', type: 'a'}]}),
+    Graph.addNode(pGraph1(), {id: '3_STDOUT', ports: [{name: 'input', kind: 'input', type: 'a'}]}),
     { from: '1_INC@inc', to: '3_STDOUT@input' })
 
   it('can get multiple successor from one port', () => {
-    var succ = walk.successor(doubleOut, '1_INC', 'inc')
+    var succ = walk.successor(doubleOut(), '1_INC', 'inc')
     expect(succ).to.have.length(2)
     expect(noParent(succ)).to.deep.include({node: '2_STDOUT', port: 'input',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}})
@@ -49,18 +49,18 @@ describe('Adjacent nodes', () => {
   })
 
   it('`adjacentNode` returns edgeFollow result', () => {
-    var pred = walk.adjacentNode(pGraph1, '0_STDIN', 'output', () => ['NEXT_NODE'])
+    var pred = walk.adjacentNode(pGraph1(), '0_STDIN', 'output', () => ['NEXT_NODE'])
     expect(pred).to.deep.equal(['NEXT_NODE'])
   })
 
   it('`adjacentNode` can use successor function', () => {
-    var succ = walk.adjacentNode(pGraph1, '1_INC', 'inc', walk.successor)
+    var succ = walk.adjacentNode(pGraph1(), '1_INC', 'inc', walk.successor)
     expect(noParent(succ)).to.deep.equal([{node: '2_STDOUT', port: 'input',
       edge: {from: '1_INC', outPort: 'inc', to: '2_STDOUT', inPort: 'input', layer: 'dataflow'}}])
   })
 
   it('`adjacentNode` returns undefined if path does not exists', () => {
-    var succ = walk.adjacentNode(pGraph1, '1_INC', 'a', walk.successor)
+    var succ = walk.adjacentNode(pGraph1(), '1_INC', 'a', walk.successor)
     expect(succ).to.be.undefined
   })
 
@@ -102,39 +102,39 @@ describe('Adjacent nodes', () => {
 })
 
 describe('Graph walks', () => {
-  var pGraph1 = Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.json'))))
+  var pGraph1 = () => Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph_simple.json'))))
   it('can walk forward through a given path', () => {
-    var path = walk.walk(pGraph1, '0_STDIN', ['output', 'inc'])
+    var path = walk.walk(pGraph1(), '0_STDIN', ['output', 'inc'])
     expect(path).to.have.length(1)
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
   })
 
   it('can walk backward through a given path', () => {
-    var path = walk.walkBack(pGraph1, '2_STDOUT', ['input', 'i'])
+    var path = walk.walkBack(pGraph1(), '2_STDOUT', ['input', 'i'])
     expect(path).to.have.length(1)
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
   })
 
-  var pGraph2 = Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph.json'))))
+  var pGraph2 = () => Convert.fromGraphlib(grlib.json.read(JSON.parse(fs.readFileSync('./test/fixtures/portgraph.json'))))
   it('can walk over a compound node', () => {
-    var path = walk.walk(pGraph2, '0_STDIN', ['output', 'inc'])
+    var path = walk.walk(pGraph2(), '0_STDIN', ['output', 'inc'])
     expect(path).to.have.length(1)
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
   })
 
   it('can walk into a compound node', () => {
-    var path = walk.walk(pGraph2, '0_STDIN', ['output', 'i'])
+    var path = walk.walk(pGraph2(), '0_STDIN', ['output', 'i'])
     expect(path).to.have.length(1)
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '3_ADD'])
   })
 
   it('returns empty array if the path does not exist', () => {
-    var path = walk.walk(pGraph2, '0_STDIN', ['a'])
+    var path = walk.walk(pGraph2(), '0_STDIN', ['a'])
     expect(path).to.have.length(0)
   })
 
   it('can follow multiple paths', () => {
-    var path = walk.walkBack(pGraph2, '3_ADD', [['s1', 's2']])
+    var path = walk.walkBack(pGraph2(), '3_ADD', [['s1', 's2']])
     expect(path).to.have.length(2)
     expect(path[0][0]).to.be.oneOf(['1_INC', '4_CONST1'])
     expect(path[1][0]).to.be.oneOf(['1_INC', '4_CONST1'])
@@ -145,7 +145,7 @@ describe('Graph walks', () => {
     cb.onCall(0).returns('output')
     cb.onCall(1).returns('inc')
     cb.onCall(2).returns([])
-    var path = walk.walk(pGraph1, '0_STDIN', cb)
+    var path = walk.walk(pGraph1(), '0_STDIN', cb)
     expect(path).to.have.length(1)
     expect(path[0]).to.deep.equal(['0_STDIN', '1_INC', '2_STDOUT'])
   })
@@ -153,12 +153,12 @@ describe('Graph walks', () => {
   it('returns an empty array if the path given by a function does not exist', () => {
     var cb = sinon.stub()
     cb.onCall(0).returns('a')
-    var path = walk.walk(pGraph1, '0_STDIN', cb)
+    var path = walk.walk(pGraph1(), '0_STDIN', cb)
     expect(path).to.have.length(0)
   })
 
   it('gives a valid node object to the path function', () => {
-    walk.walk(pGraph1, '0_STDIN', (graph, node) => {
+    walk.walk(pGraph1(), '0_STDIN', (graph, node) => {
       expect(graph).to.be.ok
       expect(node).to.be.a('string')
       if (node === '0_STDIN') return 'output'
@@ -170,7 +170,7 @@ describe('Graph walks', () => {
     cb.onCall(0).returns(['s1', 's2'])
     cb.onCall(1).returns([])
     cb.onCall(2).returns([])
-    var path = walk.walkBack(pGraph2, '3_ADD', cb)
+    var path = walk.walkBack(pGraph2(), '3_ADD', cb)
     expect(path).to.have.length(2)
     expect(path[0][0]).to.be.oneOf(['1_INC', '4_CONST1'])
     expect(path[1][0]).to.be.oneOf(['1_INC', '4_CONST1'])
@@ -178,8 +178,8 @@ describe('Graph walks', () => {
 
   it('calls the walk callback with the graph, node and port', () => {
     var cb = sinon.stub()
-    cb.calledWith(pGraph2, '0_STDIN', 'output')
-    walk.walkBack(pGraph2, '1_INC', cb)
+    cb.calledWith(pGraph2(), '0_STDIN', 'output')
+    walk.walkBack(pGraph2(), '1_INC', cb)
   })
 
   it('can follows a path into a generic', () => {

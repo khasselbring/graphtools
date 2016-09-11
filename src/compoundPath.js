@@ -110,3 +110,7 @@ export function node (path) {
 export function equal (path1, path2) {
   return _.isEqual(path1, path2)
 }
+
+export function sameParents (path1, path2) {
+  return path1 && path2 && path1.length > 0 && path2.length > 0 && equal(parent(path1), parent(path2))
+}

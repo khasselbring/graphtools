@@ -3,6 +3,11 @@
  * The port format is a unique identifier for the port and its node unlike the port name.
  */
 
+import _ from 'lodash'
+
+const OUTPUT = 'output'
+const INPUT = 'input'
+
 /**
  * Checks whether a string represents a port notation. A port notation is a string that
  * contains the information about the node and the port separated by an `@`, e.g. 'nodeA@portB'
@@ -10,7 +15,7 @@
  * @returns {boolean} True if the string represents a port notation, false otherwise.
  */
 export function isPortNotation (port) {
-  return port.indexOf('@') !== -1
+  return typeof (port) === 'string' && port.indexOf('@') !== -1
 }
 
 function parsePortNotation (port) {
@@ -32,10 +37,17 @@ function parsePortNotation (port) {
  */
 export function normalize (port) {
   if (isPortNotation(port)) {
-    return parsePortNotation(port)
+    return assureType(parsePortNotation(port))
   } else {
-    return port
+    return assureType(port)
   }
+}
+
+function assureType (port) {
+  if (!port.type) {
+    return _.merge({type: 'generic'}, port)
+  }
+  return port
 }
 
 /**
@@ -57,6 +69,24 @@ export function portName (port) {
 }
 
 /**
+ * returns whether the given port is an output port or not
+ * @param {Port} port The port to check
+ * @returns {boolean} True if the port is an output port, false otherwise.
+ */
+export function isOutputPort (port) {
+  return port.kind === OUTPUT
+}
+
+/**
+ * returns whether the given port is an input port or not
+ * @param {Port} port The port to check
+ * @returns {boolean} True if the port is an input port, false otherwise.
+ */
+export function isInputPort (port) {
+  return port.kind === INPUT
+}
+
+/**
  * Returns whether the given object is a port object or not.
  * @params any Any value.
  * @returns {boolean} True if the value is a port, false otherwise.
@@ -64,4 +94,21 @@ export function portName (port) {
 export function isPort (any) {
   return (typeof (any) === 'object' && typeof (any.node) === 'string' && typeof (any.port) === 'string') ||
     typeof (any) === 'string' && isPortNotation(any)
+}
+
+export function isValid (port) {
+  return typeof (port) === 'object' && port.name && (port.kind === INPUT || port.kind === OUTPUT) && port.type
+}
+
+/**
+ * Returns a string representation of the port
+ * @params {Port} port The port
+ * @returns {string} A string representation of the port.
+ */
+export function toString (port) {
+  return node(port) + '@' + portName(port)
+}
+
+export function equal (port1, port2) {
+  return node(port1) === node(port2) && portName(port1) === portName(port2)
 }

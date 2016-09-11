@@ -6,6 +6,7 @@ import * as Component from './component'
 import * as Compound from './compound'
 import * as CompoundPath from './compoundPath'
 import * as Edge from './edge'
+import * as Port from './port'
 import * as ObjectAPI from './objectAPI'
 // import omitDeep from 'omit-deep-lodash'
 import debugLog from 'debug'
@@ -31,7 +32,7 @@ export function equal (graph1, graph2) {
  * @returns {PortGraph} A clone of the input graph.
  */
 export function clone (graph) {
-  return fromJSON(toJSON(graph))
+  return _.clone(graph)
 }
 
 /**
@@ -49,12 +50,12 @@ export function fromJSON (jsonGraph) {
   delete jsonGraph.nodes
   delete jsonGraph.edges
   delete jsonGraph.components
-  jsonGraph.Edges = _.map(jsonGraph.Edges, _.partial(Edge.normalize, jsonGraph))
-  _.each(jsonGraph.Nodes, _.partial(checkNode, jsonGraph))
-  _.each(jsonGraph.Edges, _.partial(checkEdge, jsonGraph))
-  _.each(jsonGraph.Components, _.partial(checkComponent, jsonGraph))
-  // add parents
-  return addAPI(jsonGraph)
+  var graph = empty()
+  jsonGraph.Nodes.reduce((curGraph, node) => addNode(curGraph, node), graph)
+  jsonGraph.Edges.reduce((curGraph, edge) => addEdge(curGraph, edge), graph)
+  jsonGraph.Components.reduce((curGraph, comp) => addComponent(curGraph, comp), graph)
+  // add parents ? optimizations!!
+  return graph
 }
 
 /*
@@ -164,7 +165,7 @@ export function nodeNames (graph) {
  */
 export function nodeByPath (graph, path, basePath) {
   if (typeof (path) === 'string' && CompoundPath.isCompoundPath(path)) {
-    path = Node.stringToPath(path)
+    path = CompoundPath.fromString(path)
   } else if (!Array.isArray(path)) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
   }
@@ -203,19 +204,22 @@ export function idToPath (graph, id) {
  * @returns {Node} The node in the graph
  * @throws {Error} If the queried node does not exist in the graph.
  */
-export function node (graph, node) {
-  if (Compound.isCompound(graph) && node === '') {
+export function node (graph, searchNode) {
+  if (Port.isPort(searchNode)) {
+    return node(graph, Port.node(searchNode))
+  }
+  if (Compound.isCompound(graph) && searchNode === '') {
     return graph
   }
-  if (Array.isArray(node) || CompoundPath.isCompoundPath(node)) {
-    return nodeByPath(graph, node)
-  } else if (isID(node)) {
-    return nodeByPath(graph, idToPath(graph, node))
+  if (Array.isArray(searchNode) || CompoundPath.isCompoundPath(searchNode)) {
+    return nodeByPath(graph, searchNode)
+  } else if (isID(searchNode)) {
+    return nodeByPath(graph, idToPath(graph, searchNode))
   }
-  var res = _.find(graph.Nodes, (n) => Node.equal(n, node))
+  var res = _.find(graph.Nodes, (n) => Node.equal(n, searchNode))
   if (!res) {
     debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
-    throw new Error(`Node with id '${Node.id(node)}' does not exist in the graph.`)
+    throw new Error(`Node with id '${Node.id(searchNode)}' does not exist in the graph.`)
   }
   return res
 }
@@ -244,7 +248,7 @@ export function compounds (graph) {
  * @returns {PortGraph} The graph representing the compound node.
  */
 export function compound (node) {
-  return addAPI(_.merge({}, node, emptyGraph(), {atomic: false, path: (Node.isValid(node)) ? [Node.id(node)] : []}))
+  return addAPI(Compound.create(node))
 }
 
 /**
@@ -258,7 +262,7 @@ export function atomics (graph) {
 
 export function hasNodeByPath (graph, path, basePath) {
   if (typeof (path) === 'string' && CompoundPath.isCompoundPath(path)) {
-    path = Node.stringToPath(path)
+    path = CompoundPath.fromString(path)
   } else if (!Array.isArray(path)) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
   }
@@ -289,7 +293,9 @@ export function hasNodeByPath (graph, path, basePath) {
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
 export function hasNode (graph, node) {
-  if (Array.isArray(node) || CompoundPath.isCompoundPath(node)) {
+  if (Port.isPort(node)) {
+    return hasNode(graph, Port.node(node))
+  } else if (Array.isArray(node) || CompoundPath.isCompoundPath(node)) {
     return hasNodeByPath(graph, node)
   }
   return !!_.find(graph.Nodes, (n) => Node.equal(n, node))
@@ -297,12 +303,19 @@ export function hasNode (graph, node) {
 
 function checkNode (graph, node) {
   if (allowsReferences(graph) && Node.isReference(node)) {
+    if (hasNode(graph, Node.name(node))) {
+      throw new Error('Cannot add a reference if the name is already used. Names must be unique in every compound. Tried to add reference: ' + JSON.stringify(node))
+    }
     return
   }
   if (!node) {
     throw new Error('Cannot add undefined node to graph.')
   } else if (!Node.isValid(node)) {
     throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
+  } else {
+    if (hasNode(graph, Node.name(node))) {
+      throw new Error('Cannot add a node if the name is already used. Names must be unique in every compound. Tried to add node: ' + JSON.stringify(node))
+    }
   }
 }
 
@@ -314,7 +327,7 @@ function checkNode (graph, node) {
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
 export function addNodeByPath (graph, parentPath, nodeData) {
-  if (Node.isRootPath(parentPath)) {
+  if (CompoundPath.isRoot(parentPath)) {
     return addNode(graph, nodeData)
   } else {
     var parentGraph = node(graph, parentPath)
@@ -323,19 +336,11 @@ export function addNodeByPath (graph, parentPath, nodeData) {
 }
 
 function setPath (node, path) {
-  var nodePath = CompoundPath.join(path, Node.id(node))
+  var nodePath = CompoundPath.join(path, Node.name(node))
   if (Compound.isCompound(node)) {
     return Compound.setPath(node, nodePath, setPath)
   }
   return toJSON(_.merge({}, node, {path: nodePath}))
-}
-
-function defaultToGenericType (port) {
-  if (!port.type) {
-    return _.merge({type: 'generic'}, port)
-  } else {
-    return port
-  }
 }
 
 /**
@@ -353,9 +358,9 @@ export function addNode (graph, nodePath, node) {
   if (hasNode(graph, node)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
-  node.ports = node.ports.map(defaultToGenericType)
-  checkNode(graph, node)
-  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge({}, setPath(node, Node.path(graph))))))
+  var newNode = Node.create(node)
+  checkNode(graph, newNode)
+  return addAPI(changeSet.applyChangeSet(graph, changeSet.insertNode(_.merge({}, setPath(newNode, Node.path(graph))))))
 }
 
 /**
@@ -365,17 +370,17 @@ export function addNode (graph, nodePath, node) {
  * @returns {PortGraph} A new graph without the given node.
  */
 export function removeNode (graph, path) {
-  var parentPath = Node.pathParent(path)
+  var parentPath = CompoundPath.parent(path)
   if (parentPath.length === 0) {
     return addAPI(changeSet.applyChangeSet(graph, changeSet.removeNode(path)))
   }
   var parentGraph = node(graph, parentPath)
   // remove node in its compound and replace the graphs on the path
-  return replaceNode(graph, parentPath, removeNode(parentGraph, Node.pathNode(path)))
+  return replaceNode(graph, parentPath, removeNode(parentGraph, CompoundPath.node(path)))
 }
 
 export function replaceNode (graph, path, newNode) {
-  return addNodeByPath(removeNode(graph, path), Node.pathParent(path), _.merge({id: Node.pathNode(path)}, remAPI(newNode)))
+  return addNodeByPath(removeNode(graph, path), CompoundPath.parent(path), remAPI(newNode))
 }
 
 /**
@@ -468,23 +473,24 @@ function checkEdge (graph, edge) {
   var normEdge = Edge.normalize(graph, edge)
   var from = node(graph, normEdge.from)
   var to = node(graph, normEdge.to)
+  // TODO: check for edge from parent node is not correct anymore.. normEdge.from is a port object. (Same holds for normEdge.to)
   if (normEdge.from !== '' && !hasNode(graph, normEdge.from)) {
-    throw new Error('Cannot create edge connection from not existing node: ' + normEdge.from + ' to: ' + normEdge.to)
+    throw new Error('Cannot create edge connection from not existing node: ' + Port.toString(normEdge.from) + ' to: ' + Port.toString(normEdge.to))
   } else if (normEdge.to !== '' && !hasNode(graph, normEdge.to)) {
-    throw new Error('Cannot create edge connection from: ' + normEdge.from + ' to not existing node: ' + normEdge.to)
-  } else if (normEdge.from === normEdge.to && normEdge.outPort === normEdge.inPort) {
-    throw new Error('Cannot add loops to the port graph from=to=' + normEdge.from + '@' + normEdge.outPort)
-  } else if (!Node.isReference(from) && !Node.hasPort(node(graph, normEdge.from), normEdge.outPort)) {
-    throw new Error('The source node "' + normEdge.from + '" does not have the outgoing port "' + normEdge.outPort + '".')
-  } else if (!Node.isReference(from) && !Node.hasPort(node(graph, normEdge.to), normEdge.inPort)) {
-    throw new Error('The target node "' + normEdge.to + '" does not have the ingoing port "' + normEdge.inPort + '".')
-  } else if (!Node.isReference(from) && (Node.port(from, normEdge.outPort).kind !== ((normEdge.innerCompoundOutput) ? 'input' : 'output'))) {
-    throw new Error('The source port "' + normEdge.outPort + '" = "' + JSON.stringify(Node.port(from, normEdge.outPort)) + '" must be ' +
+    throw new Error('Cannot create edge connection from: ' + Port.toString(normEdge.from) + ' to not existing node: ' + Port.toString(normEdge.to))
+  } else if (Port.equal(normEdge.from, normEdge.to)) {
+    throw new Error('Cannot add loops to the port graph from=to=' + Port.toString(normEdge.from))
+  } else if (!Node.isReference(from) && !Node.hasPort(from, normEdge.from)) {
+    throw new Error('The source node "' + Port.node(normEdge.from) + '" does not have the outgoing port "' + Port.portName(normEdge.outPort) + '".')
+  } else if (!Node.isReference(from) && !Node.hasPort(to, normEdge.to)) {
+    throw new Error('The target node "' + Port.node(normEdge.to) + '" does not have the ingoing port "' + Port.portName(normEdge.inPort) + '".')
+  } else if (!Node.isReference(from) && (Node.port(from, normEdge.from).kind !== ((normEdge.innerCompoundOutput) ? 'input' : 'output'))) {
+    throw new Error('The source port "' + Port.portName(normEdge.from) + '" = "' + JSON.stringify(Node.port(from, normEdge.from)) + '" must be ' +
     ((normEdge.innerCompoundEdge)
     ? 'an inner input port of the compound node ' + normEdge.parent
     : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
-  } else if (!Node.isReference(from) && (Node.port(to, normEdge.inPort).kind !== ((normEdge.innerCompoundInput) ? 'output' : 'input'))) {
-    throw new Error('The target port "' + normEdge.inPort + '" = "' + JSON.stringify(Node.port(to, normEdge.inPort)) + ' must be ' +
+  } else if (!Node.isReference(from) && (Node.port(to, normEdge.to).kind !== ((normEdge.innerCompoundInput) ? 'output' : 'input'))) {
+    throw new Error('The target port "' + Port.portName(normEdge.to) + '" = "' + JSON.stringify(Node.port(to, normEdge.to)) + ' must be ' +
       ((normEdge.innerCompoundEdge)
       ? 'an inner output port of the compound node ' + normEdge.parent
       : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
@@ -628,20 +634,10 @@ export function successors (graph, source) {
     .value()
 }
 
-function emptyGraph () {
-  return {
-    Nodes: [],
-    MetaInformation: {version: packageVersion()},
-    Edges: [],
-    Components: [],
-    path: []
-  }
-}
-
 /**
  * Returns a new empty graph.
  * @returns {PortGraph} A new empty port graph.
  */
 export function empty () {
-  return addAPI(emptyGraph(), apiMethods)
+  return addAPI(setMeta(Compound.create(), 'version', packageVersion()), apiMethods)
 }

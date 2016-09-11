@@ -1,16 +1,13 @@
 /** @module Node */
 
 import _ from 'lodash'
-import * as Path from './path'
+import * as Port from './port'
 import cuid from 'cuid'
 
 /**
  * A node either as an identifier, or as an object containing the property `node` as its identifier.
  * @typedef {(string|Object)} Node
  */
-
-const OUTPUT = 'output'
-const INPUT = 'input'
 
 /**
  * Creates a normalized node object. It makes sure, that the node has all necessary information like an id and a
@@ -19,12 +16,18 @@ const INPUT = 'input'
  * @returns {Node} A complete node object
  */
 export function create (node) {
-  return _.merge({id: cuid()}, node,
-    {path: (node.path) ? Path.normalize(node.path) : undefined})
+  if (node.id) {
+    throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
+  }
+  var newNode = _.merge({id: cuid()}, node, {ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  if (!isReference(newNode) && !isValid(newNode)) {
+    throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
+  }
+  return newNode
 }
 
 /**
- * Returns the unique identifier of a node
+ * Returns the unique identifier of a node. The id is unique for the whole graph and cannot be assigned twice.
  * @params {Node} node The node
  * @returns {string} The unique identifier of the node
  * @throws {Error} If the node value is invalid.
@@ -34,10 +37,25 @@ export function id (node) {
     return node
   } else if (node == null) {
     throw new Error('Cannot determine id of undefined node.')
-  } else if (!node.id) {
-    throw new Error('Malformed node. The node must either be a string that represents the id. Or it must be an object with an id field.\n Node: ' + JSON.stringify(node))
   }
   return node.id
+}
+
+/**
+ * Gets the name of a node. The name is a unique identifier in respect to the parent. Each graph
+ * can have only one node with a specific name as its direct child. If a node has no name, the
+ * id is the name of the node.
+ * @params {Node} node The node
+ * @returns {string} The name of the node.
+ */
+export function name (node) {
+  if (typeof (node) === 'string') {
+    return node
+  } else if (node.name) {
+    return node.name
+  } else {
+    return node.id
+  }
 }
 
 /**
@@ -48,7 +66,11 @@ export function id (node) {
  * @returns {boolean} True if they have the same id, false otherwise.
  */
 export function equal (node1, node2) {
-  return id(node1) === id(node2)
+  if (isValid(node1) && isValid(node2)) {
+    return id(node1) && id(node2) && id(node1) === id(node2)
+  } else {
+    return name(node1) === name(node2)
+  }
 }
 
 /**
@@ -69,7 +91,7 @@ export function outputPorts (node, ignoreCompounds = false) {
   if (!ignoreCompounds && !node.atomic) {
     return node.ports
   } else {
-    return node.ports.filter((p) => p.kind === OUTPUT)
+    return node.ports.filter(Port.isOutputPort)
   }
 }
 
@@ -82,23 +104,26 @@ export function inputPorts (node, ignoreCompounds = false) {
   if (!ignoreCompounds && !node.atomic) {
     return node.ports
   } else {
-    return node.ports.filter((p) => p.kind === INPUT)
+    return node.ports.filter(Port.isInputPort)
   }
 }
 
 /**
  * Returns the port data for a given port.
  * @param {Node} node The node which has the port.
- * @param {String} name The name of the port.
+ * @param {String|Port} name The name of the port or a port object.
  * @returns {Port} The port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
 export function port (node, name) {
-  var port = _.find(node.ports, (p) => p.name === name)
-  if (!port) {
+  if (Port.isPort(name)) {
+    return port(node, Port.portName(name))
+  }
+  var curPort = _.find(node.ports, (p) => p.name === name)
+  if (!curPort) {
     throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
   }
-  return port
+  return curPort
 }
 
 export function path (node) {
@@ -108,10 +133,13 @@ export function path (node) {
 /**
  * Checks whether the node has the specific port.
  * @param {Node} node The node which has the port.
- * @param {String} name The name of the port.
+ * @param {String|Port} name The name of the port or a port object.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
 export function hasPort (node, name) {
+  if (Port.isPort(name)) {
+    return hasPort(node, Port.portName(name))
+  }
   return !!_.find(node.ports, (p) => p.name === name)
 }
 
@@ -121,7 +149,7 @@ export function hasPort (node, name) {
  * @returns {boolean} True if the node is a reference, false otherwise.
  */
 export function isReference (node) {
-  return _.has(node, 'ref') && node.id
+  return _.has(node, 'ref') && node.name
 }
 
 /**
@@ -133,10 +161,6 @@ export function isAtomic (node) {
   return !isReference(node) && node.atomic
 }
 
-function validPort (port) {
-  return typeof (port) === 'object' && port.name && (port.kind === INPUT || port.kind === OUTPUT) && port.type
-}
-
 /**
  * Checks whether a node is in a valid format, i.e. if it has an id field and at least one port.
  * @param {Node} node The node to test.
@@ -145,5 +169,5 @@ function validPort (port) {
 export function isValid (node) {
   return isReference(node) ||
     (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
-    ports(node).length !== 0 && _.every(ports(node), validPort))
+    ports(node).length !== 0 && _.every(ports(node), Port.isValid))
 }

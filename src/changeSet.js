@@ -7,7 +7,6 @@
 
 import jq from 'json-query'
 import _ from 'lodash'
-import {clone} from './graph'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Component from './component'
@@ -49,8 +48,8 @@ export function removeComponent (id) {
   return {type: 'changeSet', operation: 'remove', query: 'Components', filter: (n) => Component.equal(n, id)}
 }
 
-export function addMetaInformation (value) {
-  return {type: 'changeSet', operation: 'set', query: 'MetaInformation', value}
+export function addMetaInformation (key, value) {
+  return {type: 'changeSet', operation: 'set', query: 'MetaInformation', value: _.set({}, key, value)}
 }
 
 export function empty () {
@@ -158,7 +157,7 @@ const getReferences = (graph, changeSet) => {
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
 export function applyChangeSet (graph, changeSet) {
-  var newGraph = clone(graph)
+  var newGraph = _.clone(graph)
   if (!isChangeSet(changeSet)) {
     throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
   }
@@ -188,7 +187,7 @@ export function applyChangeSet (graph, changeSet) {
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
 export function applyChangeSets (graph, changeSets) {
-  var newGraph = clone(graph)
+  var newGraph = _.clone(graph)
   _.each(changeSets, (c) => applyChangeSetInplace(newGraph, c))
   return newGraph
 }

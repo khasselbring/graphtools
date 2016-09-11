@@ -26,3 +26,19 @@ export function setPath (node, path, nodeSetPath) {
     {Edges: node.Edges.map((e) => Edge.setPath(e, path))}
   )
 }
+
+/**
+ * Create a new compound either with a template, or an empty one.
+ * @params {Node} node An optional node template that contains the name and ports of the compound.
+ * @returns {Compound} The compound representing the given node.
+ */
+export function create (node) {
+  node = node || {}
+  return _.merge({
+    Nodes: [],
+    MetaInformation: {},
+    Edges: [],
+    Components: [],
+    path: []
+  }, node)
+}
