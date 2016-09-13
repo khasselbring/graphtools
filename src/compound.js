@@ -35,10 +35,10 @@ export function setPath (node, path, nodeSetPath) {
 export function create (node) {
   node = node || {}
   return _.merge({
-    Nodes: [],
-    MetaInformation: {},
-    Edges: [],
-    Components: [],
+    nodes: [],
+    metaInformation: {},
+    edges: [],
+    components: [],
     path: []
   }, node)
 }

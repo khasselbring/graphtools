@@ -19,7 +19,7 @@ import * as Component from './component'
  * @returns {ChangeSet} A change set containing the operation.
  */
 export function updateNode (node, mergeValue) {
-  return {type: 'changeSet', operation: 'merge', query: 'Nodes[id=' + node + '].value', value: mergeValue}
+  return {type: 'changeSet', operation: 'merge', query: 'nodes[id=' + node + '].value', value: mergeValue}
 }
 
 /**
@@ -28,11 +28,11 @@ export function updateNode (node, mergeValue) {
  * @returns {ChangeSet} A change set containing the new node.
  */
 export function insertNode (value) {
-  return {type: 'changeSet', operation: 'insert', query: 'Nodes', value}
+  return {type: 'changeSet', operation: 'insert', query: 'nodes', value}
 }
 
 export function removeNode (id) {
-  return {type: 'changeSet', operation: 'remove', query: 'Nodes', filter: (n) => Node.equal(n, id)}
+  return {type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => Node.equal(n, id)}
 }
 
 /**
@@ -41,15 +41,15 @@ export function removeNode (id) {
  * @returns {ChangeSet} A change set containing the new component.
  */
 export function insertComponent (value) {
-  return {type: 'changeSet', operation: 'insert', query: 'Components', value}
+  return {type: 'changeSet', operation: 'insert', query: 'components', value}
 }
 
 export function removeComponent (id) {
-  return {type: 'changeSet', operation: 'remove', query: 'Components', filter: (n) => Component.equal(n, id)}
+  return {type: 'changeSet', operation: 'remove', query: 'components', filter: (n) => Component.equal(n, id)}
 }
 
 export function addMetaInformation (key, value) {
-  return {type: 'changeSet', operation: 'set', query: 'MetaInformation', value: _.set({}, key, value)}
+  return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: _.set({}, key, value)}
 }
 
 export function empty () {
@@ -62,7 +62,7 @@ export function empty () {
  * @returns {ChangeSet} A change set containing the insertion operation.
  */
 export function insertEdge (newEdge) {
-  return {type: 'changeSet', operation: 'insert', query: 'Edges', value: newEdge}
+  return {type: 'changeSet', operation: 'insert', query: 'edges', value: newEdge}
 }
 
 /**
@@ -71,7 +71,7 @@ export function insertEdge (newEdge) {
  * @returns {ChangeSet} The change set containing the deletion operation.
  */
 export function removeEdge (edge) {
-  return {type: 'changeSet', operation: 'remove', query: 'Edges', filter: _.partial(Edge.equal, edge)}
+  return {type: 'changeSet', operation: 'remove', query: 'edges', filter: _.partial(Edge.equal, edge)}
 }
 
 /**

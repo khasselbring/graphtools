@@ -12,6 +12,7 @@ var expect = chai.expect
 describe.only('Basic graph functions', () => {
   it('can create an empty graph', () => {
     var graph = Graph.empty()
+    console.log(graph)
     expect(Graph.nodes(graph)).to.have.length(0)
     expect(Graph.edges(graph)).to.have.length(0)
     expect(Graph.components(graph)).to.have.length(0)
@@ -82,7 +83,7 @@ describe.only('Basic graph functions', () => {
     expect(() => graph.addNode({ref: 'a', name: 'a'})).to.throw(Error)
   })
 
-  describe('Node functions', () => {
+  describe.skip('Node functions', () => {
     it('fails if a non existend node is queried', () => {
       expect(() => Graph.node(Graph.empty(), 'a')).to.throw(Error)
     })
