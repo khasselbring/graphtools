@@ -97,7 +97,7 @@ export function isPort (any) {
 }
 
 export function isValid (port) {
-  return typeof (port) === 'object' && port.name && (port.kind === INPUT || port.kind === OUTPUT) && port.type
+  return typeof (port) === 'object' && port.port && (port.kind === INPUT || port.kind === OUTPUT) && port.type
 }
 
 /**

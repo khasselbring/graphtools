@@ -16,14 +16,9 @@ import {allowsReferences} from './basic'
  * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
  * @returns {Nodes[]} A list of nodes.
  */
-export const nodes = curry((predicate, graph) => {
-  if (typeof (predicate) === 'function') {
-    return graph.nodes.filter(predicate)
-  } else {
-    graph = predicate
-  }
+export const nodes = (graph) => {
   return graph.nodes
-})
+}
 
 function nodesDeepRec (graph, parents) {
   return flatten(parents.map(nodesDeep))
@@ -115,7 +110,7 @@ export const node = curry((searchNode, graph) => {
   } else if (isID(searchNode)) {
     return nodeByPath(idToPath(graph, searchNode), graph)
   }
-  var res = find(graph.nodes, Node.equal(searchNode))
+  var res = find(Node.equal(searchNode), graph.nodes)
   if (!res) {
     // TODO: debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
     throw new Error(`Node with id '${Node.id(searchNode)}' does not exist in the graph.`)
@@ -132,7 +127,7 @@ function hasNodeByPathRec (graph, path, basePath) {
   if (path.length === 0) {
     return graph
   }
-  const nodeExists = hasNode(graph, path[0])
+  const nodeExists = hasNode(path[0], graph)
   if (path.length > 1 && nodeExists) {
     var curNode = node(graph, path[0])
     if (!isCompound(curNode)) {
@@ -144,7 +139,7 @@ function hasNodeByPathRec (graph, path, basePath) {
     return false
 //    throw new Error('Could not find node "' + path[0] + '" while looking for ' + basePath + ' (remaining path: "' + path + '")')
   } else {
-    return hasNode(graph, path[0])
+    return hasNode(path[0], graph)
   }
 }
 
@@ -164,7 +159,7 @@ export const hasNode = curry((node, graph) => {
   } else if (Array.isArray(node) || isCompoundPath(node)) {
     return hasNodeByPath(node, graph)
   }
-  return !!find(graph.nodes, Node.equal(node))
+  return !!find(Node.equal(node), graph.nodes)
 })
 
 function checkNode (graph, node) {
@@ -179,7 +174,7 @@ function checkNode (graph, node) {
   } else if (!Node.isValid(node)) {
     throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
   } else {
-    if (hasNode(graph, Node.name(node))) {
+    if (hasNode(Node.name(node), graph)) {
       throw new Error('Cannot add a node if the name is already used. Names must be unique in every compound. Tried to add node: ' + JSON.stringify(node))
     }
   }
@@ -216,11 +211,11 @@ function setPath (node, path) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export const addNode = curry((node, graph) => {
-  console.log('adding node', node)
   if (hasNode(node, graph)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
   var newNode = Node.create(node)
+  console.log(graph)
   checkNode(graph, newNode)
   return changeSet.applyChangeSet(graph, changeSet.insertNode(setPath(newNode, Node.path(graph))))
 })

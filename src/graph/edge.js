@@ -17,9 +17,10 @@ export function edges (graph) {
 }
 
 function checkEdge (graph, edge) {
-  var normEdge = Edge.normalize(graph, edge)
-  var from = node(graph, normEdge.from)
-  var to = node(graph, normEdge.to)
+  var normEdge = Edge.normalize(edge)
+  console.log(normEdge)
+  var from = node(normEdge.from, graph)
+  var to = node(normEdge.to, graph)
   // TODO: check for edge from parent node is not correct anymore.. normEdge.from is a port object. (Same holds for normEdge.to)
   if (normEdge.from !== '' && !hasNode(normEdge.from, graph)) {
     throw new Error('Cannot create edge connection from not existing node: ' + Port.toString(normEdge.from) + ' to: ' + Port.toString(normEdge.to))
@@ -27,17 +28,17 @@ function checkEdge (graph, edge) {
     throw new Error('Cannot create edge connection from: ' + Port.toString(normEdge.from) + ' to not existing node: ' + Port.toString(normEdge.to))
   } else if (Port.equal(normEdge.from, normEdge.to)) {
     throw new Error('Cannot add loops to the port graph from=to=' + Port.toString(normEdge.from))
-  } else if (!Node.isReference(from) && !Node.hasPort(from, normEdge.from)) {
-    throw new Error('The source node "' + Port.node(normEdge.from) + '" does not have the outgoing port "' + Port.portName(normEdge.outPort) + '".')
-  } else if (!Node.isReference(from) && !Node.hasPort(to, normEdge.to)) {
+  } else if (!Node.isReference(from) && !Node.hasPort(normEdge.from, from)) {
+    throw new Error('The source node "' + Port.node(normEdge.from) + '" does not have the outgoing port "' + Port.portName(normEdge.from) + '".')
+  } else if (!Node.isReference(from) && !Node.hasPort(normEdge.to, to)) {
     throw new Error('The target node "' + Port.node(normEdge.to) + '" does not have the ingoing port "' + Port.portName(normEdge.inPort) + '".')
-  } else if (!Node.isReference(from) && (Node.port(from, normEdge.from).kind !== ((normEdge.innerCompoundOutput) ? 'input' : 'output'))) {
-    throw new Error('The source port "' + Port.portName(normEdge.from) + '" = "' + JSON.stringify(Node.port(from, normEdge.from)) + '" must be ' +
+  } else if (!Node.isReference(from) && (Node.port(normEdge.from, from).kind !== ((normEdge.innerCompoundOutput) ? 'input' : 'output'))) {
+    throw new Error('The source port "' + Port.portName(normEdge.from) + '" = "' + JSON.stringify(Node.port(normEdge.from, from)) + '" must be ' +
     ((normEdge.innerCompoundEdge)
     ? 'an inner input port of the compound node ' + normEdge.parent
     : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
-  } else if (!Node.isReference(from) && (Node.port(to, normEdge.to).kind !== ((normEdge.innerCompoundInput) ? 'output' : 'input'))) {
-    throw new Error('The target port "' + Port.portName(normEdge.to) + '" = "' + JSON.stringify(Node.port(to, normEdge.to)) + ' must be ' +
+  } else if (!Node.isReference(from) && (Node.port(normEdge.to, to).kind !== ((normEdge.innerCompoundInput) ? 'output' : 'input'))) {
+    throw new Error('The target port "' + Port.portName(normEdge.to) + '" = "' + JSON.stringify(Node.port(normEdge.to, to)) + ' must be ' +
       ((normEdge.innerCompoundEdge)
       ? 'an inner output port of the compound node ' + normEdge.parent
       : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
@@ -59,7 +60,7 @@ export const addEdge = curry((edge, graph) => {
   if (hasEdge(edge, graph)) {
     throw new Error('Cannot create already existing edge: ' + JSON.stringify(edge))
   }
-  var normEdge = Edge.normalize(graph, edge)
+  var normEdge = Edge.normalize(edge)
   checkEdge(graph, edge)
   return changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge))
 })
@@ -70,8 +71,8 @@ export const addEdge = curry((edge, graph) => {
  * @params {PortGraph} graph The graph.
  * @returns {boolean} True if the edge is contained in the graph, false otherwise.
  */
-export const hasEdge = curry((graph, edge) => {
-  var normEdge = Edge.normalize(graph, edge)
+export const hasEdge = curry((edge, graph) => {
+  var normEdge = Edge.normalize(edge)
   return !!find(graph.edges, Edge.equal(normEdge))
 })
 
@@ -82,8 +83,8 @@ export const hasEdge = curry((graph, edge) => {
  * @returns {Edge} The edge as it is stored in the graph.
  * @throws {Error} If the edge is not contained in the graph.
  */
-export const edge = curry((graph, edge) => {
-  var normEdge = Edge.normalize(graph, edge)
+export const edge = curry((edge, graph) => {
+  var normEdge = Edge.normalize(edge)
   var retEdge = find(graph.edges, Edge.equal(normEdge))
   if (!retEdge) {
     throw new Error('Edge is not defined in the graph: ' + JSON.stringify(edge))

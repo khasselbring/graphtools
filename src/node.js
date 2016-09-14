@@ -121,9 +121,9 @@ export function inputPorts (node, ignoreCompounds = false) {
  */
 export const port = curry((name, node) => {
   if (Port.isPort(name)) {
-    return port(node, Port.portName(name))
+    return port(Port.portName(name), node)
   }
-  var curPort = find(node.ports, (p) => p.name === name)
+  var curPort = find((p) => Port.portName(p) === name, node.ports)
   if (!curPort) {
     throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
   }
@@ -140,9 +140,9 @@ export function path (node) {
  * @param {String|Port} name The name of the port or a port object.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
-export const hasPort = curry((node, name) => {
+export const hasPort = curry((name, node) => {
   if (Port.isPort(name)) {
-    return hasPort(node, Port.portName(name))
+    return hasPort(Port.portName(name), node)
   }
   return !!find((p) => Port.portName(p) === name, node.ports)
 })

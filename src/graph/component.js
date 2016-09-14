@@ -30,7 +30,7 @@ export function componentIds (graph) {
  * @throws {Error} If the queried component does not exist in the graph.
  */
 export const component = curry((graph, comp) => {
-  var res = find(graph.components, Component.equal(comp))
+  var res = find(Component.equal(comp), graph.components)
   if (!res) {
     // TODO: debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
     throw new Error(`Component with id '${comp}' does not exist in the graph.`)
@@ -45,7 +45,7 @@ export const component = curry((graph, comp) => {
  * @returns {boolean} True if the graph has a component with the given component id, false otherwise.
  */
 export const hasComponent = curry((graph, comp) => {
-  return !!find(graph.Components, Component.equal(comp))
+  return !!find(Component.equal(comp), graph.components)
 })
 
 function checkComponent (graph, comp) {

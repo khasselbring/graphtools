@@ -1,6 +1,8 @@
 /** @module Component */
 
+import curry from 'lodash/fp/curry'
 import _ from 'lodash'
+import * as Port from './port'
 import semver from 'semver'
 
 /**
@@ -35,9 +37,9 @@ export function id (component) {
  * @param {Component} comp2 The other one.
  * @returns {boolean} True if they have the same id, false otherwise.
  */
-export function equal (comp1, comp2) {
+export const equal = curry((comp1, comp2) => {
   return id(comp1) === id(comp2)
-}
+})
 
 /**
  * Gets all ports of the component.
@@ -81,13 +83,13 @@ export function inputPorts (comp, ignoreCompounds = false) {
  * @returns {Port} The port data.
  * @throws {Error} If no port with the given name exists in this component an error is thrown.
  */
-export function port (comp, name) {
-  var port = _.find(comp.ports, (p) => p.name === name)
+export const port = curry((name, comp) => {
+  var port = _.find(comp.ports, (p) => Port.portName(p) === name)
   if (!port) {
     throw new Error('Cannot find port with name ' + name + ' in component ' + JSON.stringify(comp))
   }
   return port
-}
+})
 
 /**
  * Checks whether the component has the specific port.
@@ -95,9 +97,9 @@ export function port (comp, name) {
  * @param {String} name The name of the port.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
-export function hasPort (comp, name) {
-  return !!_.find(comp.ports, (p) => p.name === name)
-}
+export const hasPort = curry((comp, name) => {
+  return !!_.find(comp.ports, (p) => Port.portName(p) === name)
+})
 
 /**
  * Checks whether a component is in a valid format, i.e. if it has an id field and at least one port.

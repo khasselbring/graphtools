@@ -1,10 +1,11 @@
 /** @module Edge */
 
+import curry from 'lodash/fp/curry'
 import _ from 'lodash'
 import * as Node from './node'
 import * as Port from './port'
 
-function normalizeStructure (graph, edge) {
+function normalizeStructure (edge) {
   if (!_.has(edge, 'from') || !_.has(edge, 'to')) {
     throw new Error('The edge format is not valid. You need to have a from and to value in.\n\n' + JSON.stringify(edge, null, 2) + '\n')
   }
@@ -43,12 +44,12 @@ function normalizeStructure (graph, edge) {
  * @returns {Edge} The normalized form of the edge.
  * @throws {Error} An error is thrown if the edge is not in a consistent format.
  */
-export function normalize (graph, edge) {
-  var newEdge = normalizeStructure(graph, edge)
-  if (Node.isValid(graph) && newEdge.from.length === 0) {
+export function normalize (edge) {
+  var newEdge = normalizeStructure(edge)
+  if (newEdge.from.length === 0) {
     newEdge.innerCompoundOutput = true
   }
-  if (Node.isValid(graph) && newEdge.to.length === 0) {
+  if (newEdge.to.length === 0) {
     newEdge.innerCompoundInput = true
   }
   return newEdge
@@ -60,9 +61,9 @@ export function normalize (graph, edge) {
  * @param {Edge} edge2 The second edge for the comparison.
  * @returns {boolean} True if the edges are equal (i.e. they connect the same ports), false otherwise.
  */
-export function equal (edge1, edge2) {
+export const equal = curry((edge1, edge2) => {
   return Port.equal(edge1.from, edge2.from) && Port.equal(edge1.to, edge2.to) && edge1.layer === edge2.layer
-}
+})
 
 /**
  * Returns a copy of the edge where the path is prefixed with the specified path.
