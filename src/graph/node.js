@@ -3,8 +3,8 @@ import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 import find from 'lodash/fp/find'
 import merge from 'lodash/fp/merge'
-import {isCompound, isCompoundPath, setPath as compoundSetPath} from '../compound'
-import {fromString, isRoot, join, node as pathNode, parent as parhParent} from '../compoundPath'
+import {isCompound, setPath as compoundSetPath} from '../compound'
+import {fromString, isCompoundPath, isRoot, join, node as pathNode, parent as parhParent} from '../compoundPath'
 import {isPort, node as portNode} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
@@ -216,6 +216,7 @@ function setPath (node, path) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export const addNode = curry((node, graph) => {
+  console.log('adding node', node)
   if (hasNode(node, graph)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }

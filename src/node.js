@@ -1,6 +1,10 @@
 /** @module Node */
 
-import _ from 'lodash'
+import curry from 'lodash/fp/curry'
+import merge from 'lodash/fp/merge'
+import find from 'lodash/fp/find'
+import has from 'lodash/fp/has'
+import every from 'lodash/fp/every'
 import * as Port from './port'
 import cuid from 'cuid'
 
@@ -19,7 +23,7 @@ export function create (node) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = _.merge({id: cuid()}, node, {ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, {id: cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
@@ -65,13 +69,13 @@ export function name (node) {
  * @param {Node} node2 The other one.
  * @returns {boolean} True if they have the same id, false otherwise.
  */
-export function equal (node1, node2) {
+export const equal = curry((node1, node2) => {
   if (isValid(node1) && isValid(node2)) {
     return id(node1) && id(node2) && id(node1) === id(node2)
   } else {
     return name(node1) === name(node2)
   }
-}
+})
 
 /**
  * Gets all ports of the node.
@@ -115,16 +119,16 @@ export function inputPorts (node, ignoreCompounds = false) {
  * @returns {Port} The port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
-export function port (node, name) {
+export const port = curry((name, node) => {
   if (Port.isPort(name)) {
     return port(node, Port.portName(name))
   }
-  var curPort = _.find(node.ports, (p) => p.name === name)
+  var curPort = find(node.ports, (p) => p.name === name)
   if (!curPort) {
     throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
   }
   return curPort
-}
+})
 
 export function path (node) {
   return node.path
@@ -136,12 +140,12 @@ export function path (node) {
  * @param {String|Port} name The name of the port or a port object.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
-export function hasPort (node, name) {
+export const hasPort = curry((node, name) => {
   if (Port.isPort(name)) {
     return hasPort(node, Port.portName(name))
   }
-  return !!_.find(node.ports, (p) => p.name === name)
-}
+  return !!find((p) => Port.portName(p) === name, node.ports)
+})
 
 /**
  * Checks whether the node is a reference.
@@ -149,7 +153,7 @@ export function hasPort (node, name) {
  * @returns {boolean} True if the node is a reference, false otherwise.
  */
 export function isReference (node) {
-  return _.has(node, 'ref') && node.name
+  return has(node, 'ref') && node.name
 }
 
 /**
@@ -169,5 +173,5 @@ export function isAtomic (node) {
 export function isValid (node) {
   return isReference(node) ||
     (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
-    ports(node).length !== 0 && _.every(ports(node), Port.isValid))
+    ports(node).length !== 0 && every(Port.isValid, ports(node)))
 }

@@ -9,7 +9,7 @@ import semver from 'semver'
 
 var expect = chai.expect
 
-describe.only('Basic graph functions', () => {
+describe('Basic graph functions', () => {
   it('can create an empty graph', () => {
     var graph = Graph.empty()
     console.log(graph)
@@ -31,7 +31,7 @@ describe.only('Basic graph functions', () => {
     expect.fail('stange test...')
   })
 
-  it('imports a graph from json', () => {
+  it.only('imports a graph from json', () => {
     var graphJSON = {
       Nodes: [{name: 'a', ports: [{name: 'b', kind: 'output'}]}, {name: 'b', ports: [{name: 'b', kind: 'input', type: 'c'}]}],
       Edges: [{from: 'a@b', to: 'b@b'}],

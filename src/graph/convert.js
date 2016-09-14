@@ -22,9 +22,9 @@ export function fromJSON (jsonGraph) {
   delete jsonGraph.Edges
   delete jsonGraph.Components
   var graph = empty()
-  jsonGraph.nodes.reduce((curGraph, node) => addNode(node, curGraph), graph)
-  jsonGraph.edges.reduce((curGraph, edge) => addEdge(edge, curGraph), graph)
-  jsonGraph.components.reduce((curGraph, comp) => addComponent(comp, curGraph), graph)
+  graph = jsonGraph.nodes.reduce((curGraph, node) => addNode(node, curGraph), graph)
+  graph = jsonGraph.edges.reduce((curGraph, edge) => addEdge(edge, curGraph), graph)
+  graph = jsonGraph.components.reduce((curGraph, comp) => addComponent(comp, curGraph), graph)
   // add parents ? optimizations!!
   return graph
 }

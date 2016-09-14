@@ -8,7 +8,7 @@ import curry from 'lodash/fp/curry'
  * @returns {object} An object with all meta information keys.
  */
 export function meta (graph) {
-  return graph.MetaInformation
+  return graph.metaInformation
 }
 
 /**

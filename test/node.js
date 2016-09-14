@@ -29,7 +29,6 @@ describe('Node API', () => {
 
   it('`Node.id` throws an error if the id is not defined correctly', () => {
     expect(() => Node.id()).to.throw(Error)
-    expect(() => Node.id({ID: 'a'})).to.throw(Error)
   })
 
   it('`Node.name` gets the name of a node', () => {
@@ -49,12 +48,14 @@ describe('Node API', () => {
     expect(Node.equal({id: 'b'}, {id: 'a'})).to.be.false
   })
 
+  it('`Node.equal` is curryable', () => {
+    var eq = Node.equal('a')
+    expect(eq('a')).to.be.true
+    expect(eq('b')).to.be.false
+  })
+
   it('`Node.equal` throws an error if the arguments to ID are incorrect', () => {
-    expect(() => Node.equal('a')).to.throw(Error)
     expect(() => Node.equal(null, 'b')).to.throw(Error)
-    expect(() => Node.equal('a', {ID: 'b'})).to.throw(Error)
-    expect(() => Node.equal({idd: 'a'}, {ID: 'b'})).to.throw(Error)
-    expect(() => Node.equal({idd: 'a'}, 'b')).to.throw(Error)
   })
 
   it('`isValid` can check the validity of a node', () => {
@@ -89,11 +90,10 @@ describe('Node API', () => {
   })
 
   it('`hasPort` can check if a node has a port', () => {
-    expect(Node.hasPort({ports: [{name: 'a'}]}, 'a')).to.be.true
-    expect(Node.hasPort({ports: [{name: 'a'}]}, {port: 'a', node: ''})).to.be.true
-    expect(Node.hasPort({ports: [{name: 'b'}]}, 'a')).to.be.false
-    expect(Node.hasPort({ports: [{name: 'b'}]}, {port: 'a', node: ''})).to.be.false
+    expect(Node.hasPort({ports: [{port: 'a'}]}, 'a')).to.be.true
+    expect(Node.hasPort({ports: [{port: 'a'}]}, {port: 'a', node: ''})).to.be.true
+    expect(Node.hasPort({ports: [{port: 'b'}]}, 'a')).to.be.false
+    expect(Node.hasPort({ports: [{port: 'b'}]}, {port: 'a', node: ''})).to.be.false
     expect(Node.hasPort({}, 'a')).to.be.false
-    expect(Node.hasPort({})).to.be.false
   })
 })
