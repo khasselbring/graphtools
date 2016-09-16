@@ -19,11 +19,11 @@ import cuid from 'cuid'
  * @param {Node} node A protypical node object.
  * @returns {Node} A complete node object
  */
-export function create (node) {
+export function create (node, id = null) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = merge(node, {id: cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, {id: id || cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
@@ -153,7 +153,7 @@ export const hasPort = curry((name, node) => {
  * @returns {boolean} True if the node is a reference, false otherwise.
  */
 export function isReference (node) {
-  return has(node, 'ref') && node.name
+  return has('ref', node)
 }
 
 /**
@@ -162,7 +162,7 @@ export function isReference (node) {
  * @returns {boolean} True if the node is an atomic node, false otherwise.
  */
 export function isAtomic (node) {
-  return !isReference(node) && node.atomic
+  return !isReference(node)
 }
 
 /**

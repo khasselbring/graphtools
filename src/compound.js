@@ -10,7 +10,7 @@ import _ from 'lodash'
  * @returns {boolean} True if the node is a compound node, false otherwise.
  */
 export function isCompound (node) {
-  return !isReference(node) && !node.atomic && !!node.Nodes && !!node.Edges
+  return !isReference(node) && !node.atomic && !!node.nodes && !!node.edges
 }
 
 export function id (node) {
@@ -22,8 +22,8 @@ export function id (node) {
 export function setPath (node, path, nodeSetPath) {
   return _.merge({}, node,
     {path},
-    {Nodes: node.Nodes.map((n) => nodeSetPath(n, path))},
-    {Edges: node.Edges.map((e) => Edge.setPath(e, path))}
+    {nodes: node.nodes.map((n) => nodeSetPath(n, path))},
+    {edges: node.edges.map((e) => Edge.setPath(e, path))}
   )
 }
 

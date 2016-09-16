@@ -3,12 +3,14 @@ import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 import find from 'lodash/fp/find'
 import merge from 'lodash/fp/merge'
+import omit from 'lodash/fp/omit'
 import {isCompound, setPath as compoundSetPath} from '../compound'
-import {fromString, isCompoundPath, isRoot, join, node as pathNode, parent as parhParent} from '../compoundPath'
+import {isCompoundPath, isRoot, join, node as pathNode, parent as pathParent, normalize} from '../compoundPath'
 import {isPort, node as portNode} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
+import {chain} from './chain'
 
 /**
  * Returns a list of nodes on the root level.
@@ -19,6 +21,16 @@ import {allowsReferences} from './basic'
 export const nodes = (graph) => {
   return graph.nodes
 }
+
+/**
+ * Returns a list of nodes on the root level.
+ * @param {PortGraph} graph The graph.
+ * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
+ * @returns {Nodes[]} A list of nodes.
+ */
+export const nodesBy = curry((predicate, graph) => {
+  return graph.nodes.filter(predicate)
+})
 
 function nodesDeepRec (graph, parents) {
   return flatten(parents.map(nodesDeep))
@@ -34,7 +46,7 @@ function nodesDeepRec (graph, parents) {
  */
 export function nodesDeep (graph) {
   return nodes(graph)
-    .concat(nodesDeepRec(graph, nodes(isCompound, graph)))
+    .concat(nodesDeepRec(graph, nodesBy(isCompound, graph)))
 }
 
 /**
@@ -54,9 +66,7 @@ export function nodeNames (graph) {
  * @throws {Error} If the compound path is invalid.
  */
 function nodeByPathRec (graph, path, basePath) {
-  if (typeof (path) === 'string' && isCompoundPath(path)) {
-    path = fromString(path)
-  } else if (!Array.isArray(path)) {
+  if (!Array.isArray(path)) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
   }
   basePath = basePath || path
@@ -68,18 +78,18 @@ function nodeByPathRec (graph, path, basePath) {
     if (!isCompound(curNode)) {
       throw new Error('Expected "' + path[0] + '" to be a compound node in: ' + basePath)
     }
-    return nodeByPathRec(path.slice(1), basePath, curNode)
+    return nodeByPathRec(curNode, path.slice(1), basePath)
   } else {
     return curNode
   }
 }
 
 export const nodeByPath = curry((path, graph) => {
-  return nodeByPathRec(graph, path, path)
+  return nodeByPathRec(graph, normalize(path), normalize(path))
 })
 
 function isID (str) {
-  return str[0] === '#'
+  return str[0] === '#' || str.length === 25 && str[0] === 'c'
 }
 
 /**
@@ -88,7 +98,8 @@ function isID (str) {
  */
 export function idToPath (graph, id) {
   if (id[0] === '#') return idToPath(graph, id.slice(1))
-  return graph.__internals.idMap[id]
+  // return graph.__internals.idMap[id] // speed up search by creating a idMap cache
+  return nodesDeep(graph).find((n) => n.id === id).path
 }
 
 /**
@@ -105,7 +116,7 @@ export const node = curry((searchNode, graph) => {
   if (isCompound(graph) && searchNode === '') {
     return graph
   }
-  if (Array.isArray(searchNode) || isCompoundPath(searchNode)) {
+  if (isCompoundPath(searchNode)) {
     return nodeByPath(searchNode, graph)
   } else if (isID(searchNode)) {
     return nodeByPath(idToPath(graph, searchNode), graph)
@@ -119,9 +130,7 @@ export const node = curry((searchNode, graph) => {
 })
 
 function hasNodeByPathRec (graph, path, basePath) {
-  if (typeof (path) === 'string' && isCompoundPath(path)) {
-    path = fromString(path)
-  } else if (!Array.isArray(path)) {
+  if (!Array.isArray(path)) {
     throw new Error('Invalid argument for `nodeByPath`. An compound path (array of node ids) is required.')
   }
   if (path.length === 0) {
@@ -129,12 +138,12 @@ function hasNodeByPathRec (graph, path, basePath) {
   }
   const nodeExists = hasNode(path[0], graph)
   if (path.length > 1 && nodeExists) {
-    var curNode = node(graph, path[0])
+    var curNode = node(path[0], graph)
     if (!isCompound(curNode)) {
       return false
 //      throw new Error('Expected "' + path[0] + '" to be a compound node in query: "' + basePath + '"')
     }
-    return hasNodeByPath(curNode, path.slice(1), basePath)
+    return hasNodeByPathRec(curNode, path.slice(1), basePath)
   } else if (!nodeExists) {
     return false
 //    throw new Error('Could not find node "' + path[0] + '" while looking for ' + basePath + ' (remaining path: "' + path + '")')
@@ -144,7 +153,7 @@ function hasNodeByPathRec (graph, path, basePath) {
 }
 
 export const hasNodeByPath = curry((path, graph) => {
-  return hasNodeByPathRec(graph, path, path)
+  return hasNodeByPathRec(graph, normalize(path), normalize(path))
 })
 
 /**
@@ -187,12 +196,12 @@ function checkNode (graph, node) {
  * @param {PortGraph} graph The graph that is the root for the nodePath
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
-export const addNodeByPath = curry((parentPath, nodeData, graph) => {
+export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
   if (isRoot(parentPath)) {
-    return addNode(nodeData, graph)
+    return addNode(nodeData, graph, ...cb)
   } else {
-    var parentGraph = node(graph, parentPath)
-    return replaceNode(parentPath, addNode(parentGraph, nodeData), graph)
+    var parentGraph = node(parentPath, graph)
+    return replaceNode(parentPath, addNode(nodeData, parentGraph), graph)
   }
 })
 
@@ -210,13 +219,15 @@ function setPath (node, path) {
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph that includes the node.
  */
-export const addNode = curry((node, graph) => {
+export const addNode = curry((node, graph, ...cb) => {
   if (hasNode(node, graph)) {
     throw new Error('Cannot add already existing node: ' + Node.id(node))
   }
   var newNode = Node.create(node)
-  console.log(graph)
   checkNode(graph, newNode)
+  if (cb.length > 0) {
+    cb[0](newNode.id)
+  }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(setPath(newNode, Node.path(graph))))
 })
 
@@ -227,20 +238,33 @@ export const addNode = curry((node, graph) => {
  * @returns {PortGraph} A new graph without the given node.
  */
 export const removeNode = curry((path, graph) => {
-  var parentPath = parhParent(path)
+  console.log(path)
+  var parentPath = pathParent(path)
   if (parentPath.length === 0) {
     return changeSet.applyChangeSet(graph, changeSet.removeNode(path))
   }
   var parentGraph = node(parentPath, graph)
+  console.log('parent', parentPath)
   // remove node in its compound and replace the graphs on the path
-  return replaceNode(parentPath, removeNode(parentGraph, pathNode(path)), graph)
+  return replaceNode(parentPath, removeNode(pathNode(path), parentGraph), graph)
+})
+
+const unID = (node) => {
+  return omit('id', node)
+}
+
+const setNodeId = curry((oldID, newID, graph) => {
+  node(oldID, graph).id = newID
+  return graph
 })
 
 /* TODO FIX! Make sure that the id does not change */
 export const replaceNode = curry((path, newNode, graph) => {
-  return addNodeByPath(
-    removeNode(path, graph),
-    parhParent(path), newNode)
+  return chain(
+    removeNode(path),
+    addNodeByPath(pathParent(path), unID(newNode)),
+    (graph, objs) => setNodeId(objs()[1], objs()[0], graph)
+  )(graph)
 })
 
 /**

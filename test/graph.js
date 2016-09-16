@@ -12,7 +12,6 @@ var expect = chai.expect
 describe('Basic graph functions', () => {
   it('can create an empty graph', () => {
     var graph = Graph.empty()
-    console.log(graph)
     expect(Graph.nodes(graph)).to.have.length(0)
     expect(Graph.edges(graph)).to.have.length(0)
     expect(Graph.components(graph)).to.have.length(0)
@@ -31,7 +30,7 @@ describe('Basic graph functions', () => {
     expect.fail('stange test...')
   })
 
-  it.only('imports a graph from json', () => {
+  it('imports a graph from json', () => {
     var graphJSON = {
       Nodes: [{name: 'a', ports: [{port: 'b', kind: 'output'}]}, {name: 'b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],
       Edges: [{from: 'a@b', to: 'b@b'}],
@@ -52,9 +51,9 @@ describe('Basic graph functions', () => {
     }
     var graph = Graph.fromJSON(graphJSON)
     expect(graph).to.be.ok
-    expect(graph.nodes()).to.have.length(2)
-    expect(graph.edges()).to.have.length(1)
-    expect(graph.components()).to.have.length(1)
+    expect(Graph.nodes(graph)).to.have.length(2)
+    expect(Graph.edges(graph)).to.have.length(1)
+    expect(Graph.components(graph)).to.have.length(1)
   })
 
   it('fails if the json graph is not valid', () => {
@@ -73,19 +72,24 @@ describe('Basic graph functions', () => {
   })
 
   it('can have edges between references', () => {
-    var graph = Graph.empty().addNode({ref: 'a', name: 'a'}).addNode({ref: 'a', name: 'b'})
-      .addEdge({from: 'a@a', to: 'b@other'})
+    var graph = Graph.chain(
+        Graph.addNode({ref: 'a'}),
+        Graph.addNode({ref: 'a'}),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[0] + '@a', to: objs()[1] + '@other'}, graph)
+    )()
     expect(graph).to.be.ok
+    expect(Graph.edges(graph)).to.have.length(1)
   })
 
   it('cannot add two nodes with the same name', () => {
-    var graph = Graph.empty().addNode({ref: 'a', name: 'a'})
-    expect(() => graph.addNode({ref: 'a', name: 'a'})).to.throw(Error)
+    var graph = Graph.chain(Graph.addNode({ref: 'a', name: 'a'}))()
+    expect(() => Graph.addNode({ref: 'a', name: 'a'}, graph)).to.throw(Error)
   })
 
-  describe.skip('Node functions', () => {
+  describe('Basic Node functions', () => {
     it('fails if a non existend node is queried', () => {
-      expect(() => Graph.node(Graph.empty(), 'a')).to.throw(Error)
+      expect(() => Graph.node('a', Graph.empty())).to.throw(Error)
     })
 
     it('get all nodes', () => {
@@ -102,35 +106,35 @@ describe('Basic graph functions', () => {
         changeSet.insertNode({id: 'b1'}),
         changeSet.insertNode({id: 'a1'})
       ])
-      expect(Graph.nodes(graph, (n) => n.id.indexOf('a') === 0)).to.have.length(2)
+      expect(Graph.nodesBy((n) => n.id.indexOf('a') === 0, graph)).to.have.length(2)
     })
 
     it('adds nodes to the graph', () => {
-      var graph = Graph.addNode(Graph.empty(), {name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-      expect(Graph.hasNode(graph, 'a')).to.be.true
+      var graph = Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}, Graph.empty())
+      expect(Graph.hasNode('a', graph)).to.be.true
     })
 
     it('can chain adding nodes', () => {
-      var graph = Graph.empty()
-        .addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-        .addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-      expect(graph.nodes()).to.have.length(2)
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
+      )()
+      expect(Graph.nodes(graph)).to.have.length(2)
     })
 
     it('sets the type of ports to `generic` if no type is given', () => {
-      var graph = Graph.empty()
-        .addNode({name: 'a', ports: [{port: 'p', kind: 'input'}]})
-      expect(graph.node('a').ports[0].type).to.equal('generic')
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'input'}]}))()
+      expect(Graph.node('a', graph).ports[0].type).to.equal('generic')
     })
 
     it('should throw an error if the node data is not valid', () => {
-      expect(() => Graph.addNode(Graph.empty())).to.throw(Error)
-      expect(() => Graph.addNode(Graph.empty(), {})).to.throw(Error)
+      expect(() => Graph.addNode({}, Graph.empty())).to.throw(Error)
     })
 
-    it('should throw an error if an node gets added twice', () => {
-      var graph = Graph.addNode(Graph.empty(), {name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-      expect(() => Graph.addNode(graph, {name: 'a', prop: 'p'})).to.throw(Error)
+    it('should throw an error if an node with the same name gets added twice', () => {
+      var graph = Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}, Graph.empty())
+      expect(() => Graph.addNode({name: 'a', prop: 'p'}, graph)).to.throw(Error)
     })
 
     it('can check whether a node exists in the graph', () => {
@@ -138,32 +142,36 @@ describe('Basic graph functions', () => {
         changeSet.insertNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
         changeSet.insertNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
       ])
-      expect(Graph.hasNode(graph, 'a')).to.be.true
-      expect(Graph.hasNode(graph, {name: 'b'})).to.be.true
+      expect(Graph.hasNode('a', graph)).to.be.true
+      expect(Graph.hasNode({name: 'b'}, graph)).to.be.true
     })
+  })
 
+  describe('Compound Node functions', () => {
     it('sets the path when creating compounds', () => {
       var impl = Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
       expect(impl.path).to.eql([])
     })
 
     it('gets nodes by compound path', () => {
-      var impl = Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode(impl)
-      var n = Graph.node(graph, ['b', 'a'])
+      var impl = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+      )(Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.addNode(impl, Graph.empty())
+      var n = Graph.node(['b', 'a'], graph)
       expect(n).to.be.ok
       expect(n.name).to.equal('a')
-      n = Graph.node(graph, '»b»a')
+      n = Graph.node('»b»a', graph)
       expect(n).to.be.ok
       expect(n.name).to.equal('a')
     })
 
     it('does not confuse parent compounds and inner nodes', () => {
-      var impl = Graph.compound({name: 'a', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode(impl)
-      var n = Graph.node(graph, ['a', 'a'])
+      var impl = Graph.addNode(
+        {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+        Graph.compound({name: 'a', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.addNode(impl, Graph.empty())
+      var n = Graph.node(['a', 'a'], graph)
       expect(n).to.be.ok
       expect(n.name).to.equal('a')
       expect(n.path).to.eql(['a', 'a'])
@@ -171,85 +179,98 @@ describe('Basic graph functions', () => {
     })
 
     it('checks nodes by compound path', () => {
-      var impl = Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode(impl)
-      expect(Graph.hasNode(graph, ['b', 'a'])).to.be.true
-      expect(Graph.hasNode(graph, '»b»a')).to.be.true
-      expect(Graph.hasNode(graph, ['a'])).to.be.false
-      expect(Graph.hasNode(graph, ['a', 'b'])).to.be.false
+      var impl = Graph.addNode(
+        {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+        Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.addNode(impl, Graph.empty())
+      expect(Graph.hasNode(['b', 'a'], graph)).to.be.true
+      expect(Graph.hasNode('»b»a', graph)).to.be.true
+      expect(Graph.hasNode(['a'], graph)).to.be.false
+      expect(Graph.hasNode(['a', 'b'], graph)).to.be.false
     })
 
     it('adds nodes in compounds', () => {
-      var impl = Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode(impl).addNodeByPath('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      expect(Graph.hasNode(graph, ['b', 'a'])).to.be.true
-      expect(Graph.hasNode(graph, ['b', 'c'])).to.be.true
+      var impl = Graph.addNode(
+        {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+        Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.chain(
+        Graph.addNode(impl),
+        Graph.addNodeByPath('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+      )()
+      expect(Graph.hasNode(['b', 'a'], graph)).to.be.true
+      expect(Graph.hasNode(['b', 'c'], graph)).to.be.true
     })
 
     it('gets nodes deep including compound nodes', () => {
-      var impl = Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode(impl)
+      var impl = Graph.addNode(
+        {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+        Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.addNode(impl, Graph.empty())
       var nodes = Graph.nodesDeep(graph)
       expect(nodes).to.have.length(2)
       expect(nodes.map((n) => Node.path(n))).to.have.deep.members([['b', 'a'], ['b']])
     })
 
     it('removes a node on the root level', () => {
-      var graph = Graph.empty().addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-      var remGraph = graph.removeNode('a')
+      var graph = Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}, Graph.empty())
+      var remGraph = Graph.removeNode('a', graph)
       expect(remGraph).to.be.ok
-      expect(remGraph.nodes()).to.have.length(0)
+      expect(Graph.nodes(remGraph)).to.have.length(0)
     })
 
     it('does not remove other nodes when removing a specific node', () => {
-      var graph = Graph.empty().addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-        .addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-      var remGraph = graph.removeNode('a')
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
+      )()
+      var remGraph = Graph.removeNode('a', graph)
       expect(remGraph).to.be.ok
-      expect(remGraph.nodes()).to.have.length(1)
-      expect(remGraph.hasNode('a')).to.be.false
-      expect(remGraph.hasNode('b')).to.be.true
+      expect(Graph.nodes(remGraph)).to.have.length(1)
+      expect(Graph.hasNode('a', remGraph)).to.be.false
+      expect(Graph.hasNode('b', remGraph)).to.be.true
     })
 
-    it('removes nodes in compounds', () => {
-      var impl = Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode(impl)
-      var remGraph = graph.removeNode(['b', 'a'])
-      expect(remGraph.hasNode('»b»a')).to.be.false
-      expect(remGraph.hasNode('b')).to.be.true
+    it.only('removes nodes in compounds', () => {
+      var impl = Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+        Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.addNode(impl, Graph.empty())
+      var remGraph = Graph.removeNode(['b', 'a'], graph)
+      expect(Graph.hasNode('»b»a', remGraph)).to.be.false
+      expect(Graph.hasNode('b', remGraph)).to.be.true
     })
 
     it('only removes specified node in compound', () => {
-      var impl = Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-        .addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode(impl)
-      var remGraph = graph.removeNode(['b', 'b'])
-      expect(remGraph.hasNode('»b»a')).to.be.true
-      expect(remGraph.hasNode('»b»b')).to.be.false
-      expect(remGraph.hasNode('b')).to.be.true
+      var impl = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+      )(Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.addNode(impl, Graph.empty())
+      var remGraph = Graph.removeNode(['b', 'b'], graph)
+      expect(Graph.hasNode('»b»a', remGraph)).to.be.true
+      expect(Graph.hasNode('»b»b', remGraph)).to.be.false
+      expect(Graph.hasNode('b', remGraph)).to.be.true
     })
 
-    it('replaces references with a node', () => {
-      var graph = Graph.empty().addNode({ref: 'abc', name: '123'})
-        .replaceNode('123', {componentId: 'abc', ports: [{port: 'a', kind: 'output', type: 'string'}], atomic: true})
-      expect(graph.hasNode('123')).to.be.true
-      expect(graph.Nodes).to.have.length(1)
-      expect(graph.node('123').atomic).to.be.true
-      expect(graph.node('123').componentId).to.equal('abc')
-      expect(graph.node('123').ref).to.be.undefined
+    it.skip('replaces references with a node', () => {
+      var graph = Graph.chain(
+        Graph.addNode({ref: 'abc', name: '123'}),
+        Graph.replaceNode('123', {componentId: 'abc', ports: [{port: 'a', kind: 'output', type: 'string'}], atomic: true})
+      )()
+      expect(Graph.hasNode('123', graph)).to.be.true
+      expect(Graph.nodes(graph)).to.have.length(1)
+      expect(Graph.node('123', graph).atomic).to.be.true
+      expect(Graph.node('123', graph).componentId).to.equal('abc')
+      expect(Graph.node('123', graph).ref).to.be.undefined
     })
 
-    it('replaces references with a compound node', () => {
-      var impl = Graph.compound({componentId: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]})
-        .addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-        .addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      var graph = Graph.empty().addNode({ref: 'abc', name: '123'})
-        .replaceNode('123', impl)
+    it.skip('replaces references with a compound node', () => {
+      var impl = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+      )(Graph.compound({componentId: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.replaceNode(
+        '123', impl,
+        Graph.addNode({ref: 'abc', name: '123'}, Graph.empty()))
       expect(graph.hasNode('123')).to.be.true
       expect(graph.nodes()).to.have.length(1)
       expect(graph.nodesDeep()).to.have.length(3)
@@ -348,7 +369,7 @@ describe('Basic graph functions', () => {
 
   describe('Meta information', () => {
     it('returns a map of all meta information', () => {
-      var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.addMetaInformation({a: 'b'}))
+      var graph = Graph.setMeta('a', 'b', Graph.empty())
       var meta = Graph.meta(graph)
       expect(meta).to.be.an('object')
       expect(meta).to.have.property('a')

@@ -35,7 +35,7 @@ export function fromString (compoundPathStr) {
  * @returns True if the path represents a compound path, false otherwise.
  */
 export function isCompoundPath (path) {
-  return typeof (path) === 'string' && path[0] === '»'
+  return Array.isArray(path) || (typeof (path) === 'string' && path[0] === '»')
 }
 
 /**
@@ -93,7 +93,7 @@ export function parent (path) {
 
 export function node (path) {
   if (typeof (path) === 'string') {
-    return toString(node(fromString(path)))
+    return node(fromString(path))
   } else if (Array.isArray(path)) {
     return path.slice(-1)
   } else {

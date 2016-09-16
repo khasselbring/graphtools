@@ -18,7 +18,6 @@ export function edges (graph) {
 
 function checkEdge (graph, edge) {
   var normEdge = Edge.normalize(edge)
-  console.log(normEdge)
   var from = node(normEdge.from, graph)
   var to = node(normEdge.to, graph)
   // TODO: check for edge from parent node is not correct anymore.. normEdge.from is a port object. (Same holds for normEdge.to)
