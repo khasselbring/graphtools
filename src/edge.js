@@ -85,10 +85,18 @@ export function setPath (edge, path) {
  * @param {Node|Port} target The target the edge should point to. This can either be a node or a port.
  * @returns {boolean} True if the edge points to the target, false otherwise.
  */
-export function pointsTo (edge, target) {
+export const pointsTo = curry((target, edge) => {
   if (Port.isPort(target)) {
     return Port.equal(edge.to, target)
   } else {
     return Node.equal(Port.node(edge.to), target)
   }
-}
+})
+
+export const isFrom = curry((source, edge) => {
+  if (Port.isPort(source)) {
+    return Port.equal(edge.to, source)
+  } else {
+    return Node.equal(Port.node(edge.from), source)
+  }
+})

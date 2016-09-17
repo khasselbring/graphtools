@@ -112,3 +112,11 @@ export function toString (port) {
 export function equal (port1, port2) {
   return node(port1) === node(port2) && portName(port1) === portName(port2)
 }
+
+export function create (node, port) {
+  if (typeof (node) === 'object') {
+    return normalize({node: node.id, port})
+  } else {
+    return normalize({node, port})
+  }
+}

@@ -7,6 +7,7 @@ import has from 'lodash/fp/has'
 import every from 'lodash/fp/every'
 import * as Port from './port'
 import cuid from 'cuid'
+import {node as pathNode, isCompoundPath} from './compoundPath'
 
 /**
  * A node either as an identifier, or as an object containing the property `node` as its identifier.
@@ -28,6 +29,15 @@ export function create (node, id = null) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
   return newNode
+}
+
+/**
+ * Checks if the given object is an id.
+ * @param obj The object to test
+ * @returns {boolean} True if the object is an id, false otherwise.
+ */
+export function isID (str) {
+  return typeof (str) === 'string' && (str[0] === '#' || (str.length === 25 && str[0] === 'c'))
 }
 
 /**
@@ -57,6 +67,8 @@ export function name (node) {
     return node
   } else if (node.name) {
     return node.name
+  } else if (isCompoundPath(node)) {
+    return pathNode(node)[0]
   } else {
     return node.id
   }
@@ -70,7 +82,7 @@ export function name (node) {
  * @returns {boolean} True if they have the same id, false otherwise.
  */
 export const equal = curry((node1, node2) => {
-  if (isValid(node1) && isValid(node2)) {
+  if ((isValid(node1) || isID(node1)) && (isValid(node2) || isID(node2))) {
     return id(node1) && id(node2) && id(node1) === id(node2)
   } else {
     return name(node1) === name(node2)

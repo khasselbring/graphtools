@@ -10,6 +10,7 @@ import _ from 'lodash'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Component from './component'
+import {isCompound} from './compound'
 
 /**
  * Creates a change set to update a node with a given value
@@ -18,8 +19,8 @@ import * as Component from './component'
  * E.g. `{recursive: true}` will update the field `recursive` in the node and sets it to `true`.
  * @returns {ChangeSet} A change set containing the operation.
  */
-export function updateNode (node, mergeValue) {
-  return {type: 'changeSet', operation: 'merge', query: 'nodes[id=' + node + '].value', value: mergeValue}
+export function updateNode (nodePath, mergeValue) {
+  return {type: 'changeSet', operation: 'mergePath', query: nodePath, value: mergeValue}
 }
 
 /**
@@ -149,6 +150,19 @@ const getReferences = (graph, changeSet) => {
   return refs.references
 }
 
+const applyMergeByPath = (graph, path, value) => {
+  var idx = _.findIndex(graph.nodes, Node.equal(path[0]))
+  if (path.length === 1) {
+    if (idx > -1) {
+      return _.merge(graph.nodes[idx], value)
+    }
+  } else {
+    if (idx > -1 && isCompound(graph.nodes[idx])) {
+      applyMergeByPath(graph.nodes[idx], path.slice(1), value)
+    }
+  }
+}
+
 /**
  * Apply a changeSet on the given graph.
  * @param {Object} graph The graph in JSON format that should be changed.
@@ -157,26 +171,8 @@ const getReferences = (graph, changeSet) => {
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
 export function applyChangeSet (graph, changeSet) {
-  var newGraph = _.clone(graph)
-  if (!isChangeSet(changeSet)) {
-    throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
-  }
-  var refs = getReferences(newGraph, changeSet)
-  switch (changeSet.operation) {
-    case 'merge':
-      applyMerge(refs, changeSet.value)
-      break
-    case 'insert':
-      applyInsert(refs, changeSet.value)
-      break
-    case 'remove':
-      applyRemove(refs, changeSet.filter)
-      break
-    case 'set':
-      applySet(refs, changeSet.value)
-      break
-  }
-  return newGraph
+  var newGraph = _.cloneDeep(graph)
+  return applyChangeSetInplace(newGraph, changeSet)
 }
 
 /**
@@ -202,6 +198,9 @@ export function applyChangeSets (graph, changeSets) {
 export function applyChangeSetInplace (graph, changeSet) {
   if (!isChangeSet(changeSet)) {
     throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
+  }
+  if (changeSet.operation === 'mergePath') {
+    applyMergeByPath(graph, changeSet.query, changeSet.value)
   }
   var refs = getReferences(graph, changeSet)
   switch (changeSet.operation) {

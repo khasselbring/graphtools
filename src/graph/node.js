@@ -4,6 +4,7 @@ import flatten from 'lodash/fp/flatten'
 import find from 'lodash/fp/find'
 import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
+import pick from 'lodash/fp/pick'
 import {isCompound, setPath as compoundSetPath} from '../compound'
 import {isCompoundPath, isRoot, join, node as pathNode, parent as pathParent, normalize} from '../compoundPath'
 import {isPort, node as portNode} from '../port'
@@ -84,23 +85,29 @@ function nodeByPathRec (graph, path, basePath) {
   }
 }
 
+/**
+ * Return the node located at the specific path.
+ * @params {CompoundPath} path The path to the node.
+ * @params {PortGraph} graph The graph to the element.
+ * @returns {Node} The node specified by the path.
+ * @throws {Error} If the given path does not point to a node.
+ */
 export const nodeByPath = curry((path, graph) => {
   return nodeByPathRec(graph, normalize(path), normalize(path))
 })
 
-function isID (str) {
-  return str[0] === '#' || str.length === 25 && str[0] === 'c'
-}
-
 /**
  * Returns the path that points to the node in the graph by its id. The id is preseved when moving or editing nodes.
  * The path might change. To fixate a node one can use the ID.
+ * @param {string} id The id of the node
+ * @param {PortGraph} graph The graph to search in
+ * @returns {CompoundPath|null} The path to the node with the given ID.
  */
-export function idToPath (graph, id) {
-  if (id[0] === '#') return idToPath(graph, id.slice(1))
+export const idToPath = curry((id, graph) => {
+  if (id[0] === '#') return idToPath(id.slice(1), graph)
   // return graph.__internals.idMap[id] // speed up search by creating a idMap cache
   return nodesDeep(graph).find((n) => n.id === id).path
-}
+})
 
 /**
  * Returns the node with the given id. [Performance O(|V|)]
@@ -118,8 +125,11 @@ export const node = curry((searchNode, graph) => {
   }
   if (isCompoundPath(searchNode)) {
     return nodeByPath(searchNode, graph)
-  } else if (isID(searchNode)) {
-    return nodeByPath(idToPath(graph, searchNode), graph)
+  } else if (Node.isID(searchNode)) {
+    var path = idToPath(searchNode, graph)
+    if (!isRoot(pathParent(path))) {
+      return nodeByPath(idToPath(searchNode, graph), graph)
+    }
   }
   var res = find(Node.equal(searchNode), graph.nodes)
   if (!res) {
@@ -165,7 +175,7 @@ export const hasNodeByPath = curry((path, graph) => {
 export const hasNode = curry((node, graph) => {
   if (isPort(node)) {
     return hasNode(portNode(node), graph)
-  } else if (Array.isArray(node) || isCompoundPath(node)) {
+  } else if (isCompoundPath(node)) {
     return hasNodeByPath(node, graph)
   }
   return !!find(Node.equal(node), graph.nodes)
@@ -221,12 +231,12 @@ function setPath (node, path) {
  */
 export const addNode = curry((node, graph, ...cb) => {
   if (hasNode(node, graph)) {
-    throw new Error('Cannot add already existing node: ' + Node.id(node))
+    throw new Error('Cannot add already existing node: ' + Node.name(node))
   }
   var newNode = Node.create(node)
   checkNode(graph, newNode)
   if (cb.length > 0) {
-    cb[0](newNode.id)
+    cb[0](newNode)
   }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(setPath(newNode, Node.path(graph))))
 })
@@ -237,33 +247,54 @@ export const addNode = curry((node, graph, ...cb) => {
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph without the given node.
  */
-export const removeNode = curry((path, graph) => {
-  console.log(path)
+export const removeNode = curry((path, graph, ...cb) => {
   var parentPath = pathParent(path)
   if (parentPath.length === 0) {
+    if (cb.length > 0) {
+      cb[0](node(path, graph))
+    }
     return changeSet.applyChangeSet(graph, changeSet.removeNode(path))
   }
   var parentGraph = node(parentPath, graph)
-  console.log('parent', parentPath)
   // remove node in its compound and replace the graphs on the path
-  return replaceNode(parentPath, removeNode(pathNode(path), parentGraph), graph)
+  return replaceNode(parentPath, removeNode(pathNode(path), parentGraph, ...cb), graph)
 })
 
 const unID = (node) => {
   return omit('id', node)
 }
 
-const setNodeId = curry((oldID, newID, graph) => {
-  node(oldID, graph).id = newID
-  return graph
+const mergeNodes = curry((oldNode, newNode, graph) => {
+  return changeSet.applyChangeSet(graph, changeSet.updateNode(idToPath(newNode.id, graph), pick(['id', 'name', 'path'], oldNode)))
 })
+
+/**
+ * Updates all pathes in the graph.
+ * @param {PortGraph} graph The graph to update
+ * @returns {PortGraph} The port graph with all valid paths.
+ */
+const rePath = (graph) => {
+  return rePathRec([], graph)
+}
+
+const rePathRec = (basePath, graph) => {
+  graph.nodes.forEach((n) => {
+    var newPath = join(basePath, Node.name(n))
+    n.path = newPath
+    if (isCompound(n)) {
+      rePathRec(newPath, n)
+    }
+  })
+  return graph
+}
 
 /* TODO FIX! Make sure that the id does not change */
 export const replaceNode = curry((path, newNode, graph) => {
   return chain(
     removeNode(path),
     addNodeByPath(pathParent(path), unID(newNode)),
-    (graph, objs) => setNodeId(objs()[1], objs()[0], graph)
+    (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
+    rePath
   )(graph)
 })
 

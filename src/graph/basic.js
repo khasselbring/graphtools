@@ -1,3 +1,6 @@
+/**
+ * @overview Includes basic graph functions like creating a graph or cloning it.
+ */
 
 import cloneObj from 'lodash/fp/clone'
 import isEqual from 'lodash/fp/isEqual'
