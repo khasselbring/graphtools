@@ -1,7 +1,11 @@
 /** @module Edge */
 
-import {isReference, id as nodeID} from './node'
+import omit from 'lodash/fp/omit'
+import merge from 'lodash/fp/merge'
+import curry from 'lodash/fp/curry'
+import {isReference, id as nodeID, hasPort} from './node'
 import * as Edge from './edge'
+import * as Port from './port'
 import _ from 'lodash'
 
 /**
@@ -11,6 +15,18 @@ import _ from 'lodash'
  */
 export function isCompound (node) {
   return !isReference(node) && !node.atomic && !!node.nodes && !!node.edges
+}
+
+/**
+ * Returns whether the node is a recursion node
+ * (i.e. is the node that contains the recursion implementation -- recursive root
+ * or it is the the node that invokes the recursive call -- recursion invokee)
+ * @params {Node} node The node that should be tested
+ * @returns {boolean} True if it is a recursion node, false otherwise.
+ */
+export function isRecursion (node) {
+  // might change in the future...
+  return node.isRecursion
 }
 
 export function id (node) {
@@ -42,3 +58,65 @@ export function create (node) {
     path: []
   }, node)
 }
+
+
+const getPort = (portOrString, node) =>
+  (typeof (portOrString) === 'string') ? Port.create(node, portOrString) : portOrString
+
+/**
+ * Rename a port and return the new node.
+ * @param {String|Port} port the Port to rename.
+ * @returns {Node} The node with the renamed port. The componentId will be removed, as it is not
+ * an implementation of the component anymore.
+ */
+export const renamePort = curry((port, newName, node) => {
+  port = getPort(port, node)
+  return omit('componentId', merge(node, {ports: node.ports.map((p) => {
+    if (Port.equal(port, p)) {
+      return merge(p, {port: newName})
+    } else return p
+  })}))
+})
+
+/**
+ * Remove a port from a node
+ * @param {Port|String} port The port to remove
+ * @returns {Node} The node without the given port. The componentId will be removed, as it is not
+ * an implementation of the component anymore.
+ */
+export const removePort = curry((port, node) => {
+  port = getPort(port, node)
+  return omit('componentId', merge(node, {ports: node.ports.filter(Port.equal(port))}))
+})
+
+const addPort = (port, kind, node) => {
+  if (hasPort(port, node)) {
+    throw new Error('Cannot add already existing port ' + Port.toString(port) + ' to node.')
+  }
+  return omit('componentId',
+    merge(node, {ports: node.ports.concat([Port.create(port.node, port.port, kind)])}))
+}
+
+/**
+ * Adds a new input port to the node.
+ * @params {Port|String} port The port to add.
+ * @params {Node} node The node that gets the port.
+ * @returns {Node} A new node with the given port.
+ * @throws {Error} If the node already has a port with that name.
+ */
+export const addInputPort = curry((port, node) => {
+  port = getPort(port, node)
+  return addPort(port, 'input', node)
+})
+
+/**
+ * Adds a new output port to the node.
+ * @params {Port|String} port The port to add.
+ * @params {Node} node The node that gets the port.
+ * @returns {Node} A new node with the given port.
+ * @throws {Error} If the node already has a port with that name.
+ */
+export const addOutputPort = curry((port, node) => {
+  port = getPort(port, node)
+  return addPort(port, 'output', node)
+})

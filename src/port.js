@@ -113,10 +113,10 @@ export function equal (port1, port2) {
   return node(port1) === node(port2) && portName(port1) === portName(port2)
 }
 
-export function create (node, port) {
+export function create (node, port, kind) {
   if (typeof (node) === 'object') {
-    return normalize({node: node.id, port})
+    return normalize({node: node.id, port, kind})
   } else {
-    return normalize({node, port})
+    return normalize({node, port, kind})
   }
 }

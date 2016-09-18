@@ -23,7 +23,7 @@ describe.skip('Adjacent nodes', () => {
     Graph.addEdge({from: '1_INC@inc', to: '2_STDOUT@input'})
   )()
 
-  it.only('can get the predecessor of a node for', () => {
+  it('can get the predecessor of a node for', () => {
     var pred = walk.predecessor('2_STDOUT', 'input', pGraph1())
     expect(pred).to.have.length(1)
     expect(pred[0].port).to.deep.equal({node: '1_INC', port: 'inc'})

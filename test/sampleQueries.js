@@ -1,6 +1,8 @@
+import curry from 'lodash/fp/curry'
 import * as Graph from '../src/graph'
 import * as Node from '../src/node'
 import * as Compound from '../src/compound'
+import * as Port from '../src/port'
 
 const Functional = {
   isLambdaImplementation: (n) => n.isLambdaImplementation
@@ -10,83 +12,87 @@ const Semantics = {
   isSink: (n) => n.sink
 }
 
-const Port = {
-  node: (p) => p.node
-}
-
+/*
 // unnecessary if compounds are unpacked before rest?
-const atomicSuccessorInPort = (graph, port) =>
-  Graph.successors(graph, port, {ignoreCompounds: true})
+const atomicSuccessorInPort = curry((port, graph) =>
+  Graph.successors(port, {ignoreCompounds: true}, graph)
+)
 
 // unnecessary if compounds are unpacked before rest?
 const atomicPredecessorOutPort = (graph, port) =>
   Graph.predecessors(graph, port, {ignoreCompounds: true})
+*/
 
-const isUnused = (graph, node) =>
-  Graph.successors(graph, node).length === 0 &&
+const isUnused = curry((node, graph) =>
+  Graph.successors(node, graph).length === 0 &&
   !Functional.isLambdaImplementation(node) &&
-  !Semantics.isSink(node)
+  !Semantics.isSink(node))
 
 
-const deleteUnusedPredecessors = (graph, node) =>
-  Graph.predecessors(graph, node)
-    .filter((p) => Graph.successors(graph, p)
+const deleteUnusedPredecessors = curry((node, graph) =>
+  Graph.predecessors(node, graph)
+    .filter((p) => Graph.successors(p, graph)
       .every((s) => Node.equal(Port.node(s), node)))
-    .reduce((curGraph, p) => curGraph.removeNode(p), graph)
+    .reduce((curGraph, p) => Graph.removeNode(p, curGraph), graph))
 
-const deleteIfUnused = (graph, node) => {
-  if (isUnused(graph, node)) {
-    return graph.removeNode(deleteUnusedPredecessors(graph, node), node)
+const deleteIfUnused = curry((node, graph) => {
+  if (isUnused(node, graph)) {
+    return Graph.removeNode(node, deleteUnusedPredecessors(node, graph))
   }
   return graph
-}
+})
 
 // replaceNode is part of graphtools API
 
-const isUnnecessaryCompound = (graph, node) =>
+const isUnnecessaryCompound = curry((node, graph) =>
   Compound.isCompound(node) &&
   !Compound.isRecursion(node) &&
-  !Functional.isLambdaImplementation(node)
+  !Functional.isLambdaImplementation(node))
 
-const unpackCompoundNode = (graph, node) =>
-  Graph.nodes(node).reduce((curGraph, n) =>
-    curGraph.moveNode(n, graph.parent(node)), graph)
+/**
+ * what would the semantics of move be?? This is a rewrite function!?
+ */
+const unpackCompoundNode = curry((node, graph) =>
+  Graph.moveNodes(Graph.children(node, graph), Graph.parent(node, graph), graph))
 
-const removeEmptyCompound = (graph, node) => {
-  if (graph.children(node).length !== 0) {
+const removeEmptyCompound = curry((node, graph) => {
+  if (Graph.children(node, graph).length !== 0) {
     throw new Error('Cannot remove non empty compound')
   }
-  return graph.removeNode(node)
-}
+  return Graph.removeNode(node, graph)
+})
 
 // createEdge to successor does not create a valid graph
 // the successor will have two predecessors...
 // this is a "skip target" ? where one (?) edge to the
 // target gets redirected to its successors (multiple?)
 // perhaps not necessary... used for replaceNode?
-const skipTarget = (graph, output, target) =>
-  graph.removeEdge(output, target)
-    .successors(target)
-    .reduce((curGraph, s) => curGraph
-      .removeEdge(target, s)
-      .addEdge(output, s), graph)
+const skipTarget = curry((output, target, graph) =>
+  Graph.chain(
+    Graph.removeEdge(output, target, graph),
+    (graph) =>
+      Graph.successors(target, graph)
+        .reduce((curGraph, s) =>
+          Graph.chain(
+            Graph.removeEdge(target, s),
+            Graph.addEdge(output, s))
+        , graph)))
 
-const deepRemove = (graph, node) =>
-  deleteUnusedPredecessors(graph, node)
-    .removeNode(node)
+const deepRemove = curry((node, graph) =>
+  deleteUnusedPredecessors(node, graph)
+    .removeNode(node))
 
-const movePredecessorsInto = (graph, from, to) =>
+/* move? */
+const movePredecessorsInto = curry((from, to, graph) =>
   graph.predecessors(from).reduce((curGraph, p) =>
-    curGraph.move(p, to), graph)
+    curGraph.move(p, to), graph))
 
 // Compound.removePort should be part of graphtools
-// Compound.createInputPort(n, port, type)
-// Compound.createOutputPort(n, port, type)
+// Compound.addInputPort(n, port, type)
+// Compound.addOutputPort(n, port, type)
 // Compound.renamePort(n, port, newName)
 
 module.exports = {
-  atomicSuccessorInPort,
-  atomicPredecessorOutPort,
   isUnused,
   deleteIfUnused,
   isUnnecessaryCompound,
