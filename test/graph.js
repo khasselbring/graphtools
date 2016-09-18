@@ -10,7 +10,7 @@ import semver from 'semver'
 
 var expect = chai.expect
 
-describe.only('Basic graph functions', () => {
+describe('Basic graph functions', () => {
   it('can create an empty graph', () => {
     var graph = Graph.empty()
     expect(Graph.nodes(graph)).to.have.length(0)
@@ -415,7 +415,15 @@ describe.only('Basic graph functions', () => {
 
   describe('Meta information', () => {
     it('returns a map of all meta information', () => {
-      var graph = Graph.setMeta('a', 'b', Graph.empty())
+      var graph = Graph.setMetaKey('a', 'b', Graph.empty())
+      var meta = Graph.meta(graph)
+      expect(meta).to.be.an('object')
+      expect(meta).to.have.property('a')
+      expect(meta.a).to.equal('b')
+    })
+
+    it('sets a whole object as meta', () => {
+      var graph = Graph.setMeta({a: 'b'}, Graph.empty())
       var meta = Graph.meta(graph)
       expect(meta).to.be.an('object')
       expect(meta).to.have.property('a')

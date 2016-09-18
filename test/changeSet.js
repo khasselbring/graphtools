@@ -11,8 +11,8 @@ describe('Change Sets', () => {
     var graph = Graph.empty()
     var cS = changeSet.insertNode({ id: 'a', prop: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.node(newGraph, 'a')).to.be.ok
-    expect(Graph.node(newGraph, 'a').prop).to.equal('test')
+    expect(Graph.node('a', newGraph)).to.be.ok
+    expect(Graph.node('a', newGraph).prop).to.equal('test')
   })
 
   it('can set a field in a node', () => {
@@ -20,7 +20,7 @@ describe('Change Sets', () => {
       changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
     var cS = changeSet.updateNode('a', { NEW_PROP: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.node(newGraph, 'a').NEW_PROP).to.equal('test')
+    expect(Graph.node('a', newGraph).NEW_PROP).to.equal('test')
   })
 
   it('can update a field in a node', () => {
@@ -28,7 +28,7 @@ describe('Change Sets', () => {
       changeSet.insertNode({id: 'a', ports: [{name: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
     var cS = changeSet.updateNode('a', { prop: 'new_test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.node(newGraph, 'a').prop).to.equal('new_test')
+    expect(Graph.node('a', newGraph).prop).to.equal('new_test')
   })
 
   it('can remove a node', () => {
@@ -64,25 +64,40 @@ describe('Change Sets', () => {
       changeSet.insertNode({id: 'b', ports: [{name: 'a', kind: 'input', type: 'number'}]}),
       changeSet.insertNode({id: 'c', ports: [{name: 'a', kind: 'output', type: 'number'}]}),
       changeSet.insertNode({id: 'd', ports: [{name: 'a', kind: 'input', type: 'number'}]}),
-      changeSet.insertEdge({ from: ['a'], outPort: 'a', to: ['b'], inPort: 'a' }),
-      changeSet.insertEdge({ from: ['c'], outPort: 'a', to: ['d'], inPort: 'a' })
+      changeSet.insertEdge({ from: {node: 'a', port: 'a'}, to: {node: 'b', port: 'a'} }),
+      changeSet.insertEdge({ from: {node: 'c', port: 'a'}, to: {node: 'd', port: 'a'} })
     ])
-    cS = changeSet.removeEdge({ from: ['c'], outPort: 'a', to: ['d'], inPort: 'a' })
+    cS = changeSet.removeEdge({ from: {node: 'c', port: 'a'}, to: {node: 'd', port: 'a'} })
     newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.edges(newGraph)).to.have.length(1)
-    expect(Graph.edges(newGraph)[0].from).to.eql(['a'])
+    expect(Graph.edges(newGraph)[0].from.node).to.eql('a')
   })
 
-  it('can add meta keys', () => {
+  it('can set meta information', () => {
     var graph = Graph.empty()
-    var newGraph = changeSet.applyChangeSet(graph, changeSet.addMetaInformation({metaID: 'ABC'}))
+    var newGraph = changeSet.applyChangeSet(graph, changeSet.setMetaInformation({metaID: 'ABC'}))
     expect(Graph.meta(newGraph)).to.have.property('metaID')
     expect(Graph.meta(newGraph).metaID).to.equal('ABC')
   })
 
+  it('can add meta keys', () => {
+    var graph = Graph.empty()
+    var newGraph = changeSet.applyChangeSet(graph, changeSet.addMetaInformation('metaID', 'ABC'))
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('ABC')
+  })
+
+  it('can update meta information', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.setMetaInformation({metaID: 'ABC'}))
+    const cS = changeSet.setMetaInformation({metaID: 'DEF'})
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('DEF')
+  })
+
   it('can update meta keys', () => {
-    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.addMetaInformation({metaID: 'ABC'}))
-    const cS = changeSet.addMetaInformation({metaID: 'DEF'})
+    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.setMetaInformation({metaID: 'ABC'}))
+    const cS = changeSet.addMetaInformation('metaID', 'DEF')
     var newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.meta(newGraph)).to.have.property('metaID')
     expect(Graph.meta(newGraph).metaID).to.equal('DEF')
@@ -91,8 +106,8 @@ describe('Change Sets', () => {
   it('can apply multiple change sets', () => {
     var graph = Graph.empty()
     var newGraph = changeSet.applyChangeSets(graph, [
-      changeSet.addMetaInformation({metaID: 'ABC'}),
-      changeSet.addMetaInformation({name: 'test'})
+      changeSet.setMetaInformation({metaID: 'ABC'}),
+      changeSet.addMetaInformation('name', 'test')
     ])
     expect(Graph.meta(newGraph)).to.have.property('metaID')
     expect(Graph.meta(newGraph)).to.have.property('name')

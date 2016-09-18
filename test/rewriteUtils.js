@@ -6,7 +6,7 @@ import * as Utils from './sampleQueries'
 
 const expect = chai.expect
 
-describe('Exemplary usages', () => {
+describe.skip('Exemplary usages', () => {
   it('can delete non-branching predecessors', () => {
     var graph = Graph.empty()
       .addNode({id: 'A', ports: [{name: 'a', kind: 'output'}]})

@@ -18,6 +18,10 @@ export function meta (graph) {
  * @param value Any possible value for the key.
  * @returns A new graph with the applied changes.
  */
-export const setMeta = curry((key, value, graph) => {
+export const setMetaKey = curry((key, value, graph) => {
   return changeSet.applyChangeSet(graph, changeSet.addMetaInformation(key, value))
+})
+
+export const setMeta = curry((obj, graph) => {
+  return changeSet.applyChangeSet(graph, changeSet.setMetaInformation(obj))
 })

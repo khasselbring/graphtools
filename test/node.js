@@ -8,10 +8,10 @@ var expect = chai.expect
 
 describe('Node API', () => {
   it('`Node.create` creates nodes correctly', () => {
-    expect(Node.create({ports: [{name: 'a', kind: 'output'}]})).to.be.ok
-    expect(Node.create({ports: [{name: 'a', kind: 'output'}]}).id).to.be.ok
-    expect(Node.create({name: 'b', ports: [{name: 'a', kind: 'output'}]})).to.be.ok
-    expect(Node.create({name: 'b', ports: [{name: 'a', kind: 'output'}]}).id).to.be.ok
+    expect(Node.create({ports: [{port: 'a', kind: 'output'}]})).to.be.ok
+    expect(Node.create({ports: [{port: 'a', kind: 'output'}]}).id).to.be.ok
+    expect(Node.create({name: 'b', ports: [{port: 'a', kind: 'output'}]})).to.be.ok
+    expect(Node.create({name: 'b', ports: [{port: 'a', kind: 'output'}]}).id).to.be.ok
   })
 
   it('`Node.create` does not create invalid nodes and throws an error', () => {
@@ -19,7 +19,7 @@ describe('Node API', () => {
     expect(() => Node.create({id: 'a'})).to.throw(Error)
     expect(() => Node.create({id: 'a', name: 'b'})).to.throw(Error)
     expect(() => Node.create({id: 'a', ports: [{name: 'a', kind: 'output'}]})).to.throw(Error)
-    expect(() => Node.create({id: 'a', name: 'b', ports: [{name: 'a', kind: 'output'}]})).to.throw(Error)
+    expect(() => Node.create({id: 'a', name: 'b', ports: [{port: 'a', kind: 'output'}]})).to.throw(Error)
   })
 
   it('`Node.id` works for nodes and strings', () => {
@@ -59,41 +59,41 @@ describe('Node API', () => {
   })
 
   it('`isValid` can check the validity of a node', () => {
-    expect(Node.isValid({id: 'a', ports: [{name: 'p', kind: 'output', type: 'number'}]})).to.be.true
-    expect(Node.isValid({id: 'a', ports: [{name: 'p'}]})).to.be.false
-    expect(Node.isValid({id: 'a', ports: [{name: 'p', kind: 'nop', type: 'A'}]})).to.be.false
-    expect(Node.isValid({id: 'a', ports: [{name: 'p', type: 'A'}]})).to.be.false
-    expect(Node.isValid({id: 'a', ports: [{name: 'p', kind: 'output'}]})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{port: 'p', kind: 'output', type: 'number'}]})).to.be.true
+    expect(Node.isValid({id: 'a', ports: [{port: 'p'}]})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{port: 'p', kind: 'nop', type: 'A'}]})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{port: 'p', type: 'A'}]})).to.be.false
+    expect(Node.isValid({id: 'a', ports: [{port: 'p', kind: 'output'}]})).to.be.false
     expect(Node.isValid({id: 'a'})).to.be.false
-    expect(Node.isValid({idd: 'a', ports: [{name: 'p', kind: 'output', type: 'number'}]})).to.be.false
+    expect(Node.isValid({idd: 'a', ports: [{port: 'p', kind: 'output', type: 'number'}]})).to.be.false
     expect(Node.isValid({})).to.be.false
-    expect(Node.isValid({ports: [{name: 'p', kind: 'output', type: 'number'}]})).to.be.false
+    expect(Node.isValid({ports: [{port: 'p', kind: 'output', type: 'number'}]})).to.be.false
     expect(Node.isValid()).to.be.false
   })
 
   it('can get different port types', () => {
-    expect(Node.ports({ports: [{name: 'a', kind: 'output'}], atomic: true})).to.have.length(1)
-    expect(Node.outputPorts({ports: [{name: 'a', kind: 'output', type: 'number'}], atomic: true})).to.have.length(1)
-    expect(Node.outputPorts({ports: [{name: 'a', kind: 'input'}], atomic: true})).to.have.length(0)
+    expect(Node.ports({ports: [{port: 'a', kind: 'output'}], atomic: true})).to.have.length(1)
+    expect(Node.outputPorts({ports: [{port: 'a', kind: 'output', type: 'number'}], atomic: true})).to.have.length(1)
+    expect(Node.outputPorts({ports: [{port: 'a', kind: 'input'}], atomic: true})).to.have.length(0)
     expect(Node.outputPorts({ports: [
-      {name: 'a', kind: 'output'},
-      {name: 'b', kind: 'input'},
-      {name: 'c', kind: 'output'}
+      {port: 'a', kind: 'output'},
+      {port: 'b', kind: 'input'},
+      {port: 'c', kind: 'output'}
     ], atomic: true})).to.have.length(2)
-    expect(Node.inputPorts({ports: [{name: 'a', kind: 'output'}], atomic: true})).to.have.length(0)
-    expect(Node.inputPorts({ports: [{name: 'a', kind: 'input'}], atomic: true})).to.have.length(1)
+    expect(Node.inputPorts({ports: [{port: 'a', kind: 'output'}], atomic: true})).to.have.length(0)
+    expect(Node.inputPorts({ports: [{port: 'a', kind: 'input'}], atomic: true})).to.have.length(1)
     expect(Node.inputPorts({ports: [
-      {name: 'a', kind: 'output'},
-      {name: 'b', kind: 'input'},
-      {name: 'c', kind: 'input'}
+      {port: 'a', kind: 'output'},
+      {port: 'b', kind: 'input'},
+      {port: 'c', kind: 'input'}
     ], atomic: true})).to.have.length(2)
   })
 
   it('`hasPort` can check if a node has a port', () => {
-    expect(Node.hasPort({ports: [{port: 'a'}]}, 'a')).to.be.true
-    expect(Node.hasPort({ports: [{port: 'a'}]}, {port: 'a', node: ''})).to.be.true
-    expect(Node.hasPort({ports: [{port: 'b'}]}, 'a')).to.be.false
-    expect(Node.hasPort({ports: [{port: 'b'}]}, {port: 'a', node: ''})).to.be.false
-    expect(Node.hasPort({}, 'a')).to.be.false
+    expect(Node.hasPort('a', {ports: [{port: 'a'}]}, 'a')).to.be.true
+    expect(Node.hasPort({port: 'a', node: ''}, {ports: [{port: 'a'}]})).to.be.true
+    expect(Node.hasPort('a', {ports: [{port: 'b'}]})).to.be.false
+    expect(Node.hasPort({port: 'a', node: ''}, {ports: [{port: 'b'}]})).to.be.false
+    expect(Node.hasPort('a', {})).to.be.false
   })
 })

@@ -24,7 +24,7 @@ function normalizeStructure (edge) {
  * Normalizes the edge into the standard format
  *
  * ```
- *  {from: '<node|port>', to: '<node|port>', [outPort: '<port-name>', inPort: '<port-name>']}
+ *  {from: '<port>', to: '<port>'}
  * ```
  *
  * It accepts the following short forms:
@@ -34,7 +34,7 @@ function normalizeStructure (edge) {
  *  {from: '@<port>', to: '<node>@<port>'}
  *  {from: '<node>@<port>', to: '@<port>'}
  *  {from: '@<port>', to: '@<port>'}
- *  {from: '<node>', to: '<node>', fromPort: '<port-name>', toPort: '<port-name>'}
+ *  {from: '<node>', to: '<node>', outPort: '<port-name>', inPort: '<port-name>'}
  * ```
  *
  * The format must be consistent, you cannot have a mixture for `from` and `to`.

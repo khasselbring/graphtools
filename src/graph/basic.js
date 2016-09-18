@@ -8,7 +8,7 @@ import curry from 'lodash/fp/curry'
 import set from 'lodash/fp/set'
 import {create} from '../compound'
 import {isReference} from '../node'
-import {setMeta} from './meta'
+import {setMetaKey} from './meta'
 import {packageVersion} from '../internals'
 
 /**
@@ -65,5 +65,5 @@ export function disallowReferences (graph) {
  * @returns {PortGraph} A new empty port graph.
  */
 export function empty () {
-  return setMeta('version', packageVersion(), create())
+  return setMetaKey('version', packageVersion(), create())
 }

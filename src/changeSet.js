@@ -53,6 +53,10 @@ export function addMetaInformation (key, value) {
   return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: _.set({}, key, value)}
 }
 
+export function setMetaInformation (meta) {
+  return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: meta}
+}
+
 export function empty () {
   return {type: 'changeSet', opertaion: 'none'}
 }

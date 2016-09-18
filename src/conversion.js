@@ -1,4 +1,6 @@
-/** @module Conversion */
+/** @module Conversion
+ * We might not need this....?
+*/
 
 import grlib from 'graphlib'
 import * as Graph from './graph'
