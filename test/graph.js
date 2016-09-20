@@ -4,7 +4,7 @@ import chai from 'chai'
 import * as changeSet from '../src/changeSet'
 import * as Graph from '../src/graph'
 import * as Node from '../src/node'
-import {create as port} from '../src/port'
+import {port} from '../src/port'
 import _ from 'lodash'
 import semver from 'semver'
 
@@ -365,6 +365,21 @@ describe('Basic graph functions', () => {
       var graph = Graph.addNode(cmpd, Graph.empty())
       expect(Graph.edge({from: '»c»a@out', to: '»c»b@in', graph})).to.be.ok
       expect(() => Graph.edge({from: 'a@out', to: 'b@in'}, graph)).to.throw(Error)
+    })
+
+    it('Can add edges in compounds', () => {
+      var cmpd = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output', type: 'a'}]}))
+      var graph = Graph.chain(
+        Graph.addNode(cmpd),
+        Graph.addEdge({from: '»c»a@out', to: '»c»b@in'})
+      )()
+      // accessible via the root graph
+      expect(Graph.edge({from: '»c»a@out', to: '»c»b@in', graph})).to.be.ok
+      // accessible via the compound node
+      expect(Graph.edge({from: 'a@out', to: 'b@in', graph}, Graph.node('c', graph))).to.be.ok
     })
 
     it('Fails if the connecting ports do not exist', () => {

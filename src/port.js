@@ -3,6 +3,7 @@
  * The port format is a unique identifier for the port and its node unlike the port name.
  */
 
+import curry from 'lodash/fp/curry'
 import _ from 'lodash'
 
 const OUTPUT = 'output'
@@ -109,14 +110,22 @@ export function toString (port) {
   return node(port) + '@' + portName(port)
 }
 
-export function equal (port1, port2) {
+export const equal = curry((port1, port2) => {
   return node(port1) === node(port2) && portName(port1) === portName(port2)
-}
+})
 
-export function create (node, port, kind) {
+export const create = curry((node, port, kind) => {
   if (typeof (node) === 'object') {
     return normalize({node: node.id, port, kind})
   } else {
     return normalize({node, port, kind})
   }
-}
+})
+
+export const port = curry((node, port) => {
+  if (typeof (node) === 'object') {
+    return normalize({node: node.id, port})
+  } else {
+    return normalize({node, port})
+  }
+})

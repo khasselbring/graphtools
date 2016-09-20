@@ -2,10 +2,14 @@
 import find from 'lodash/fp/find'
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
+import map from 'lodash/fp/map'
+import flatten from 'lodash/fp/flatten'
 import * as Port from '../port'
 import * as Node from '../node'
 import * as Edge from '../edge'
-import {node, hasNode} from './node'
+import {isCompound} from '../compound'
+import {equal, isRoot} from '../compoundPath'
+import {node, hasNode, nodesDeepBy, parent, replaceNode} from './node'
 import * as changeSet from '../changeSet'
 
 /**
@@ -14,7 +18,7 @@ import * as changeSet from '../changeSet'
  * @returns {Edges[]} A list of edges.
  */
 export function edges (graph) {
-  return graph.edges
+  return flatten(map('edges', nodesDeepBy(isCompound, graph).concat([graph])))
 }
 
 function checkEdge (graph, edge) {
@@ -53,8 +57,34 @@ function pathsToIDs (edge, graph) {
   })
 }
 
+function edgeParent (edge, graph) {
+  var parentFrom = Node.path(parent(edge.from, graph))
+  var parentTo = Node.path(parent(edge.to, graph))
+  if (equal(parentFrom, parentTo)) {
+    return parentFrom // = parentTo
+  } else if (equal(Node.path(node(edge.from)), parentTo)) {
+    return parentTo
+  } else if (equal(Node.path(node(edge.to)), parentFrom)) {
+    return parentFrom
+  } else {
+    throw new Error('Unable to determine parent for the edge:', JSON.stringify(edge))
+  }
+}
+
 function normalize (edge, graph) {
   return pathsToIDs(Edge.normalize(edge), graph)
+}
+
+function addEdgeToCompound (edge, graph) {
+  var cs = changeSet.insertEdge(edge)
+  var parent = edgeParent(edge, graph)
+  if (isRoot(parent)) {
+    return changeSet.applyChangeSet(graph, cs)
+  } else {
+    var comp = node(parent, graph)
+    var newComp = changeSet.applyChangeSet(comp, cs)
+    return replaceNode(parent, newComp, graph)
+  }
 }
 
 /**
@@ -74,7 +104,7 @@ export const addEdge = curry((edge, graph) => {
   }
   var normEdge = normalize(edge, graph)
   checkEdge(graph, normEdge)
-  return changeSet.applyChangeSet(graph, changeSet.insertEdge(normEdge))
+  return addEdgeToCompound(normEdge, graph)
 })
 
 /**
@@ -85,7 +115,7 @@ export const addEdge = curry((edge, graph) => {
  */
 export const hasEdge = curry((edge, graph) => {
   var normEdge = normalize(edge, graph)
-  return !!find(Edge.equal(normEdge), graph.edges)
+  return !!find(Edge.equal(normEdge), edges(graph))
 })
 
 /**
@@ -97,7 +127,7 @@ export const hasEdge = curry((edge, graph) => {
  */
 export const edge = curry((edge, graph) => {
   var normEdge = normalize(edge, graph)
-  var retEdge = find(graph.edges, Edge.equal(normEdge))
+  var retEdge = find(Edge.equal(normEdge), edges(graph))
   if (!retEdge) {
     throw new Error('Edge is not defined in the graph: ' + JSON.stringify(edge))
   }

@@ -3,9 +3,11 @@
 import omit from 'lodash/fp/omit'
 import merge from 'lodash/fp/merge'
 import curry from 'lodash/fp/curry'
-import {isReference, id as nodeID, hasPort} from './node'
+import negate from 'lodash/fp/negate'
+import {isReference, id as nodeID, hasPort, inputPorts, outputPorts} from './node'
 import * as Edge from './edge'
 import * as Port from './port'
+import * as Graph from './graph'
 import _ from 'lodash'
 
 /**
@@ -27,6 +29,10 @@ export function isCompound (node) {
 export function isRecursion (node) {
   // might change in the future...
   return node.isRecursion
+}
+
+export function component (node) {
+  return node.componentId
 }
 
 export function id (node) {
@@ -55,13 +61,17 @@ export function create (node) {
     metaInformation: {},
     edges: [],
     components: [],
-    path: []
+    path: [],
+    ports: [],
+    atomic: false
   }, node)
 }
 
+export const children = Graph.nodes
+export {hasPort, inputPorts, outputPorts}
 
 const getPort = (portOrString, node) =>
-  (typeof (portOrString) === 'string') ? Port.create(node, portOrString) : portOrString
+  (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : portOrString
 
 /**
  * Rename a port and return the new node.
@@ -86,7 +96,7 @@ export const renamePort = curry((port, newName, node) => {
  */
 export const removePort = curry((port, node) => {
   port = getPort(port, node)
-  return omit('componentId', merge(node, {ports: node.ports.filter(Port.equal(port))}))
+  return omit('componentId', merge(node, {ports: node.ports.filter(negate(Port.equal(port)))}))
 })
 
 const addPort = (port, kind, node) => {

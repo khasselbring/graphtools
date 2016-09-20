@@ -30,7 +30,7 @@ export const nodes = (graph) => {
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodesBy = curry((predicate, graph) => {
-  return graph.nodes.filter(predicate)
+  return nodes(graph).filter(predicate)
 })
 
 function nodesDeepRec (graph, parents) {
@@ -41,9 +41,7 @@ function nodesDeepRec (graph, parents) {
  * Get all nodes at all depths. It will go into every compound node and return their nodes
  * and the nodes of their compound nodes, etc.
  * @param {PortGraph} graph The graph to work on
- * @param {String[]} baseCPath The base compound path for the node paths. This path specifies a list of parents and the actual node.
- * @returns {Node[]} A list of pairs. Each containing a compound path as the first element specifying a list of parents
- * that lead to the node in the graph. The second element is the corresponding node.
+ * @returns {Node[]} A list of nodes.
  */
 export function nodesDeep (graph) {
   return nodes(graph)
@@ -51,12 +49,22 @@ export function nodesDeep (graph) {
 }
 
 /**
+ * Get all nodes at all depths that fulfill the given predicate. It will go into every compound node
+ * and return their nodes and the nodes of their compound nodes, etc.
+ * @param {PortGraph} graph The graph to work on
+ * @returns {Node[]} A list of nodes that fulfill the predicate.
+ */
+export const nodesDeepBy = curry((predicate, graph) => {
+  return nodesDeep(graph).filter(predicate)
+})
+
+/**
  * Returns a list of node names. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
  * @returns {string[]} A list of node names.
  */
 export function nodeNames (graph) {
-  return graph.nodes.map(Node.id)
+  return nodes(graph).map(Node.id)
 }
 
 /**
@@ -128,10 +136,10 @@ export const node = curry((searchNode, graph) => {
   } else if (Node.isID(searchNode)) {
     var path = idToPath(searchNode, graph)
     if (!isRoot(pathParent(path))) {
-      return nodeByPath(idToPath(searchNode, graph), graph)
+      return nodeByPath(path, graph)
     }
   }
-  var res = find(Node.equal(searchNode), graph.nodes)
+  var res = find(Node.equal(searchNode), nodes(graph))
   if (!res) {
     // TODO: debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
     throw new Error(`Node with id '${Node.id(searchNode)}' does not exist in the graph.`)
@@ -177,13 +185,18 @@ export const hasNode = curry((node, graph) => {
     return hasNode(portNode(node), graph)
   } else if (isCompoundPath(node)) {
     return hasNodeByPath(node, graph)
+  } else if (Node.isID(node)) {
+    var path = idToPath(node, graph)
+    if (!isRoot(pathParent(path))) {
+      return hasNodeByPath(path, graph)
+    }
   }
-  return !!find(Node.equal(node), graph.nodes)
+  return !!find(Node.equal(node), nodes(graph))
 })
 
 function checkNode (graph, node) {
   if (allowsReferences(graph) && Node.isReference(node)) {
-    if (hasNode(Node.name(node), graph)) {
+    if (Node.hasName(node) && hasNode(Node.name(node), graph)) {
       throw new Error('Cannot add a reference if the name is already used. Names must be unique in every compound. Tried to add reference: ' + JSON.stringify(node))
     }
     return
@@ -193,7 +206,7 @@ function checkNode (graph, node) {
   } else if (!Node.isValid(node)) {
     throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
   } else {
-    if (hasNode(Node.name(node), graph)) {
+    if (Node.hasName(node) && hasNode(Node.name(node), graph)) {
       throw new Error('Cannot add a node if the name is already used. Names must be unique in every compound. Tried to add node: ' + JSON.stringify(node))
     }
   }
@@ -265,7 +278,8 @@ const unID = (node) => {
 }
 
 const mergeNodes = curry((oldNode, newNode, graph) => {
-  return changeSet.applyChangeSet(graph, changeSet.updateNode(idToPath(newNode.id, graph), pick(['id', 'name', 'path'], oldNode)))
+  return changeSet.applyChangeSet(graph,
+    changeSet.updateNode(idToPath(newNode.id, graph), pick(['id', 'name', 'path'], oldNode)))
 })
 
 /**
@@ -278,7 +292,7 @@ const rePath = (graph) => {
 }
 
 const rePathRec = (basePath, graph) => {
-  graph.nodes.forEach((n) => {
+  nodes(graph).forEach((n) => {
     var newPath = join(basePath, Node.name(n))
     n.path = newPath
     if (isCompound(n)) {
@@ -288,7 +302,6 @@ const rePathRec = (basePath, graph) => {
   return graph
 }
 
-/* TODO FIX! Make sure that the id does not change */
 export const replaceNode = curry((path, newNode, graph) => {
   return chain(
     removeNode(path),
@@ -305,5 +318,5 @@ export const replaceNode = curry((path, newNode, graph) => {
  * @returns {Node} The node id of the parent node or undefined if the node has no parent.
  */
 export const parent = curry((n, graph) => {
-  return node(n, graph).parent
+  return node(pathParent(node(n, graph).path), graph)
 })

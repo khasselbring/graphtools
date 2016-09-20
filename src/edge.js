@@ -72,12 +72,7 @@ export const equal = curry((edge1, edge2) => {
  * @returns {Edge} A new edge that has the prefixed paths.
  */
 export function setPath (edge, path) {
-  return _.merge({}, edge,
-    {
-      parent: _.compact(_.concat(path, edge.parent)),
-      from: _.compact(_.concat(path, edge.from)),
-      to: _.compact(_.concat(path, edge.to))
-    })
+  return edge
 }
 
 /**

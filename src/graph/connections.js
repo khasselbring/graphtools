@@ -24,8 +24,7 @@ export function areConnected (nodeFrom, nodeTo, graph) {
  * @returns {Port[]} A list of ports with their corresponding nodes
  */
 export function predecessors (target, graph) {
-  var targetId = Node.id(node(target, graph))
-  return map('from')(graph.edges.filter(Edge.pointsTo(targetId)))
+  return map('from')(inIncidents(target, graph))
 }
 
 /**
@@ -40,12 +39,44 @@ export function predecessor (node, graph) {
 }
 
 /**
+ * Gets all ingoing incident edges to a port
+ * @param {Port} port The port
+ * @param {PortGraph} graph The graph
+ * @returns {Edge[]} An array of all ingoing incident edges.
+ */
+export function inIncidents (port, graph) {
+  var targetId = Node.id(node(port, graph))
+  return graph.edges.filter(Edge.pointsTo(targetId))
+}
+
+/**
+ * Gets the ingoing incident edges to a port
+ * @param {Port} port The port
+ * @param {PortGraph} graph The graph
+ * @returns {Edge} The ingoing incident edge (if there are somehow more than one in edge it returns the first found.)
+ */
+export function inIncident (port, graph) {
+  var targetId = Node.id(node(port, graph))
+  return graph.edges.filter(Edge.pointsTo(targetId))[0]
+}
+
+/**
+ * Gets all outgoing incident edges to a port
+ * @param {Port} port The port
+ * @param {PortGraph} graph The graph
+ * @returns {Edge[]} An array of all outgoing incident edges.
+ */
+export function outIncidents (port, graph) {
+  var sourceId = Node.id(node(port, graph))
+  return graph.edges.filter(Edge.isFrom(sourceId))
+}
+
+/**
  * Get the successors of one node in the graph, optionally for a specific port.
  * @param {PortGraph} graph The graph.
  * @param {Node|Port} source The source from which to follow the edges.
  * @returns {Port[]} A list of ports that succeed the node with their corresponding nodes.
  */
 export function successors (source, graph) {
-  var sourceId = Node.id(node(source, graph))
-  return map('to')(graph.edges.filter(Edge.isFrom(sourceId)))
+  return map('to')(outIncidents(source, graph))
 }

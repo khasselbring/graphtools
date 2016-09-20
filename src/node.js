@@ -20,11 +20,11 @@ import {node as pathNode, isCompoundPath} from './compoundPath'
  * @param {Node} node A protypical node object.
  * @returns {Node} A complete node object
  */
-export function create (node, id = null) {
+export function create (node) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = merge(node, {id: id || cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, {id: cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
@@ -72,6 +72,10 @@ export function name (node) {
   } else {
     return node.id
   }
+}
+
+export function hasName (node) {
+  return !!node.name
 }
 
 /**
