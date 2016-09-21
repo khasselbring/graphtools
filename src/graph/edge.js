@@ -25,9 +25,9 @@ function checkEdge (graph, edge) {
   var from = node(edge.from, graph)
   var to = node(edge.to, graph)
   // TODO: check for edge/ from parent node is not correct anymore.. normEdge.from is a port object. (Same holds for normEdge.to)
-  if (edge.from !== '' && !hasNode(edge.from, graph)) {
+  if (edge.from.node !== '' && !hasNode(edge.from, graph)) {
     throw new Error('Cannot create edge connection from not existing node: ' + Port.toString(edge.from) + ' to: ' + Port.toString(edge.to))
-  } else if (edge.to !== '' && !hasNode(edge.to, graph)) {
+  } else if (edge.to.node !== '' && !hasNode(edge.to, graph)) {
     throw new Error('Cannot create edge connection from: ' + Port.toString(edge.from) + ' to not existing node: ' + Port.toString(edge.to))
   } else if (Port.equal(edge.from, edge.to)) {
     throw new Error('Cannot add loops to the port graph from=to=' + Port.toString(edge.from))
@@ -37,12 +37,12 @@ function checkEdge (graph, edge) {
     throw new Error('The target node "' + Port.node(edge.to) + '" does not have the ingoing port "' + Port.portName(edge.inPort) + '".')
   } else if (!Node.isReference(from) && (Node.port(edge.from, from).kind !== ((edge.innerCompoundOutput) ? 'input' : 'output'))) {
     throw new Error('The source port "' + Port.portName(edge.from) + '" = "' + JSON.stringify(Node.port(edge.from, from)) + '" must be ' +
-    ((edge.innerCompoundEdge)
+    ((edge.innerCompoundOutput)
     ? 'an inner input port of the compound node ' + edge.parent
     : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
   } else if (!Node.isReference(from) && (Node.port(edge.to, to).kind !== ((edge.innerCompoundInput) ? 'output' : 'input'))) {
     throw new Error('The target port "' + Port.portName(edge.to) + '" = "' + JSON.stringify(Node.port(edge.to, to)) + ' must be ' +
-      ((edge.innerCompoundEdge)
+      ((edge.innerCompoundInput)
       ? 'an inner output port of the compound node ' + edge.parent
       : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
   }
@@ -72,7 +72,14 @@ function edgeParent (edge, graph) {
 }
 
 function normalize (edge, graph) {
-  return pathsToIDs(Edge.normalize(edge), graph)
+  var normEdge = Edge.normalize(edge)
+  if (normEdge.from.node === '') {
+    normEdge.innerCompoundOutput = true
+  }
+  if (normEdge.to.node === '') {
+    normEdge.innerCompoundInput = true
+  }
+  return pathsToIDs(normEdge, graph)
 }
 
 function addEdgeToCompound (edge, graph) {

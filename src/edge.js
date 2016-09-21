@@ -2,7 +2,6 @@
 
 import curry from 'lodash/fp/curry'
 import _ from 'lodash'
-import * as Node from './node'
 import * as Port from './port'
 
 function normalizeStructure (edge) {
@@ -74,24 +73,3 @@ export const equal = curry((edge1, edge2) => {
 export function setPath (edge, path) {
   return edge
 }
-
-/**
- * Checks whether an edge points to a given target.
- * @param {Node|Port} target The target the edge should point to. This can either be a node or a port.
- * @returns {boolean} True if the edge points to the target, false otherwise.
- */
-export const pointsTo = curry((target, edge) => {
-  if (Port.isPort(target)) {
-    return Port.equal(edge.to, target)
-  } else {
-    return Node.equal(Port.node(edge.to), target)
-  }
-})
-
-export const isFrom = curry((source, edge) => {
-  if (Port.isPort(source)) {
-    return Port.equal(edge.to, source)
-  } else {
-    return Node.equal(Port.node(edge.from), source)
-  }
-})

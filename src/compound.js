@@ -9,6 +9,7 @@ import * as Edge from './edge'
 import * as Port from './port'
 import * as Graph from './graph'
 import _ from 'lodash'
+import cuid from 'cuid'
 
 /**
  * Checks whether a node is a compound node.
@@ -63,7 +64,8 @@ export function create (node) {
     components: [],
     path: [],
     ports: [],
-    atomic: false
+    atomic: false,
+    id: '#' + cuid()
   }, node)
 }
 

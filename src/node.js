@@ -24,7 +24,7 @@ export function create (node) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = merge(node, {id: cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, {id: '#' + cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
@@ -37,7 +37,7 @@ export function create (node) {
  * @returns {boolean} True if the object is an id, false otherwise.
  */
 export function isID (str) {
-  return typeof (str) === 'string' && (str[0] === '#' || (str.length === 25 && str[0] === 'c'))
+  return typeof (str) === 'string' && (str[0] === '#')
 }
 
 /**

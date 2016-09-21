@@ -1,9 +1,25 @@
 
 import find from 'lodash/fp/find'
 import map from 'lodash/fp/map'
-import {node} from './node'
-import * as Node from '../node'
+import curry from 'lodash/fp/curry'
 import * as Edge from '../edge'
+import {edges} from './edge'
+import {query} from '../location'
+
+/**
+ * Checks whether an edge points to a given target.
+ * @param {Node|Port} target The target the edge should point to. This can either be a node or a port.
+ * @returns {boolean} True if the edge points to the target, false otherwise.
+ */
+export const pointsTo = curry((target, graph, edge) => {
+  var q = query(target, graph)
+  return q(edge.to)
+})
+
+export const isFrom = curry((source, graph, edge) => {
+  var q = query(source, graph)
+  return q(edge.from)
+})
 
 /**
  * Checks whether the two nodes are connected via an edge.
@@ -13,7 +29,7 @@ import * as Edge from '../edge'
  * @returns {boolean} True if the graph has an edge going from "nodeFrom" to "nodeTo".
  */
 export function areConnected (nodeFrom, nodeTo, graph) {
-  return !!find(graph.edges, (e) => Edge.isFrom(nodeFrom, e) && Edge.pointsTo(nodeTo, e))
+  return !!find(edges(graph), (e) => Edge.isFrom(nodeFrom, e, graph) && Edge.pointsTo(nodeTo, e, graph))
 }
 
 /**
@@ -45,8 +61,7 @@ export function predecessor (node, graph) {
  * @returns {Edge[]} An array of all ingoing incident edges.
  */
 export function inIncidents (port, graph) {
-  var targetId = Node.id(node(port, graph))
-  return graph.edges.filter(Edge.pointsTo(targetId))
+  return edges(graph).filter(pointsTo(port, graph))
 }
 
 /**
@@ -56,8 +71,7 @@ export function inIncidents (port, graph) {
  * @returns {Edge} The ingoing incident edge (if there are somehow more than one in edge it returns the first found.)
  */
 export function inIncident (port, graph) {
-  var targetId = Node.id(node(port, graph))
-  return graph.edges.filter(Edge.pointsTo(targetId))[0]
+  return inIncidents(port, graph)[0]
 }
 
 /**
@@ -67,8 +81,7 @@ export function inIncident (port, graph) {
  * @returns {Edge[]} An array of all outgoing incident edges.
  */
 export function outIncidents (port, graph) {
-  var sourceId = Node.id(node(port, graph))
-  return graph.edges.filter(Edge.isFrom(sourceId))
+  return edges(graph).filter(isFrom(port, graph))
 }
 
 /**
