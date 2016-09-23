@@ -6,14 +6,16 @@ import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
 import pick from 'lodash/fp/pick'
 import {isCompound, setPath as compoundSetPath} from '../compound'
-import {isRoot, join, node as pathNode, parent as pathParent} from '../compoundPath'
+import {isRoot, join, node as pathNode, parent as pathParent, isCompoundPath} from '../compoundPath'
 // import {isPort, node as portNode} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
 import {chain} from './chain'
-import {nodeByPath, nodeBy} from './internal'
-import {location, idToPath, query} from '../location'
+import {nodeBy} from './internal'
+import {idToPath, query} from '../location'
+import {incidents} from './connections'
+import {removeEdge} from './edge'
 
 /**
  * Returns a list of nodes on the root level.
@@ -69,18 +71,18 @@ export function nodeNames (graph) {
   return nodes(graph).map(Node.id)
 }
 
-function nodeInternal (search, graph) {
-  var loc = location(search, graph)
-  var node
-  switch (loc.type) {
-    case 'location':
-      node = nodeByPath(loc.path, graph)
-      break
-    default:
-      return
-  }
-  return node
-}
+// function nodeInternal (search, graph) {
+//   var loc = location(search, graph)
+//   var node
+//   switch (loc.type) {
+//     case 'location':
+//       node = nodeByPath(loc.path, graph)
+//       break
+//     default:
+//       return
+//   }
+//   return node
+// }
 
 /**
  * Returns the node with the given id. [Performance O(|V|)]
@@ -104,7 +106,7 @@ export const node = curry((searchNode, graph) => {
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
 export const hasNode = curry((node, graph) => {
-  return !!nodeInternal(node, graph)
+  return !!nodeBy(query(node, graph), graph)
 })
 
 function checkNode (graph, node) {
@@ -174,16 +176,19 @@ export const addNode = curry((node, graph, ...cb) => {
  * @returns {PortGraph} A new graph without the given node.
  */
 export const removeNode = curry((path, graph, ...cb) => {
-  var parentPath = pathParent(path)
+  var remNode = node(path, graph)
+  var parentPath = pathParent(remNode.path)
   if (parentPath.length === 0) {
     if (cb.length > 0) {
-      cb[0](node(path, graph))
+      cb[0](remNode)
     }
-    return changeSet.applyChangeSet(graph, changeSet.removeNode(path))
+    var inc = incidents(remNode.path, graph)
+    var remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge, curGraph), graph)
+    return changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.path))
   }
   var parentGraph = node(parentPath, graph)
   // remove node in its compound and replace the graphs on the path
-  return replaceNode(parentPath, removeNode(pathNode(path), parentGraph, ...cb), graph)
+  return replaceNode(parentPath, removeNode(pathNode(remNode.path), parentGraph, ...cb), graph)
 })
 
 const unID = (node) => {
@@ -215,10 +220,18 @@ const rePathRec = (basePath, graph) => {
   return graph
 }
 
+function nodeParentPath (path, graph) {
+  if (isCompoundPath(path)) {
+    return pathParent(path)
+  } else {
+    return pathParent(node(path, graph).path)
+  }
+}
+
 export const replaceNode = curry((path, newNode, graph) => {
   return chain(
     removeNode(path),
-    addNodeByPath(pathParent(path), unID(newNode)),
+    addNodeByPath(nodeParentPath(path, graph), unID(newNode)),
     (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
     rePath
   )(graph)

@@ -37,7 +37,7 @@ export function areConnected (nodeFrom, nodeTo, graph) {
  * predecessor for every port.
  * @param {PortGraph} graph The graph.
  * @param {Node|Port} target The target to which the predecessores point.
- * @returns {Port[]} A list of ports with their corresponding nodes
+ * @returns {Port[]} A list of ports with their  corresponding nodes
  */
 export function predecessors (target, graph) {
   return map('from')(inIncidents(target, graph))
@@ -93,3 +93,11 @@ export function outIncidents (port, graph) {
 export function successors (source, graph) {
   return map('to')(outIncidents(source, graph))
 }
+
+function or (fn1, fn2) {
+  return (v) => fn1(v) || fn2(v)
+}
+
+export const incidents = curry((port, graph) => {
+  return edges(graph).filter(or(isFrom(port, graph), pointsTo(port, graph)))
+})

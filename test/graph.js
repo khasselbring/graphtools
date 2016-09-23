@@ -212,6 +212,15 @@ describe('Basic graph functions', () => {
       expect(nodes.map((n) => Node.path(n))).to.have.deep.members([['b', 'a'], ['b']])
     })
 
+    it('can get a node by component id', () => {
+      var graph = Graph.chain(
+        Graph.addNode({componentId: 'a', name: 'A', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
+        Graph.addNode({componentId: 'b', name: 'B', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+      )()
+      expect(Graph.node('/a', graph).name).to.equal('A')
+      expect(Graph.node('/b', graph).name).to.equal('B')
+    })
+
     it('removes a node on the root level', () => {
       var graph = Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}, Graph.empty())
       var remGraph = Graph.removeNode('a', graph)
@@ -300,6 +309,16 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode('»123»comp»b', graph)).to.be.true
       expect(Graph.node('»123»comp»a', graph).id).to.eql(Graph.node(Graph.node('»123»comp»a', graph).id, graph).id)
       expect(Graph.node('»123»comp»b', graph).id).to.eql(Graph.node(Graph.node('»123»comp»b', graph).id, graph).id)
+    })
+
+    it('Removing a node removes its edges', () => {
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
+        (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
+      )()
+      expect(Graph.edges(Graph.removeNode('a', graph)).length).to.equal(0)
+      expect(Graph.edges(Graph.removeNode('b', graph)).length).to.equal(0)
     })
   })
 
@@ -413,6 +432,38 @@ describe('Basic graph functions', () => {
       expect(Graph.predecessor('b', graph).port).to.equal('out')
       expect(Graph.predecessors('b', graph)[0].port).to.equal('out')
       expect(Graph.predecessors({node: 'b', port: 'in'}, graph)[0].port).to.equal('out')
+    })
+
+    it('Can remove an edge', () => {
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
+        (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
+      )()
+      var edge = Graph.inIncident('b', graph)
+      expect(Graph.edges(Graph.removeEdge(edge, graph)).length).to.equal(0)
+      expect(Graph.edges(Graph.removeEdge({from: 'a@out', to: 'b@in'}, graph)).length).to.equal(0)
+    })
+
+    it.skip('Supports special syntax', () => {
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}, {port: 'out', kind: 'output'}]}),
+        Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input'}]}),
+        (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph),
+        Graph.addEdge({from: 'b@out', to: 'c@in'})
+      )()
+      // all edges from a to b
+      expect(Graph.edges(Graph.removeEdge({from: 'a', to: 'b'}, graph)).length).to.equal(1)
+      // all edges from a
+      expect(Graph.edges(Graph.removeEdge({from: 'a'}, graph)).length).to.equal(1)
+      expect(Graph.edges(Graph.removeEdge('a→', graph)).length).to.equal(1)
+      // all edges to b
+      expect(Graph.edges(Graph.removeEdge({to: 'b'}, graph)).length).to.equal(1)
+      expect(Graph.edges(Graph.removeEdge('→b', graph)).length).to.equal(1)
+      // all edges from and to b
+      expect(Graph.edges(Graph.removeEdge('b', graph)).length).to.equal(0)
+      expect(Graph.edges(Graph.removeEdge('→b→', graph)).length).to.equal(0)
     })
 
     it('Gets the successors for a node', () => {

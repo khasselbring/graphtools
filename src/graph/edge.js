@@ -114,6 +114,11 @@ export const addEdge = curry((edge, graph) => {
   return addEdgeToCompound(normEdge, graph)
 })
 
+export const removeEdge = curry((edge, graph) => {
+  var normEdge = normalize(edge, graph)
+  return changeSet.applyChangeSet(graph, changeSet.removeEdge(normEdge))
+})
+
 /**
  * Checks whether the graph has the given edge.
  * @params {Edge} edge The edge to look for.

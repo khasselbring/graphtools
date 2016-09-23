@@ -7,6 +7,7 @@
  * okay to omit the `»`, i.e. `»A` is the same as `A`.
  */
 
+import curry from 'lodash/fp/curry'
 import _ from 'lodash'
 
 /**
@@ -107,9 +108,9 @@ export function node (path) {
  * @param {CompoundPath} path2 The second path to compare.
  * @returns {boolean} True if the paths are the same, false otherwise.
  */
-export function equal (path1, path2) {
+export const equal = curry((path1, path2) => {
   return _.isEqual(path1, path2)
-}
+})
 
 export function sameParents (path1, path2) {
   return path1 && path2 && path1.length > 0 && path2.length > 0 && equal(parent(path1), parent(path2))

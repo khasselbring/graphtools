@@ -106,10 +106,11 @@ function locPath (loc, graph) {
 }
 
 function fullLocation (loc, graph) {
+  if (loc.type === 'query') return loc
   var path = locPath(loc, graph)
   var node = nodeByPath(path, graph) || {}
   return {type: 'location', locType: loc.locType,
-    path, index: (loc.index) ? loc.index : node.id, name: (loc.name) ? loc.name : node.name
+    path, index: (loc.index) ? loc.index : node.id, name: (loc.name) ? loc.name : node.name, port: loc.port
   }
 }
 
@@ -123,6 +124,7 @@ export function location (loc, graph) {
   if (typeof (loc) === 'string') {
     return fullLocation(fromString(loc), graph)
   } else if (Array.isArray(loc)) {
+    console.log('from array!!', loc)
     return fullLocation({type: 'location', locType: 'node', path: loc}, graph)
   } else if (typeof (loc) === 'object' && isPort(loc)) {
     return fullLocation(merge(location(loc.node, graph), {type: 'location', locType: 'port', port: loc.port}), graph)
@@ -143,12 +145,14 @@ export function query (loc, graph) {
 }
 
 function identifiesNode (loc, node) {
-  return (isPort(node) && loc.index === node.node) ||
+  return (isPort(node) &&
+      ((isIndex(node.node) && loc.index === node.node) ||
+      (!isIndex(node.node) && loc.name === node.node))) ||
     (!isPort(node) && loc.index === node.id)
 }
 
 function identifiesPort (loc, port) {
-  return loc.locType === 'port' && loc.port === port.port && identifiesNode(loc, port.node)
+  return loc.locType === 'port' && loc.port === port.port && identifiesNode(loc, port)
 }
 
 function isRootNode (n) {
@@ -165,15 +169,14 @@ function isRootNode (n) {
  * @params other Any type that can be a location.
  * @returns True if the location identifies the object stored in other.
  */
-export const identifies = curry((location, other) => {
-  if (location.type === 'port') {
-    if (!isPort(other)) {
-      console.warn('Comparing port against non port. Will always return false!')
-    }
-    return isPort(other) && identifiesPort(location, other)
+export const identifies = curry((loc, other) => {
+  if (loc.type === 'query' && loc.queryType === 'component') {
+    return other.componentId === loc.query
+  } else if (loc.locType === 'port' && isPort(other)) {
+    return isPort(other) && identifiesPort(loc, other)
   } else if (isNode(other) || isRootNode(other) || isPort(other)) {
-    return identifiesNode(location, other)
+    return identifiesNode(loc, other)
   } else {
-    throw new Error('Unable to identify object type. Checking for: ' + JSON.stringify(location) + ' object is: ' + JSON.stringify(other))
+    throw new Error('Unable to identify object type. Checking for: ' + JSON.stringify(loc) + ' object is: ' + JSON.stringify(other))
   }
 })
