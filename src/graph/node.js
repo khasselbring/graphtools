@@ -150,6 +150,17 @@ function setPath (node, path) {
   return merge(node, {path: nodePath})
 }
 
+function replaceIdInPort (oldId, newId, port) {
+  return merge(port, {node: (port.node === oldId) ? newId : port.node})
+}
+
+function replaceId (oldId, newId, edge) {
+  return merge(edge, {
+    from: replaceIdInPort(oldId, newId, edge.from),
+    to: replaceIdInPort(oldId, newId, edge.to)
+  })
+}
+
 /**
  * Add a node to the graph, returns a new graph. [Performance O(|V| + |E|)]
  * @param {Node} node The node object that should be added.
@@ -164,6 +175,9 @@ export const addNode = curry((node, graph, ...cb) => {
   checkNode(graph, newNode)
   if (cb.length > 0) {
     cb[0](newNode)
+  }
+  if (isCompound(newNode)) {
+    newNode.edges = newNode.edges.map((e) => replaceId(node.id, newNode.id, e))
   }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(setPath(newNode, Node.path(graph))))
 })

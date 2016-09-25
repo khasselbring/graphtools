@@ -7,7 +7,9 @@ import negate from 'lodash/fp/negate'
 import {isReference, id as nodeID, hasPort, inputPorts, outputPorts} from './node'
 import * as Edge from './edge'
 import * as Port from './port'
-import * as Graph from './graph'
+import {edges, removeEdge} from './graph/edge'
+import {pointsTo, isFrom} from './graph/connections'
+import {nodes} from './graph/node'
 import _ from 'lodash'
 import cuid from 'cuid'
 
@@ -69,7 +71,7 @@ export function create (node) {
   }, node)
 }
 
-export const children = Graph.nodes
+export const children = nodes
 export {hasPort, inputPorts, outputPorts}
 
 const getPort = (portOrString, node) =>
@@ -98,7 +100,9 @@ export const renamePort = curry((port, newName, node) => {
  */
 export const removePort = curry((port, node) => {
   port = getPort(port, node)
-  return omit('componentId', merge(node, {ports: node.ports.filter(negate(Port.equal(port)))}))
+  var portEdges = edges(node).filter((e) => pointsTo(port, e) || isFrom(port, e))
+  var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge, cmp), node)
+  return omit('componentId', merge(newNode, {ports: newNode.ports.filter(negate(Port.equal(port)))}))
 })
 
 const addPort = (port, kind, node) => {

@@ -2,6 +2,7 @@
 
 import chai from 'chai'
 import * as Compound from '../src/compound.js'
+import * as Edge from '../src/graph/edge.js'
 // import _ from 'lodash'
 
 var expect = chai.expect
@@ -26,6 +27,17 @@ describe('Compound API', () => {
     var remCmp = Compound.removePort('a', cmp2)
     expect(Compound.hasPort('a', remCmp)).to.be.false
     expect(Compound.hasPort('b', remCmp)).to.be.true
+  })
+
+  it('Removes all edges from/to a port when removing the port', () => {
+    var cmp1 = Compound.addInputPort('a', Compound.create())
+    var cmp2 = Compound.addOutputPort('b', cmp1)
+    var cmpE = Edge.addEdge({from: cmp2.id + '@a', to: cmp2.id + '@b'}, cmp2)
+    expect(Edge.edges(cmpE)).to.have.length(1)
+    var remCmpIn = Compound.removePort('a', cmpE)
+    expect(Edge.edges(remCmpIn)).to.have.length(0)
+    var remCmpOut = Compound.removePort('b', cmpE)
+    expect(Edge.edges(remCmpOut)).to.have.length(0)
   })
 
   it('Can rename ports', () => {

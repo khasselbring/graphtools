@@ -353,7 +353,7 @@ describe('Basic graph functions', () => {
       expect(Graph.edges(Graph.removeNode('b', graph)).length).to.equal(0)
     })
 
-    it.only('Adding a compound relabels all edges to the new id', () => {
+    it('Adding a compound relabels all edges to the new id', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
         Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       expect(Graph.predecessors('', comp)).to.have.length(1)

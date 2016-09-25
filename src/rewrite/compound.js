@@ -5,7 +5,7 @@
 import curry from 'lodash/fp/curry'
 import {chain} from '../graph/chain'
 import * as Compound from '../compound'
-import {predecessor, inIncidents} from '../graph/connections'
+import {predecessor, inIncidents, outIncidents} from '../graph/connections'
 import * as Graph from '../graph'
 import {mergeNodes} from '../graph/internal'
 
@@ -13,6 +13,7 @@ export const includePredecessor = curry((port, graph) => {
   var pred = predecessor(port, graph)
   var predNode = Graph.node(pred, graph)
   var preInPorts = inIncidents(pred.node, graph)
+  var postInPorts = outIncidents(port, graph)
   var compound = Graph.node(port, graph)
 
   var newCompound = chain(
@@ -27,6 +28,8 @@ export const includePredecessor = curry((port, graph) => {
     .concat(preInPorts.map((edge) => Compound.addInputPort(edge.to)))
     .concat(preInPorts.map((edge) =>
         Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})))
+    .concat(postInPorts.map((edge) =>
+        Graph.addEdge({from: pred, to: edge.to})))
   )(compound)
   var newGraph = chain(
     [

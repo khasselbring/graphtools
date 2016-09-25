@@ -4,12 +4,12 @@ import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
 import map from 'lodash/fp/map'
 import flatten from 'lodash/fp/flatten'
+import compact from 'lodash/fp/compact'
 import * as Port from '../port'
 import * as Node from '../node'
 import * as Edge from '../edge'
-import {isCompound} from '../compound'
 import {equal, isRoot} from '../compoundPath'
-import {node, hasNode, nodesDeepBy, parent, replaceNode} from './node'
+import {node, hasNode, nodesDeep, parent, replaceNode} from './node'
 import * as changeSet from '../changeSet'
 
 /**
@@ -18,7 +18,7 @@ import * as changeSet from '../changeSet'
  * @returns {Edges[]} A list of edges.
  */
 export function edges (graph) {
-  return flatten(map('edges', nodesDeepBy(isCompound, graph).concat([graph])))
+  return compact(flatten(map('edges', nodesDeep(graph).concat([graph]))))
 }
 
 function checkEdge (graph, edge) {
