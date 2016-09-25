@@ -92,6 +92,25 @@ export function parent (path) {
   }
 }
 
+/**
+ * Returns the root node in the path, i.e. the first node indicated by the path.
+ * @params {CompoundPath} path The path
+ * @returns {CompoundPath} The id of the base/root element in the path.
+ */
+export function base (path) {
+  if (typeof (path) === 'string') {
+    return toString(base(fromString(path)))
+  } else if (Array.isArray(path)) {
+    if (path.length === 1) {
+      return []
+    } else {
+      return path.slice(0, 1)
+    }
+  } else {
+    throw new Error('Malformed compound path. It must either be a string or an array of node IDs. Compounds paths was: ' + JSON.stringify(path))
+  }
+}
+
 export function node (path) {
   if (typeof (path) === 'string') {
     return node(fromString(path))
@@ -101,6 +120,34 @@ export function node (path) {
     throw new Error('Malformed compound path. It must either be a string or an array of node IDs. Compounds paths was: ' + JSON.stringify(path))
   }
 }
+
+/**
+ * Returns a new path that omits the root component.
+ * @param {CompoundPath} path The path
+ * @returns {CompoundPath} A path that omits the root component. E.g. rest([a, b, c]) -> [b, c].
+ */
+export function rest (path) {
+  if (typeof (path) === 'string') {
+    return rest(fromString(path))
+  } else if (Array.isArray(path)) {
+    return path.slice(1)
+  } else {
+    throw new Error('Malformed compound path. It must either be a string or an array of node IDs. Compounds paths was: ' + JSON.stringify(path))
+  }
+}
+
+export const relativeTo = curry((path1, path2) => {
+  if (path2.length > path1.length) {
+    throw new Error('Cannot calculate relative path to a longer path. Tried to get express: ' + path1 + ' relative to: ' + path2)
+  }
+  if (path2.length === 0) {
+    return path1
+  } else if (path1[0] !== path2[0]) {
+    throw new Error('Pathes are are not subsets and thus the relative path cannot be calculated.')
+  } else {
+    return relativeTo(rest(path1), rest(path2))
+  }
+})
 
 /**
  * Returns whether two compound paths are equal

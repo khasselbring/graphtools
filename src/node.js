@@ -147,6 +147,7 @@ export const port = curry((name, node) => {
 })
 
 export function path (node) {
+  if (!node) return []
   return node.path
 }
 

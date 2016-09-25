@@ -11,8 +11,8 @@ describe('Change Sets', () => {
     var graph = Graph.empty()
     var cS = changeSet.insertNode({ id: 'a', ports: [{port: 'test', kind: 'output', type: 'number'}], prop: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.node('a', newGraph)).to.be.ok
-    expect(Graph.node('a', newGraph).prop).to.equal('test')
+    expect(newGraph.nodes[0]).to.be.ok
+    expect(newGraph.nodes[0].prop).to.equal('test')
   })
 
   it('can set a field in a node', () => {
@@ -20,7 +20,7 @@ describe('Change Sets', () => {
       changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
     var cS = changeSet.updateNode('a', { NEW_PROP: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.node('a', newGraph).NEW_PROP).to.equal('test')
+    expect(newGraph.nodes[0].NEW_PROP).to.equal('test')
   })
 
   it('can update a field in a node', () => {
@@ -28,7 +28,7 @@ describe('Change Sets', () => {
       changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
     var cS = changeSet.updateNode('a', { prop: 'new_test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.node('a', newGraph).prop).to.equal('new_test')
+    expect(newGraph.nodes[0].prop).to.equal('new_test')
   })
 
   it('can remove a node', () => {

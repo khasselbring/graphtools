@@ -4,16 +4,15 @@ import flatten from 'lodash/fp/flatten'
 // import find from 'lodash/fp/find'
 import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
-import pick from 'lodash/fp/pick'
 import {isCompound, setPath as compoundSetPath} from '../compound'
-import {isRoot, join, node as pathNode, parent as pathParent, isCompoundPath} from '../compoundPath'
+import {isRoot, join, rest as pathRest, base as pathBase, parent as pathParent, isCompoundPath, relativeTo, equal} from '../compoundPath'
 // import {isPort, node as portNode} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
 import {chain} from './chain'
-import {nodeBy} from './internal'
-import {idToPath, query} from '../location'
+import {nodeBy, mergeNodes} from './internal'
+import {query} from '../location'
 import {incidents} from './connections'
 import {removeEdge} from './edge'
 
@@ -175,30 +174,26 @@ export const addNode = curry((node, graph, ...cb) => {
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph without the given node.
  */
-export const removeNode = curry((path, graph, ...cb) => {
-  var remNode = node(path, graph)
-  var parentPath = pathParent(remNode.path)
-  if (parentPath.length === 0) {
+export const removeNode = curry((query, graph, ...cb) => {
+  var remNode = node(query, graph)
+  var path = relativeTo(remNode.path, graph.path)
+  var basePath = pathBase(path)
+  if (basePath.length === 0) {
     if (cb.length > 0) {
       cb[0](remNode)
     }
-    var inc = incidents(remNode.path, graph)
+    var inc = incidents(path, graph)
     var remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge, curGraph), graph)
     return changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.path))
   }
-  var parentGraph = node(parentPath, graph)
+  var parentGraph = node(basePath, graph)
   // remove node in its compound and replace the graphs on the path
-  return replaceNode(parentPath, removeNode(pathNode(remNode.path), parentGraph, ...cb), graph)
+  return replaceNode(basePath, removeNode(pathRest(path), parentGraph, ...cb), graph)
 })
 
 const unID = (node) => {
   return omit(['id', 'path'], node)
 }
-
-const mergeNodes = curry((oldNode, newNode, graph) => {
-  return changeSet.applyChangeSet(graph,
-    changeSet.updateNode(idToPath(newNode.id, graph), pick(['id', 'name', 'path'], oldNode)))
-})
 
 /**
  * Updates all pathes in the graph.
@@ -244,5 +239,9 @@ export const replaceNode = curry((path, newNode, graph) => {
  * @returns {Node} The node id of the parent node or undefined if the node has no parent.
  */
 export const parent = curry((n, graph) => {
-  return node(pathParent(node(n, graph).path), graph)
+  if (equal(node(n, graph).path, graph.path)) {
+    // parent points to a node not accessible from this graph (or a n is the root of the whole graph)
+    return
+  }
+  return node(pathParent(relativeTo(node(n, graph).path, graph.path)), graph)
 })

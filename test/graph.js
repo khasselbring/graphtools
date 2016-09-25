@@ -139,10 +139,10 @@ describe('Basic graph functions', () => {
     })
 
     it('can check whether a node exists in the graph', () => {
-      var graph = changeSet.applyChangeSets(Graph.empty(), [
-        changeSet.insertNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
-        changeSet.insertNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
-      ])
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
+      )()
       expect(Graph.hasNode('a', graph)).to.be.true
       expect(Graph.hasNode({name: 'b'}, graph)).to.be.true
     })
@@ -249,6 +249,28 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode('b', remGraph)).to.be.true
     })
 
+    it('removes nodes in compounds in compounds', () => {
+      var impl = Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+        Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var impl2 = Graph.addNode(impl, Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output'}]}))
+      var graph = Graph.addNode(impl2, Graph.empty())
+      var remGraph = Graph.removeNode(['c', 'b', 'a'], graph)
+      expect(Graph.hasNode('»c»b»a', remGraph)).to.be.false
+      expect(Graph.hasNode('c', remGraph)).to.be.true
+      expect(Graph.hasNode('»c»b', remGraph)).to.be.true
+    })
+
+    it('removes compounds that contain nodes', () => {
+      var impl = Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+        Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var impl2 = Graph.addNode(impl, Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output'}]}))
+      var graph = Graph.addNode(impl2, Graph.empty())
+      var remGraph = Graph.removeNode(['c', 'b'], graph)
+      expect(Graph.hasNode('»c»b»a', remGraph)).to.be.false
+      expect(Graph.hasNode('c', remGraph)).to.be.true
+      expect(Graph.hasNode('»c»b', remGraph)).to.be.false
+    })
+
     it('only removes specified node in compound', () => {
       var impl = Graph.chain(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
@@ -259,6 +281,16 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode('»b»a', remGraph)).to.be.true
       expect(Graph.hasNode('»b»b', remGraph)).to.be.false
       expect(Graph.hasNode('b', remGraph)).to.be.true
+    })
+
+    it('can address nodes relative to compound', () => {
+      var impl = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+      var graph = Graph.addNode(impl, Graph.empty())
+      expect(Graph.hasNode('a', Graph.node('c', graph))).to.be.true
+      expect(Graph.hasNode('b', Graph.node('c', graph))).to.be.true
     })
 
     it('replaces references with a node', () => {
@@ -319,6 +351,16 @@ describe('Basic graph functions', () => {
       )()
       expect(Graph.edges(Graph.removeNode('a', graph)).length).to.equal(0)
       expect(Graph.edges(Graph.removeNode('b', graph)).length).to.equal(0)
+    })
+
+    it.only('Adding a compound relabels all edges to the new id', () => {
+      var comp = Graph.addEdge({from: '@inC', to: '@outC'},
+        Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
+      expect(Graph.predecessors('', comp)).to.have.length(1)
+      expect(Graph.successors('', comp)).to.have.length(1)
+      var graph = Graph.addNode(comp, Graph.empty())
+      expect(Graph.predecessors('c', graph)).to.have.length(1)
+      expect(Graph.successors('c', graph)).to.have.length(1)
     })
   })
 
@@ -401,6 +443,18 @@ describe('Basic graph functions', () => {
       expect(Graph.edge({from: 'a@out', to: 'b@in', graph}, Graph.node('c', graph))).to.be.ok
     })
 
+    it('Can connect from the compound to an inner node', () => {
+      var cmpd = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'a'}]})
+      )(Graph.compound({name: 'c', ports: [{port: 'in', kind: 'input', type: 'a'}]}))
+      var graph = Graph.chain(
+        Graph.addNode(cmpd),
+        Graph.addEdge({from: '»c@in', to: '»c»a@in'})
+      )()
+      expect(Graph.successors('c', graph)).to.have.length(1)
+      expect(Graph.node(Graph.successors('c', graph)[0], graph).name).to.equal('a')
+    })
+
     it('Fails if the connecting ports do not exist', () => {
       var graph = Graph.chain(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
@@ -420,6 +474,18 @@ describe('Basic graph functions', () => {
       )()
       expect(_.map(Graph.predecessors('b', graph), 'port')).to.eql(['out'])
       expect(_.map(Graph.predecessors({node: 'b', port: 'in'}, graph), 'port')).to.eql(['out'])
+    })
+
+    it('Returns the predecessors inside a compound node', () => {
+      var cmpd = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]})
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output', type: 'a'}]}))
+      var graph = Graph.chain(
+        Graph.addNode(cmpd),
+        Graph.addEdge({from: '»c»a@out', to: '»c@out'})
+      )()
+      expect(Graph.predecessors('c', graph)).to.have.length(1)
+      expect(Graph.node(Graph.predecessor('c', graph), graph).name).to.equal('a')
     })
 
     it('adds edges via a chain', () => {

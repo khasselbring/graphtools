@@ -1,9 +1,11 @@
 
-// import find from 'lodash/fp/find'
+import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
+import pick from 'lodash/fp/pick'
 // import {equal as nodeEqual} from '../node'
 import {isCompound} from '../compound'
-import {equal as pathEqual} from '../compoundPath'
+import {equal as pathEqual, isRoot, relativeTo} from '../compoundPath'
+import * as changeSet from '../changeSet'
 
 /**
  * Returns a list of nodes on the root level.
@@ -56,10 +58,33 @@ export function nodesDeep (graph) {
 
 export function nodeByPath (path, graph) {
   if (!path) return
-  return nodeBy((n) => pathEqual(path), graph)
+  if (isRoot(path)) return graph
+  return nodeBy((n) => pathEqual(path, n.path), graph)
 //  return nodeByPathRec(graph, path, path)
 }
 
 export function nodeBy (fn, graph) {
   return nodesDeep(graph).filter(fn)[0]
 }
+
+/**
+ * Returns the path that points to the node in the graph by its id. The id is preseved when moving or editing nodes.
+ * The path might change. To fixate a node one can use the ID.
+ * @param {string} id The id of the node
+ * @param {PortGraph} graph The graph to search in
+ * @returns {CompoundPath|null} The path to the node with the given ID.
+ */
+export const idToPath = curry((id, graph) => {
+  // return graph.__internals.idMap[id] // speed up search by creating a idMap cache
+  return nodesDeep(graph).find((n) => n.id === id).path
+})
+
+export const mergeNodes = curry((oldNode, newNode, graph, ...cb) => {
+  var path = idToPath(newNode.id, graph)
+  var mergeGraph = changeSet.applyChangeSet(graph,
+    changeSet.updateNode(relativeTo(path, graph.path), pick(['id', 'name', 'path'], oldNode)))
+  if (cb.length > 0) {
+    cb[0](nodeByPath(path, graph))
+  }
+  return mergeGraph
+})

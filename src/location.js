@@ -4,9 +4,10 @@
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
-import {nodeByPath, nodesDeep} from './graph/internal'
+import {nodeByPath, idToPath} from './graph/internal'
 import {isPort} from './port'
 import {isValid as isNode} from './node'
+import {join} from './compoundPath'
 
 /** A port notation can have every of the other notations for the node and as such
  * it is necessary to check first if it is a port notation. The symbol '@' is only used in
@@ -76,30 +77,19 @@ function fromString (str, allowsPorts = true) {
   }
 }
 
-/**
- * Returns the path that points to the node in the graph by its id. The id is preseved when moving or editing nodes.
- * The path might change. To fixate a node one can use the ID.
- * @param {string} id The id of the node
- * @param {PortGraph} graph The graph to search in
- * @returns {CompoundPath|null} The path to the node with the given ID.
- */
-export const idToPath = curry((id, graph) => {
-  // return graph.__internals.idMap[id] // speed up search by creating a idMap cache
-  return nodesDeep(graph).find((n) => n.id === id).path
-})
-
 function locPath (loc, graph) {
+  var graphPath = graph.path
   if (loc.path) {
-    return loc.path
+    return join(graphPath, loc.path)
   } else if (loc.name) {
     // best guess is that the node is at the root level...
-    return [loc.name]
+    return join(graphPath, [loc.name])
   } else if (loc.index) {
-    var node = idToPath(loc.index, graph)
-    if (!node) {
+    var nodePath = idToPath(loc.index, graph)
+    if (!nodePath) {
       throw new Error('Unable to locate node with id: ' + loc.index + '.')
     }
-    return node
+    return join(graphPath, nodePath)
   } else {
     throw new Error('Unable to process location. Not enough information to find node in the graph.')
   }
@@ -124,7 +114,6 @@ export function location (loc, graph) {
   if (typeof (loc) === 'string') {
     return fullLocation(fromString(loc), graph)
   } else if (Array.isArray(loc)) {
-    console.log('from array!!', loc)
     return fullLocation({type: 'location', locType: 'node', path: loc}, graph)
   } else if (typeof (loc) === 'object' && isPort(loc)) {
     return fullLocation(merge(location(loc.node, graph), {type: 'location', locType: 'port', port: loc.port}), graph)

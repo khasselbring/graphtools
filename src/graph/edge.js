@@ -62,10 +62,29 @@ function edgeParent (edge, graph) {
   var parentTo = Node.path(parent(edge.to, graph))
   if (equal(parentFrom, parentTo)) {
     return parentFrom // = parentTo
-  } else if (equal(Node.path(node(edge.from)), parentTo)) {
+  } else if (equal(Node.path(node(edge.from, graph)), parentTo)) {
     return parentTo
-  } else if (equal(Node.path(node(edge.to)), parentFrom)) {
+  } else if (equal(Node.path(node(edge.to, graph)), parentFrom)) {
     return parentFrom
+  } else {
+    throw new Error('Unable to determine parent for the edge:', JSON.stringify(edge))
+  }
+}
+
+function setInnerCompound (edge, graph) {
+  var parentFrom = Node.path(parent(edge.from, graph))
+  var parentTo = Node.path(parent(edge.to, graph))
+  var from = Node.path(node(edge.from, graph))
+  var to = Node.path(node(edge.to, graph))
+  if (equal(parentFrom, parentTo)) {
+    if (equal(to, from)) {
+      return merge(edge, {innerCompoundInput: true, innerCompoundOutput: true})
+    }
+    return edge
+  } else if (equal(from, parentTo)) {
+    return merge(edge, {innerCompoundOutput: true})
+  } else if (equal(to, parentFrom)) {
+    return merge(edge, {innerCompoundInput: true})
   } else {
     throw new Error('Unable to determine parent for the edge:', JSON.stringify(edge))
   }
@@ -73,19 +92,13 @@ function edgeParent (edge, graph) {
 
 function normalize (edge, graph) {
   var normEdge = Edge.normalize(edge)
-  if (normEdge.from.node === '') {
-    normEdge.innerCompoundOutput = true
-  }
-  if (normEdge.to.node === '') {
-    normEdge.innerCompoundInput = true
-  }
-  return pathsToIDs(normEdge, graph)
+  return setInnerCompound(pathsToIDs(normEdge, graph), graph)
 }
 
 function addEdgeToCompound (edge, graph) {
   var cs = changeSet.insertEdge(edge)
   var parent = edgeParent(edge, graph)
-  if (isRoot(parent)) {
+  if (isRoot(parent) || equal(parent, graph.path)) {
     return changeSet.applyChangeSet(graph, cs)
   } else {
     var comp = node(parent, graph)
