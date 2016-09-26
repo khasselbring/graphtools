@@ -17,7 +17,7 @@ chai.use(sinonChai)
 const noParent = _.partial(omitDeep, _, 'parent')
 
 describe.skip('Adjacent nodes', () => {
-  var pGraph1 = () => Graph.chain(
+  var pGraph1 = () => Graph.flow(
     Graph.addNode({name: '2_STDOUT', ports: [{port: 'input', kind: 'input', type: 'a'}]}),
     Graph.addNode({name: '1_INC', ports: [{port: 'inc', kind: 'output', type: 'a'}]}),
     Graph.addEdge({from: '1_INC@inc', to: '2_STDOUT@input'})
@@ -39,7 +39,7 @@ describe.skip('Adjacent nodes', () => {
     expect(pred[0].edge.to).to.deep.equal({node: '2_STDOUT', port: 'input'})
   })
 
-  var doubleOut = () => Graph.chain(
+  var doubleOut = () => Graph.flow(
     Graph.addNode(pGraph1(), {name: '3_STDOUT', ports: [{port: 'input', kind: 'input', type: 'a'}]}),
     Graph.addEdge({from: '1_INC@inc', to: '3_STDOUT@input'})
   )(pGraph1())
@@ -67,7 +67,7 @@ describe.skip('Adjacent nodes', () => {
     expect(succ).to.be.undefined
   })
 
-  const incGraph = () => Graph.chain(
+  const incGraph = () => Graph.flow(
     Graph.addNode({name: 'const', ports: [{port: 'output', kind: 'output', type: 'a'}]}),
     Graph.addNode({name: 'add', ports: [{port: 's1', kind: 'input', type: 'a'}, {port: 's2', kind: 'input', type: 'a'}, {port: 'sum', kind: 'output', type: 'a'}]}),
     Graph.addEdge({from: 'const@output', to: 'add@s2'}),

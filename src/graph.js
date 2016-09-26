@@ -1,6 +1,6 @@
 
 export * from './graph/basic'
-export * from './graph/chain'
+export * from './graph/flow'
 export * from './graph/component'
 export * from './graph/connections'
 export * from './graph/convert'

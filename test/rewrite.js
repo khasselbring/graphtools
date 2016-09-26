@@ -12,7 +12,7 @@ describe('Rewrite basic API', () => {
     it('can include the direct predecessor of a compound port into the compound', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
         Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
         Graph.addNode(comp),
         Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
@@ -33,7 +33,7 @@ describe('Rewrite basic API', () => {
     it('can include the direct predecessor via short notation', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
         Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
         Graph.addNode(comp),
         Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
@@ -54,7 +54,7 @@ describe('Rewrite basic API', () => {
     it('throws an error if the predecessor of an port has other successors', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
         Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
         Graph.addNode(comp),
         Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
@@ -72,14 +72,14 @@ describe('Rewrite basic API', () => {
 
   describe('Excluding inner nodes', () => {
     it('moves a node out of an compound', () => {
-      var comp = Graph.chain(
+      var comp = Graph.flow(
         Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
         (graph, objs) =>
           Graph.addEdge({from: '@inC', to: objs()[0].id + '@inA'})(graph),
         (graph, objs) =>
           Graph.addEdge({to: '@outC', from: objs()[0].id + '@outA'})(graph)
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
         Graph.addNode(comp),
         (graph, objs) =>
@@ -95,7 +95,7 @@ describe('Rewrite basic API', () => {
     })
 
     it('throws an error if the node has predecessors in the compound node', () => {
-      var comp = Graph.chain(
+      var comp = Graph.flow(
         Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}, {port: 'inB', kind: 'input'}], name: 'a'}),
         Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
         (graph, objs) =>

@@ -10,7 +10,7 @@ import {isRoot, join, rest as pathRest, base as pathBase, parent as pathParent, 
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
-import {chain} from './chain'
+import {flow} from './flow'
 import {nodeBy, mergeNodes} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
@@ -238,7 +238,7 @@ function nodeParentPath (path, graph) {
 }
 
 export const replaceNode = curry((path, newNode, graph) => {
-  return chain(
+  return flow(
     removeNode(path),
     addNodeByPath(nodeParentPath(path, graph), unID(newNode)),
     (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),

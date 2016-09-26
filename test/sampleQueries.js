@@ -68,12 +68,12 @@ const removeEmptyCompound = curry((node, graph) => {
 // target gets redirected to its successors (multiple?)
 // perhaps not necessary... used for replaceNode?
 const skipTarget = curry((output, target, graph) =>
-  Graph.chain(
+  Graph.flow(
     Graph.removeEdge(output, target, graph),
     (graph) =>
       Graph.successors(target, graph)
         .reduce((curGraph, s) =>
-          Graph.chain(
+          Graph.flow(
             Graph.removeEdge(target, s),
             Graph.addEdge(output, s))
         , graph)))

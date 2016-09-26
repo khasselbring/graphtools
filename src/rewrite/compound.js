@@ -8,7 +8,7 @@ import all from 'lodash/fp/all'
 import negate from 'lodash/fp/negate'
 import flatten from 'lodash/fp/flatten'
 import uniq from 'lodash/fp/uniq'
-import {chain} from '../graph/chain'
+import {flow} from '../graph/flow'
 import * as Compound from '../compound'
 import {predecessor, successors, inIncidents, outIncidents} from '../graph/connections'
 import * as Graph from '../graph'
@@ -34,7 +34,7 @@ export const includePredecessor = curry((port, graph) => {
   var postInPorts = outIncidents(port, graph)
   var compound = Graph.node(port, graph)
 
-  var newCompound = chain(
+  var newCompound = flow(
     // remove old port and add predecessor
     [
       Compound.removePort(port),
@@ -49,7 +49,7 @@ export const includePredecessor = curry((port, graph) => {
     .concat(postInPorts.map((edge) =>
         Graph.addEdge({from: pred, to: edge.to})))
   )(compound)
-  var newGraph = chain(
+  var newGraph = flow(
     [
       Graph.removeNode(pred),
       Graph.replaceNode(port, newCompound)
@@ -85,7 +85,7 @@ export const excludeNode = curry((node, graph) => {
   var portPreds = flatten(preds.map((edge) => inIncidents(edge.from, graph).map((e) => [e, edge])))
   var succs = outIncidents(node, graph)
 
-  var newCompound = chain(
+  var newCompound = flow(
     [ // remove the node inside the compound
       Graph.removeNode(nodeObj)
     ]
@@ -96,10 +96,10 @@ export const excludeNode = curry((node, graph) => {
     // add all outgoing edges from the newly created compound ports to their successors
     .concat(succs.map((edge) => Graph.addEdge({from: '@' + edge.from.port, to: edge.to})))
   )(parent)
-  var newGraph = chain(
+  var newGraph = flow(
     // disconnect all edges whose ports get removed
     [
-      chain(portPreds.map((edges) => Graph.removeEdge(edges[0]))),
+      flow(portPreds.map((edges) => Graph.removeEdge(edges[0]))),
       Graph.replaceNode(parent, newCompound),
       Graph.addNodeByPath(Node.path(Graph.parent(parent, graph)), nodeObj),
       (graph, objs) => mergeNodes({id: nodeObj.id}, objs()[2], graph)

@@ -73,7 +73,7 @@ describe('Basic graph functions', () => {
   })
 
   it('can have edges between references', () => {
-    var graph = Graph.chain(
+    var graph = Graph.flow(
         Graph.addNode({ref: 'a'}),
         Graph.addNode({ref: 'a'}),
         (graph, objs) =>
@@ -84,7 +84,7 @@ describe('Basic graph functions', () => {
   })
 
   it('cannot add two nodes with the same name', () => {
-    var graph = Graph.chain(Graph.addNode({ref: 'a', name: 'a'}))()
+    var graph = Graph.flow(Graph.addNode({ref: 'a', name: 'a'}))()
     expect(() => Graph.addNode({ref: 'a', name: 'a'}, graph)).to.throw(Error)
   })
 
@@ -115,8 +115,8 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode('a', graph)).to.be.true
     })
 
-    it('can chain adding nodes', () => {
-      var graph = Graph.chain(
+    it('can flow adding nodes', () => {
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
       )()
@@ -124,7 +124,7 @@ describe('Basic graph functions', () => {
     })
 
     it('sets the type of ports to `generic` if no type is given', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'input'}]}))()
       expect(Graph.node('a', graph).ports[0].type).to.equal('generic')
     })
@@ -139,7 +139,7 @@ describe('Basic graph functions', () => {
     })
 
     it('can check whether a node exists in the graph', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
       )()
@@ -155,7 +155,7 @@ describe('Basic graph functions', () => {
     })
 
     it('gets nodes by compound path', () => {
-      var impl = Graph.chain(
+      var impl = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )(Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
       var graph = Graph.addNode(impl, Graph.empty())
@@ -194,7 +194,7 @@ describe('Basic graph functions', () => {
       var impl = Graph.addNode(
         {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
         Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode(impl),
         Graph.addNodeByPath('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )()
@@ -213,7 +213,7 @@ describe('Basic graph functions', () => {
     })
 
     it('can get a node by component id', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({componentId: 'a', name: 'A', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
         Graph.addNode({componentId: 'b', name: 'B', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )()
@@ -229,7 +229,7 @@ describe('Basic graph functions', () => {
     })
 
     it('does not remove other nodes when removing a specific node', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'p', kind: 'output', type: 'a'}]})
       )()
@@ -272,7 +272,7 @@ describe('Basic graph functions', () => {
     })
 
     it('only removes specified node in compound', () => {
-      var impl = Graph.chain(
+      var impl = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )(Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
@@ -284,7 +284,7 @@ describe('Basic graph functions', () => {
     })
 
     it('can address nodes relative to compound', () => {
-      var impl = Graph.chain(
+      var impl = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
@@ -294,7 +294,7 @@ describe('Basic graph functions', () => {
     })
 
     it('replaces references with a node', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({ref: 'abc', name: '123'}),
         Graph.replaceNode('123', {componentId: 'abc', ports: [{port: 'a', kind: 'output', type: 'string'}], atomic: true})
       )()
@@ -307,7 +307,7 @@ describe('Basic graph functions', () => {
     })
 
     it('replaces references with a compound node', () => {
-      var impl = Graph.chain(
+      var impl = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )(Graph.compound({componentId: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
@@ -324,11 +324,11 @@ describe('Basic graph functions', () => {
     })
 
     it('copes with multiple levels of compound nodes', () => {
-      var impl = Graph.chain(
+      var impl = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )(Graph.compound({name: 'comp', componentId: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
-      var impl2 = Graph.chain(
+      var impl2 = Graph.flow(
         Graph.addNode(impl)
       )(Graph.compound({componentId: 'c', ports: [{port: 'out', kind: 'output'}]}))
       var graph = Graph.replaceNode(
@@ -344,7 +344,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Removing a node removes its edges', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
         (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
@@ -366,7 +366,7 @@ describe('Basic graph functions', () => {
 
   describe('Edge functions', () => {
     it('Can add edges to the graph', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
       )()
@@ -377,7 +377,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Can remove edges from the graph', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addEdge({from: 'a@out', to: 'b@in'})
@@ -387,7 +387,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Throws an error if the edge that should be deleted does not exist', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
       )()
@@ -395,7 +395,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Throws an error if at least one node in the edge does not exist', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]})
       )()
@@ -408,7 +408,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Throws an error if the edge is a loop', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]})
       )()
@@ -417,7 +417,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Throws an error if the edge goes from output to output', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]})
       )()
@@ -426,7 +426,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Check whether an edge is in the graph', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]})
       )()
@@ -436,7 +436,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Get an edge in the graph', () => {
-      var cmpd = Graph.chain(
+      var cmpd = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addEdge({from: 'a@out', to: 'b@in'})
@@ -447,11 +447,11 @@ describe('Basic graph functions', () => {
     })
 
     it('Can add edges in compounds', () => {
-      var cmpd = Graph.chain(
+      var cmpd = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
       )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output', type: 'a'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c»a@out', to: '»c»b@in'})
       )()
@@ -462,10 +462,10 @@ describe('Basic graph functions', () => {
     })
 
     it('Can connect from the compound to an inner node', () => {
-      var cmpd = Graph.chain(
+      var cmpd = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'a'}]})
       )(Graph.compound({name: 'c', ports: [{port: 'in', kind: 'input', type: 'a'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c@in', to: '»c»a@in'})
       )()
@@ -474,7 +474,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Fails if the connecting ports do not exist', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
       )()
@@ -485,7 +485,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Gets the predecessors for a node', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addEdge({from: 'a@out', to: 'b@in'})
@@ -495,10 +495,10 @@ describe('Basic graph functions', () => {
     })
 
     it('Returns the predecessors inside a compound node', () => {
-      var cmpd = Graph.chain(
+      var cmpd = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]})
       )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output', type: 'a'}]}))
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c»a@out', to: '»c@out'})
       )()
@@ -506,8 +506,8 @@ describe('Basic graph functions', () => {
       expect(Graph.node(Graph.predecessor('c', graph), graph).name).to.equal('a')
     })
 
-    it('adds edges via a chain', () => {
-      var graph = Graph.chain(
+    it('adds edges via a flow', () => {
+      var graph = Graph.flow(
         Graph.addNode({ports: [{port: 'out', kind: 'output'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
         (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
@@ -519,7 +519,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Can remove an edge', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
         (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
@@ -530,7 +530,7 @@ describe('Basic graph functions', () => {
     })
 
     it.skip('Supports special syntax', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}, {port: 'out', kind: 'output'}]}),
         Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input'}]}),
@@ -551,7 +551,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Gets the successors for a node', () => {
-      var graph = Graph.chain(
+      var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
         Graph.addNode({name: 'c', ports: [{port: 'in2', kind: 'input'}]}),

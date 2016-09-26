@@ -1,7 +1,7 @@
 
 import {empty} from './basic'
 
-export const chain = function () {
+export const flow = function () {
   var args = null
   if (Array.isArray(arguments[0])) {
     args = arguments[0]
@@ -20,7 +20,7 @@ export const chain = function () {
         })
         return {graph: newGraph, store: obj.store}
       } catch (err) {
-        err.message += ' in chain function ' + (idx + 1) + ((fn.name && fn.name !== 'wrapper') ? ' named ' + fn.name : '')
+        err.message += ' in flow function ' + (idx + 1) + ((fn.name && fn.name !== 'wrapper') ? ' named ' + fn.name : '')
         throw err
       }
     }, {graph, store: {}}).graph
