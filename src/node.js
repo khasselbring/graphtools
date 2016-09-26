@@ -88,6 +88,10 @@ export function hasName (node) {
 export const equal = curry((node1, node2) => {
   if ((isValid(node1) || isID(node1)) && (isValid(node2) || isID(node2))) {
     return id(node1) && id(node2) && id(node1) === id(node2)
+  } else if (Port.isPort(node1)) {
+    return equal(Port.node(node1), node2)
+  } else if (Port.isPort(node2)) {
+    return equal(node1, Port.node(node2))
   } else {
     return name(node1) === name(node2)
   }

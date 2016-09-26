@@ -376,6 +376,24 @@ describe('Basic graph functions', () => {
       expect(Graph.edges(newGraph)[0].to.port).to.eql('in')
     })
 
+    it('Can remove edges from the graph', () => {
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
+        Graph.addEdge({from: 'a@out', to: 'b@in'})
+      )()
+      var newGraph = Graph.removeEdge({from: 'a@out', to: 'b@in'}, graph)
+      expect(Graph.edges(newGraph)).to.have.length(0)
+    })
+
+    it('Throws an error if the edge that should be deleted does not exist', () => {
+      var graph = Graph.chain(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
+      )()
+      expect(() => Graph.removeEdge({from: 'a@out', to: 'b@in'}, graph)).to.throw(Error)
+    })
+
     it('Throws an error if at least one node in the edge does not exist', () => {
       var graph = Graph.chain(
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),

@@ -76,15 +76,14 @@ function setInnerCompound (edge, graph) {
   var parentTo = Node.path(parent(edge.to, graph))
   var from = Node.path(node(edge.from, graph))
   var to = Node.path(node(edge.to, graph))
-  if (equal(parentFrom, parentTo)) {
-    if (equal(to, from)) {
-      return merge(edge, {innerCompoundInput: true, innerCompoundOutput: true})
-    }
-    return edge
+  if (equal(from, to) && equal(parentFrom, parentTo)) {
+    return merge(edge, {innerCompoundInput: true, innerCompoundOutput: true})
   } else if (equal(from, parentTo)) {
     return merge(edge, {innerCompoundOutput: true})
   } else if (equal(to, parentFrom)) {
     return merge(edge, {innerCompoundInput: true})
+  } else if (equal(parentFrom, parentTo)) {
+    return edge
   } else {
     throw new Error('Unable to determine parent for the edge:', JSON.stringify(edge))
   }
@@ -129,6 +128,9 @@ export const addEdge = curry((edge, graph) => {
 
 export const removeEdge = curry((edge, graph) => {
   var normEdge = normalize(edge, graph)
+  if (!hasEdge(normEdge, graph)) {
+    throw new Error('Cannot delete edge that is not in the graph.')
+  }
   return changeSet.applyChangeSet(graph, changeSet.removeEdge(normEdge))
 })
 

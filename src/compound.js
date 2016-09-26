@@ -102,7 +102,8 @@ export const removePort = curry((port, node) => {
   port = getPort(port, node)
   var portEdges = edges(node).filter((e) => pointsTo(port, e) || isFrom(port, e))
   var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge, cmp), node)
-  return omit('componentId', merge(newNode, {ports: newNode.ports.filter(negate(Port.equal(port)))}))
+  return merge(omit(['ports', 'componentId'], newNode),
+    {ports: newNode.ports.filter(negate((p) => Port.equal(port, merge(p, {node: node.id}))))})
 })
 
 const addPort = (port, kind, node) => {

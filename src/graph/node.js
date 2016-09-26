@@ -138,7 +138,7 @@ export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
     return addNode(nodeData, graph, ...cb)
   } else {
     var parentGraph = node(parentPath, graph)
-    return replaceNode(parentPath, addNode(nodeData, parentGraph), graph)
+    return replaceNode(parentPath, addNode(nodeData, parentGraph, ...cb), graph)
   }
 })
 

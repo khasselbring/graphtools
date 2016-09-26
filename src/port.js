@@ -111,6 +111,7 @@ export function toString (port) {
 }
 
 export const equal = curry((port1, port2) => {
+  // console.log('port equal', port1, port2, node(port1) === node(port2) && portName(port1) === portName(port2))
   return node(port1) === node(port2) && portName(port1) === portName(port2)
 })
 
