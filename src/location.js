@@ -6,8 +6,8 @@ import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
 import {nodeByPath, idToPath} from './graph/internal'
 import {isPort} from './port'
-import {isValid as isNode} from './node'
-import {join} from './compoundPath'
+import {isValid as isNode, equal, id} from './node'
+import {rest, prefix} from './compoundPath'
 
 /** A port notation can have every of the other notations for the node and as such
  * it is necessary to check first if it is a port notation. The symbol '@' is only used in
@@ -77,19 +77,35 @@ function fromString (str, allowsPorts = true) {
   }
 }
 
+
+
+function idify (path, graph) {
+  if (path.length === 0) return path
+  var node = graph.nodes.filter(equal(path[0]))[0]
+  if (!node) {
+    if (equal(path[0], graph)) {
+      return [id(graph)].concat(idify(rest(path), graph))
+    }
+    return
+  }
+  return [id(node)].concat(idify(rest(path), node))
+}
+
 function locPath (loc, graph) {
   var graphPath = graph.path
   if (loc.path) {
-    return join(graphPath, loc.path)
+    let idPath = idify(loc.path, graph)
+    return (idPath) ? prefix(idPath, graphPath) : undefined
   } else if (loc.name) {
     // best guess is that the node is at the root level...
-    return join(graphPath, [loc.name])
+    let idPath = idify([loc.name], graph)
+    return (idPath) ? prefix(idPath, graphPath) : undefined
   } else if (loc.index) {
     var nodePath = idToPath(loc.index, graph)
     if (!nodePath) {
       throw new Error('Unable to locate node with id: ' + loc.index + '.')
     }
-    return join(graphPath, nodePath)
+    return prefix(nodePath, graphPath)
   } else {
     throw new Error('Unable to process location. Not enough information to find node in the graph.')
   }

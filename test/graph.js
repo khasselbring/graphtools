@@ -10,6 +10,8 @@ import semver from 'semver'
 
 var expect = chai.expect
 
+const toNames = (graph) => (id) => Node.name(Graph.node(id, graph))
+
 describe('Basic graph functions', () => {
   it('can create an empty graph', () => {
     var graph = Graph.empty()
@@ -175,7 +177,7 @@ describe('Basic graph functions', () => {
       var n = Graph.node(['a', 'a'], graph)
       expect(n).to.be.ok
       expect(n.name).to.equal('a')
-      expect(n.path).to.eql(['a', 'a'])
+      expect(n.path.map(toNames(graph))).to.eql(['a', 'a'])
       expect(n.atomic).to.be.true
     })
 
@@ -209,7 +211,7 @@ describe('Basic graph functions', () => {
       var graph = Graph.addNode(impl, Graph.empty())
       var nodes = Graph.nodesDeep(graph)
       expect(nodes).to.have.length(2)
-      expect(nodes.map((n) => Node.path(n))).to.have.deep.members([['b', 'a'], ['b']])
+      expect(nodes.map((n) => Node.path(n).map(toNames(graph)))).to.have.deep.members([['b', 'a'], ['b']])
     })
 
     it('can get a node by component id', () => {

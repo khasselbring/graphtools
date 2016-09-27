@@ -2,12 +2,12 @@
 
 import chai from 'chai'
 import * as Graph from '../src/graph'
-import {includePredecessor, excludeNode} from '../src/rewrite/compound'
+import {includePredecessor, excludeNode, unCompound} from '../src/rewrite/compound'
 import * as Node from '../src/node'
 
 var expect = chai.expect
 
-describe('Rewrite basic API', () => {
+describe.skip('Rewrite basic API', () => {
   describe('Including predecessors', () => {
     it('can include the direct predecessor of a compound port into the compound', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
@@ -105,6 +105,40 @@ describe('Rewrite basic API', () => {
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.addNode(comp, Graph.empty())
       expect(() => excludeNode('a', graph)).to.throw(Error)
+    })
+  })
+
+  describe('Removing the compound boundaries completely', () => {
+    it('Can process empty compounds', () => {
+      var graph = Graph.addNode(
+        Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}),
+        Graph.empty())
+      expect(Graph.nodes(unCompound('c', graph))).to.have.length(0)
+    })
+
+    it('moves al nodes out of an compound', () => {
+      var comp = Graph.flow(
+        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
+        Graph.addNode({ports: [{port: 'outB', kind: 'output'}, {port: 'inB', kind: 'input'}], name: 'b'}),
+        (graph, objs) =>
+          Graph.addEdge({from: '@inC', to: 'a@inA'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({to: 'b@inB', from: 'a@outA'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({to: '@outC', from: 'b@outB'})(graph)
+      )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
+      var graph = Graph.flow(
+        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
+        Graph.addNode({ports: [{port: 'inH', kind: 'input'}]}),
+        Graph.addNode(comp),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[0].id + '@outF', to: 'c@inC'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: 'c@outC', to: objs()[1].id + '@inH'})(graph)
+      )()
+      expect(Graph.nodes(graph)).to.have.length(3)
+      var rewGraph = unCompound('c', graph)
+      expect(Graph.nodes(rewGraph)).to.have.length(4)
     })
   })
 })

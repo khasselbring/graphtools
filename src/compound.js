@@ -75,7 +75,7 @@ export const children = nodes
 export {hasPort, inputPorts, outputPorts}
 
 const getPort = (portOrString, node) =>
-  (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : portOrString
+  (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : merge({node: node.id}, portOrString)
 
 /**
  * Rename a port and return the new node.

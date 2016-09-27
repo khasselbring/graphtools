@@ -93,7 +93,7 @@ export function nodeNames (graph) {
 export const node = curry((searchNode, graph) => {
   var node = nodeBy(query(searchNode, graph), graph)
   if (!node) {
-    throw new Error(`Node with id '${Node.id(searchNode)}' does not exist in the graph.`)
+    throw new Error(`Node with id '${Node.id(searchNode) || searchNode}' does not exist in the graph.`)
   }
   return node
 })
@@ -143,7 +143,7 @@ export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
 })
 
 function setPath (node, path) {
-  var nodePath = join(path, Node.name(node))
+  var nodePath = join(path, Node.id(node))
   if (isCompound(node)) {
     return compoundSetPath(node, nodePath, setPath)
   }
@@ -198,7 +198,7 @@ export const removeNode = curry((query, graph, ...cb) => {
     }
     var inc = incidents(path, graph)
     var remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge, curGraph), graph)
-    return changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.path))
+    return changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.id))
   }
   var parentGraph = node(basePath, graph)
   // remove node in its compound and replace the graphs on the path
@@ -220,7 +220,7 @@ const rePath = (graph) => {
 
 const rePathRec = (basePath, graph) => {
   nodes(graph).forEach((n) => {
-    var newPath = join(basePath, Node.name(n))
+    var newPath = join(basePath, Node.id(n))
     n.path = newPath
     if (isCompound(n)) {
       rePathRec(newPath, n)

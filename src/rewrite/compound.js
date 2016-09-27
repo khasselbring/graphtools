@@ -14,6 +14,7 @@ import {predecessor, successors, inIncidents, outIncidents} from '../graph/conne
 import * as Graph from '../graph'
 import * as Node from '../node'
 import {mergeNodes} from '../graph/internal'
+import {topologicalSort} from '../algorithm'
 
 /**
  * Moves the predecessor of a port into the compound node. It changes the signature of the
@@ -102,4 +103,18 @@ export const excludeNode = curry((node, graph) => {
     Node.outputPorts(nodeObj, true).map((port) => Graph.addEdge({from: nodeObj.id + '@' + port.port, to: parent.id + '@' + port.port}))
   )(graph)
   return newGraph
+})
+
+/**
+ * Takes a compound node and moves all nodes out of the compound node and removes then removes the empty compound.
+ * @params {Compound} node The compound node
+ * @params {PortGraph} graph The graph in which the compound node lies.
+ * @returns {PortGraph} The new graph where all nodes were moved out of the compound node.
+ */
+export const unCompound = curry((node, graph) => {
+  var sorting = topologicalSort(Graph.node(node, graph))
+  return flow(
+    sorting.map((n) => excludeNode(n)),
+    Graph.removeNode(node)
+  )(graph)
 })

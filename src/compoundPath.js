@@ -149,6 +149,24 @@ export const relativeTo = curry((path1, path2) => {
   }
 })
 
+const isPrefix = (path1, path2, idx = 0) => {
+  if (path2.length <= idx) return true
+  if (path1[idx] === path2[idx]) {
+    return isPrefix(path1, path2, idx + 1)
+  } else return false
+}
+
+export const prefix = curry((path1, path2) => {
+  if (path2.length === 0) return path1
+  if (path2[0] !== path1[0]) {
+    return [path2[0]].concat(prefix(path1, rest(path2)))
+  } else if (isPrefix(path1, path2)) {
+    return path2
+  } else {
+    throw new Error('Unable to apply inconsistent prefix: ' + JSON.stringify(path1) + ' , ' + JSON.stringify(path2))
+  }
+})
+
 /**
  * Returns whether two compound paths are equal
  * @param {CompoundPath} path1 The first path to compare.
