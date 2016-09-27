@@ -36,18 +36,15 @@ export const includePredecessor = curry((port, graph) => {
 
   var newCompound = flow(
     // remove old port and add predecessor
-    [
-      Compound.removePort(port),
-      Graph.addNode(predNode),
-      // set the id of the included predecessor to the id of the predecessor
-      (graph, objs) => mergeNodes({id: predNode.id}, objs()[1], graph)
-    ]
+    Compound.removePort(port),
+    Graph.addNode(predNode),
+    // set the id of the included predecessor to the id of the predecessor
+    (graph, objs) => mergeNodes({id: predNode.id}, objs()[1], graph),
     // add all input ports of predecessor
-    .concat(preInPorts.map((edge) => Compound.addInputPort(edge.to)))
-    .concat(preInPorts.map((edge) =>
-        Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})))
-    .concat(postInPorts.map((edge) =>
-        Graph.addEdge({from: pred, to: edge.to})))
+    preInPorts.map((edge) => Compound.addInputPort(edge.to)),
+    preInPorts.map((edge) =>
+        Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})),
+    postInPorts.map((edge) => Graph.addEdge({from: pred, to: edge.to}))
   )(compound)
   var newGraph = flow(
     [
@@ -86,26 +83,23 @@ export const excludeNode = curry((node, graph) => {
   var succs = outIncidents(node, graph)
 
   var newCompound = flow(
-    [ // remove the node inside the compound
-      Graph.removeNode(nodeObj)
-    ]
+    // remove the node inside the compound
+    Graph.removeNode(nodeObj),
     // remove all ports that are not needed inside the compound anymore
-    .concat(exclusivePorts.map((p) => Compound.removePort(p)))
+    exclusivePorts.map((p) => Compound.removePort(p)),
     // add all a port for each output port of the excluded node
-    .concat(Node.outputPorts(nodeObj, true).map((port) => Compound.addInputPort(port)))
+    Node.outputPorts(nodeObj, true).map((port) => Compound.addInputPort(port)),
     // add all outgoing edges from the newly created compound ports to their successors
-    .concat(succs.map((edge) => Graph.addEdge({from: '@' + edge.from.port, to: edge.to})))
+    succs.map((edge) => Graph.addEdge({from: '@' + edge.from.port, to: edge.to}))
   )(parent)
   var newGraph = flow(
     // disconnect all edges whose ports get removed
-    [
-      flow(portPreds.map((edges) => Graph.removeEdge(edges[0]))),
-      Graph.replaceNode(parent, newCompound),
-      Graph.addNodeByPath(Node.path(Graph.parent(parent, graph)), nodeObj),
-      (graph, objs) => mergeNodes({id: nodeObj.id}, objs()[2], graph)
-    ]
-    .concat(portPreds.map((edges) => Graph.addEdge({from: edges[0].from, to: nodeObj.id + '@' + edges[1].to.port})))
-    .concat(Node.outputPorts(nodeObj, true).map((port) => Graph.addEdge({from: nodeObj.id + '@' + port.port, to: parent.id + '@' + port.port})))
+    flow(portPreds.map((edges) => Graph.removeEdge(edges[0]))),
+    Graph.replaceNode(parent, newCompound),
+    Graph.addNodeByPath(Node.path(Graph.parent(parent, graph)), nodeObj),
+    (graph, objs) => mergeNodes({id: nodeObj.id}, objs()[2], graph),
+    portPreds.map((edges) => Graph.addEdge({from: edges[0].from, to: nodeObj.id + '@' + edges[1].to.port})),
+    Node.outputPorts(nodeObj, true).map((port) => Graph.addEdge({from: nodeObj.id + '@' + port.port, to: parent.id + '@' + port.port}))
   )(graph)
   return newGraph
 })

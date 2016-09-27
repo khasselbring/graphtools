@@ -1,13 +1,9 @@
 
+import flatten from 'lodash/fp/flatten'
 import {empty} from './basic'
 
 export const flow = function () {
-  var args = null
-  if (Array.isArray(arguments[0])) {
-    args = arguments[0]
-  } else {
-    args = arguments
-  }
+  var args = flatten(arguments)
   return (graph) => {
     if (!graph) {
       graph = empty()
