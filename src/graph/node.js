@@ -182,13 +182,7 @@ export const addNode = curry((node, graph, ...cb) => {
   return changeSet.applyChangeSet(graph, changeSet.insertNode(setPath(newNode, Node.path(graph))))
 })
 
-/**
- * Removes a node from the graph. [Performance O(|V| + |E|)]
- * @param {CompoundPath} path The node that shall be removed, either the node object or the id.
- * @param {PortGraph} graph The graph.
- * @returns {PortGraph} A new graph without the given node.
- */
-export const removeNode = curry((query, graph, ...cb) => {
+const removeNodeInternal = curry((query, deleteEdges, graph, ...cb) => {
   var remNode = node(query, graph)
   var path = relativeTo(remNode.path, graph.path)
   var basePath = pathBase(path)
@@ -196,13 +190,26 @@ export const removeNode = curry((query, graph, ...cb) => {
     if (cb.length > 0) {
       cb[0](remNode)
     }
-    var inc = incidents(path, graph)
-    var remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge, curGraph), graph)
+    var remEdgesGraph = graph
+    if (deleteEdges) {
+      var inc = incidents(path, graph)
+      remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge, curGraph), graph)
+    }
     return changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.id))
   }
   var parentGraph = node(basePath, graph)
   // remove node in its compound and replace the graphs on the path
   return replaceNode(basePath, removeNode(pathRest(path), parentGraph, ...cb), graph)
+})
+
+/**
+ * Removes a node from the graph. [Performance O(|V| + |E|)]
+ * @param {CompoundPath} path The node that shall be removed, either the node object or the id.
+ * @param {PortGraph} graph The graph.
+ * @returns {PortGraph} A new graph without the given node.
+ */
+export const removeNode = curry((query, graph, ...cb) => {
+  return removeNodeInternal(query, true, graph, ...cb)
 })
 
 const unID = (node) => {
@@ -239,7 +246,7 @@ function nodeParentPath (path, graph) {
 
 export const replaceNode = curry((path, newNode, graph) => {
   return flow(
-    removeNode(path),
+    removeNodeInternal(path, false),
     addNodeByPath(nodeParentPath(path, graph), unID(newNode)),
     (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
     rePath

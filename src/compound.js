@@ -4,7 +4,7 @@ import omit from 'lodash/fp/omit'
 import merge from 'lodash/fp/merge'
 import curry from 'lodash/fp/curry'
 import negate from 'lodash/fp/negate'
-import {isReference, id as nodeID, hasPort, inputPorts, outputPorts} from './node'
+import {isReference, id as nodeID, hasPort, inputPorts, outputPorts, ports} from './node'
 import * as Edge from './edge'
 import * as Port from './port'
 import {edges, removeEdge} from './graph/edge'
@@ -100,10 +100,10 @@ export const renamePort = curry((port, newName, node) => {
  */
 export const removePort = curry((port, node) => {
   port = getPort(port, node)
-  var portEdges = edges(node).filter((e) => pointsTo(port, e) || isFrom(port, e))
+  var portEdges = edges(node).filter((e) => pointsTo(port, node, e) || isFrom(port, node, e))
   var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge, cmp), node)
   return merge(omit(['ports', 'componentId'], newNode),
-    {ports: newNode.ports.filter(negate((p) => Port.equal(port, merge(p, {node: node.id}))))})
+    {ports: ports(newNode).filter(negate((p) => Port.equal(port, p)))})
 })
 
 const addPort = (port, kind, node) => {
@@ -111,7 +111,7 @@ const addPort = (port, kind, node) => {
     throw new Error('Cannot add already existing port ' + Port.toString(port) + ' to node.')
   }
   return omit('componentId',
-    merge(node, {ports: node.ports.concat([Port.create(port.node, port.port, kind)])}))
+    merge(node, {ports: node.ports.concat([Port.create(node.id, port.port, kind)])}))
 }
 
 /**

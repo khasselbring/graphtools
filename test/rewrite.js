@@ -7,7 +7,7 @@ import * as Node from '../src/node'
 
 var expect = chai.expect
 
-describe.skip('Rewrite basic API', () => {
+describe('Rewrite basic API', () => {
   describe('Including predecessors', () => {
     it('can include the direct predecessor of a compound port into the compound', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
@@ -91,6 +91,7 @@ describe.skip('Rewrite basic API', () => {
       expect(Graph.predecessors('c@outA', rewGraph)).to.have.length(1)
       expect(Graph.node(Graph.predecessor('c@outA', rewGraph), rewGraph).name).to.equal('a')
       expect(Graph.node(Graph.successors('c@outA', rewGraph)[0], rewGraph).name).to.equal('c')
+      expect(Graph.node(Graph.predecessor('c@outC', rewGraph), rewGraph).name).to.equal('c')
       expect(Node.hasPort('inC', Graph.node('c', rewGraph))).to.be.false
     })
 
@@ -116,7 +117,7 @@ describe.skip('Rewrite basic API', () => {
       expect(Graph.nodes(unCompound('c', graph))).to.have.length(0)
     })
 
-    it('moves al nodes out of an compound', () => {
+    it('moves all nodes out of an compound', () => {
       var comp = Graph.flow(
         Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
         Graph.addNode({ports: [{port: 'outB', kind: 'output'}, {port: 'inB', kind: 'input'}], name: 'b'}),
@@ -129,7 +130,7 @@ describe.skip('Rewrite basic API', () => {
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
         Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        Graph.addNode({ports: [{port: 'inH', kind: 'input'}]}),
+        Graph.addNode({ports: [{port: 'inH', kind: 'input'}], name: 'h'}),
         Graph.addNode(comp),
         (graph, objs) =>
           Graph.addEdge({from: objs()[0].id + '@outF', to: 'c@inC'})(graph),
@@ -139,6 +140,7 @@ describe.skip('Rewrite basic API', () => {
       expect(Graph.nodes(graph)).to.have.length(3)
       var rewGraph = unCompound('c', graph)
       expect(Graph.nodes(rewGraph)).to.have.length(4)
+      expect(Graph.predecessors('h', rewGraph)).to.have.length(1)
     })
   })
 })

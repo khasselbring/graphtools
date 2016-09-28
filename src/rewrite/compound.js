@@ -6,11 +6,11 @@ import curry from 'lodash/fp/curry'
 import any from 'lodash/fp/any'
 import all from 'lodash/fp/all'
 import negate from 'lodash/fp/negate'
-import flatten from 'lodash/fp/flatten'
 import uniq from 'lodash/fp/uniq'
+import flatten from 'lodash/fp/flatten'
 import {flow} from '../graph/flow'
 import * as Compound from '../compound'
-import {predecessor, successors, inIncidents, outIncidents} from '../graph/connections'
+import {predecessor, successors, inIncidents, inIncident, outIncidents} from '../graph/connections'
 import * as Graph from '../graph'
 import * as Node from '../node'
 import {mergeNodes} from '../graph/internal'
@@ -80,7 +80,7 @@ export const excludeNode = curry((node, graph) => {
   var exclusivePorts = uniq(preds
     .filter((edge) => all(Node.equal(nodeObj), successors(edge.from, graph)))
     .map((edge) => edge.from))
-  var portPreds = flatten(preds.map((edge) => inIncidents(edge.from, graph).map((e) => [e, edge])))
+  var portPreds = preds.map((edge) => [inIncident(edge.from, graph), edge])
   var succs = outIncidents(node, graph)
 
   var newCompound = flow(
@@ -113,8 +113,14 @@ export const excludeNode = curry((node, graph) => {
  */
 export const unCompound = curry((node, graph) => {
   var sorting = topologicalSort(Graph.node(node, graph))
+  var emptyComp = flow(sorting.map((n) => excludeNode(n)))(graph)
+  var cons = flatten(Node.outputPorts(Graph.node(node, emptyComp), true).map((p) =>
+    Graph.successors(p, emptyComp).map((to) => ({
+      from: Graph.predecessor(Graph.predecessor(p, emptyComp), emptyComp),
+      to: to
+    }))))
   return flow(
-    sorting.map((n) => excludeNode(n)),
-    Graph.removeNode(node)
-  )(graph)
+    Graph.removeNode(node),
+    cons.map((edge) => Graph.addEdge(edge))
+  )(emptyComp)
 })

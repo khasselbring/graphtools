@@ -131,10 +131,6 @@ describe('Basic graph functions', () => {
       expect(Graph.node('a', graph).ports[0].type).to.equal('generic')
     })
 
-    it('should throw an error if the node data is not valid', () => {
-      expect(() => Graph.addNode({}, Graph.empty())).to.throw(Error)
-    })
-
     it('should throw an error if an node with the same name gets added twice', () => {
       var graph = Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}, Graph.empty())
       expect(() => Graph.addNode({name: 'a', prop: 'p'}, graph)).to.throw(Error)

@@ -15,7 +15,6 @@ describe('Node API', () => {
   })
 
   it('`Node.create` does not create invalid nodes and throws an error', () => {
-    expect(() => Node.create({})).to.throw(Error)
     expect(() => Node.create({id: 'a'})).to.throw(Error)
     expect(() => Node.create({id: 'a', name: 'b'})).to.throw(Error)
     expect(() => Node.create({id: 'a', ports: [{name: 'a', kind: 'output'}]})).to.throw(Error)
@@ -40,12 +39,12 @@ describe('Node API', () => {
   it('`Node.equal` can compare nodes by id', () => {
     expect(Node.equal('a', 'a')).to.be.true
     expect(Node.equal('b', 'a')).to.be.false
-    expect(Node.equal({id: 'a'}, 'a')).to.be.true
-    expect(Node.equal({id: 'a'}, 'b')).to.be.false
-    expect(Node.equal('a', {id: 'a'})).to.be.true
-    expect(Node.equal('b', {id: 'a'})).to.be.false
-    expect(Node.equal({id: 'a'}, {id: 'a'})).to.be.true
-    expect(Node.equal({id: 'b'}, {id: 'a'})).to.be.false
+    expect(Node.equal({id: 'a', ports: []}, 'a')).to.be.true
+    expect(Node.equal({id: 'a', ports: []}, 'b')).to.be.false
+    expect(Node.equal('a', {id: 'a', ports: []})).to.be.true
+    expect(Node.equal('b', {id: 'a', ports: []})).to.be.false
+    expect(Node.equal({id: 'a', ports: []}, {id: 'a', ports: []})).to.be.true
+    expect(Node.equal({id: 'b', ports: []}, {id: 'a', ports: []})).to.be.false
   })
 
   it('`Node.equal` is curryable', () => {
@@ -64,9 +63,7 @@ describe('Node API', () => {
     expect(Node.isValid({id: 'a', ports: [{port: 'p', kind: 'nop', type: 'A'}]})).to.be.false
     expect(Node.isValid({id: 'a', ports: [{port: 'p', type: 'A'}]})).to.be.false
     expect(Node.isValid({id: 'a', ports: [{port: 'p', kind: 'output'}]})).to.be.false
-    expect(Node.isValid({id: 'a'})).to.be.false
     expect(Node.isValid({idd: 'a', ports: [{port: 'p', kind: 'output', type: 'number'}]})).to.be.false
-    expect(Node.isValid({})).to.be.false
     expect(Node.isValid({ports: [{port: 'p', kind: 'output', type: 'number'}]})).to.be.false
     expect(Node.isValid()).to.be.false
   })

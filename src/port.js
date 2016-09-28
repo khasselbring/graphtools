@@ -4,6 +4,7 @@
  */
 
 import curry from 'lodash/fp/curry'
+import merge from 'lodash/fp/merge'
 import _ from 'lodash'
 
 const OUTPUT = 'output'
@@ -40,6 +41,9 @@ export function normalize (port) {
   if (isPortNotation(port)) {
     return assureType(parsePortNotation(port))
   } else {
+    if (isPortNotation(port.port)) {
+      return assureType(merge(port, {port: parsePortNotation(port.port).port}))
+    }
     return assureType(port)
   }
 }

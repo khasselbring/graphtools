@@ -103,7 +103,7 @@ export const equal = curry((node1, node2) => {
  * @returns {Port[]} A list of ports.
  */
 export function ports (node) {
-  return node.ports || []
+  return node.ports.map(merge({node: node.id})) || []
 }
 
 /**
@@ -113,9 +113,9 @@ export function ports (node) {
  */
 export function outputPorts (node, ignoreCompounds = false) {
   if (!ignoreCompounds && !node.atomic) {
-    return node.ports
+    return ports(node)
   } else {
-    return node.ports.filter(Port.isOutputPort)
+    return ports(node).filter(Port.isOutputPort)
   }
 }
 
@@ -126,9 +126,9 @@ export function outputPorts (node, ignoreCompounds = false) {
  */
 export function inputPorts (node, ignoreCompounds = false) {
   if (!ignoreCompounds && !node.atomic) {
-    return node.ports
+    return ports(node)
   } else {
-    return node.ports.filter(Port.isInputPort)
+    return ports(node).filter(Port.isInputPort)
   }
 }
 
@@ -194,5 +194,5 @@ export function isAtomic (node) {
 export function isValid (node) {
   return isReference(node) ||
     (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
-    ports(node).length !== 0 && every(Port.isValid, ports(node)))
+    every(Port.isValid, ports(node)))
 }

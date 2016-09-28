@@ -24,9 +24,9 @@ const nonConnected = (graph) => {
  * @throws {Error} If the graph has loops.
  */
 export function topologicalSort (graph) {
-  if (Node.inputPorts(graph).length > 0) {
+  if (Node.inputPorts(graph, true).length > 0) {
     return topologicalSort(
-      Graph.flow(Node.inputPorts(graph).map((p) => Compound.removePort(p)))(graph))
+      Graph.flow(Node.inputPorts(graph, true).map((p) => Compound.removePort(p)))(graph))
   }
   if (Graph.nodes(graph).length === 0) {
     return []
