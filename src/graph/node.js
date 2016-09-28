@@ -93,7 +93,7 @@ export function nodeNames (graph) {
 export const node = curry((searchNode, graph) => {
   var node = nodeBy(query(searchNode, graph), graph)
   if (!node) {
-    throw new Error(`Node with id '${Node.id(searchNode) || searchNode}' does not exist in the graph.`)
+    throw new Error(`Node with id '${Node.id(searchNode) || JSON.stringify(searchNode)}' does not exist in the graph.`)
   }
   return node
 })
@@ -110,7 +110,7 @@ export const hasNode = curry((node, graph) => {
 
 function checkNode (graph, node) {
   if (allowsReferences(graph) && Node.isReference(node)) {
-    if (Node.hasName(node) && hasNode(Node.name(node), graph)) {
+    if (Node.hasName(node) && hasNode(Node.name(node), graph) && !Node.equal(unID(node), graph)) {
       throw new Error('Cannot add a reference if the name is already used. Names must be unique in every compound. Tried to add reference: ' + JSON.stringify(node))
     }
     return
@@ -120,7 +120,7 @@ function checkNode (graph, node) {
   } else if (!Node.isValid(node)) {
     throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
   } else {
-    if (Node.hasName(node) && hasNode(Node.name(node), graph)) {
+    if (Node.hasName(node) && hasNode(Node.name(node), graph) && !Node.equal(unID(node), graph)) {
       throw new Error('Cannot add a node if the name is already used. Names must be unique in every compound. Tried to add node: ' + JSON.stringify(node))
     }
   }
@@ -168,7 +168,7 @@ function replaceId (oldId, newId, edge) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export const addNode = curry((node, graph, ...cb) => {
-  if (hasNode(unID(node), graph)) {
+  if (hasNode(unID(node), graph) && !Node.equal(unID(node), graph)) {
     throw new Error('Cannot add already existing node: ' + Node.name(node))
   }
   var newNode = Node.create(unID(node))

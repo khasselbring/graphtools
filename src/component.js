@@ -3,6 +3,8 @@
 import curry from 'lodash/fp/curry'
 import _ from 'lodash'
 import * as Port from './port'
+import {children, isCompound} from './compound'
+import {create} from './node'
 import semver from 'semver'
 
 /**
@@ -118,5 +120,8 @@ export function isValid (comp) {
  * @returns {Node} A node with the given name representing the component.
  */
 export function createNode (reference, comp) {
+  if (isCompound(comp)) {
+    return _.merge({}, reference, comp, {nodes: children(comp).map(create)})
+  }
   return _.merge({}, reference, comp)
 }

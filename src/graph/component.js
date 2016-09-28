@@ -29,7 +29,7 @@ export function componentIds (graph) {
  * @returns {Component} The component in the graph
  * @throws {Error} If the queried component does not exist in the graph.
  */
-export const component = curry((graph, comp) => {
+export const component = curry((comp, graph) => {
   var res = find(Component.equal(comp), graph.components)
   if (!res) {
     // TODO: debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
@@ -44,7 +44,7 @@ export const component = curry((graph, comp) => {
  * @param {Component|string} comp The component or its component id you want to check for.
  * @returns {boolean} True if the graph has a component with the given component id, false otherwise.
  */
-export const hasComponent = curry((graph, comp) => {
+export const hasComponent = curry((comp, graph) => {
   return !!find(Component.equal(comp), graph.components)
 })
 
@@ -76,6 +76,6 @@ export const addComponent = curry((comp, graph) => {
  * @param {Component|string} comp The component that shall be removed, either the component object or the component id.
  * @returns {PortGraph} A new graph without the given component.
  */
-export const removeComponent = curry((graph, comp) => {
+export const removeComponent = curry((comp, graph) => {
   return changeSet.applyChangeSet(graph, changeSet.removeComponent(Component.id(comp)))
 })
