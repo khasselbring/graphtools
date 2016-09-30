@@ -559,6 +559,28 @@ describe('Basic graph functions', () => {
       expect(Graph.successors('a', graph)).to.have.length(2)
       expect(_.map(Graph.successors('a', graph), 'port')).to.deep.have.members(['in', 'in2'])
     })
+
+    it('is possible to add a non dataflow edge', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
+        Graph.addEdge({from: 'a', to: 'b', layer: 'recursion'})
+      )()
+      expect(Graph.edges(graph)).to.have.length(1)
+      expect(Graph.hasEdge({from: 'a', to: 'b', layer: 'recursion'}, graph)).to.be.true
+    })
+
+    it('is possible to add a non dataflow edge in compounds', () => {
+      var cmpd = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input'}]})
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output'}]}))
+      var graph = Graph.flow(
+        Graph.addNode(cmpd),
+        Graph.addEdge({from: '»c»a', to: 'c', layer: 'recursion'})
+      )()
+      expect(Graph.edges(graph)).to.have.length(1)
+      expect(Graph.hasEdge({from: '»c»a', to: 'c', layer: 'recursion'}, graph)).to.be.true
+    })
   })
 
   describe('Meta information', () => {

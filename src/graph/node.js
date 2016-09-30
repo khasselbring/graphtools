@@ -150,14 +150,18 @@ function setPath (node, path) {
   return merge(node, {path: nodePath})
 }
 
-function replaceIdInPort (oldId, newId, port) {
-  return merge(port, {node: (port.node === oldId) ? newId : port.node})
+function replaceIdInPort (oldId, newId, port, layer) {
+  if (layer === 'dataflow') {
+    return merge(port, {node: (port.node === oldId) ? newId : port.node})
+  } else {
+    return (port === oldId) ? newId : port
+  }
 }
 
 function replaceId (oldId, newId, edge) {
   return merge(edge, {
-    from: replaceIdInPort(oldId, newId, edge.from),
-    to: replaceIdInPort(oldId, newId, edge.to)
+    from: replaceIdInPort(oldId, newId, edge.from, edge.layer),
+    to: replaceIdInPort(oldId, newId, edge.to, edge.layer)
   })
 }
 
@@ -181,6 +185,27 @@ export const addNode = curry((node, graph, ...cb) => {
   }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(setPath(newNode, Node.path(graph))))
 })
+
+/**
+ * Sets properties for node.
+ * @param {Object} value The properties to set, e.g. `{recursion: true, recursiveRoot: true}`
+ * @param {Node} nodeQuery The node or a nodeQuery of the affected node
+ * @param {PortGraph} graph The graph
+ * @returns {PortGraph} A graph in which the change is realized.
+ */
+export const set = curry((value, nodeQuery, graph) => {
+  var nodeObj = node(nodeQuery, graph)
+  return replaceNode(nodeObj, Node.set(value, nodeObj), graph)
+})
+
+/**
+ * Get a property of a node.
+ * @param {String} key The key of the property like 'recursion'
+ * @param {Node} nodeQuery A node or a query for the node.
+ * @param {PortGraph} graph The graph.
+ * @returns The value of the property or undefined if the property does not exist in the node.
+ */
+export const get = curry((key, nodeQuery, graph) => Node.get(key, node(nodeQuery, graph)))
 
 const removeNodeInternal = curry((query, deleteEdges, graph, ...cb) => {
   var remNode = node(query, graph)

@@ -4,7 +4,7 @@ import omit from 'lodash/fp/omit'
 import merge from 'lodash/fp/merge'
 import curry from 'lodash/fp/curry'
 import negate from 'lodash/fp/negate'
-import {isReference, id as nodeID, hasPort, inputPorts, outputPorts, ports} from './node'
+import {isReference, id as nodeID, hasPort, inputPorts, outputPorts, ports, component} from './node'
 import * as Edge from './edge'
 import * as Port from './port'
 import {edges, removeEdge} from './graph/edge'
@@ -32,10 +32,6 @@ export function isCompound (node) {
 export function isRecursion (node) {
   // might change in the future...
   return node.isRecursion
-}
-
-export function component (node) {
-  return node.componentId
 }
 
 export function id (node) {
@@ -72,7 +68,7 @@ export function create (node) {
 }
 
 export const children = nodes
-export {hasPort, inputPorts, outputPorts}
+export {hasPort, inputPorts, outputPorts, component}
 
 const getPort = (portOrString, node) =>
   (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : merge({node: node.id}, portOrString)

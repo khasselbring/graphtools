@@ -9,6 +9,9 @@ function normalizeStructure (edge) {
     throw new Error('The edge format is not valid. You need to have a from and to value in.\n\n' + JSON.stringify(edge, null, 2) + '\n')
   }
   var layer = edge.layer || 'dataflow'
+  if (layer !== 'dataflow') {
+    return edge
+  }
   if (edge.outPort && edge.inPort) {
     return _.merge({}, _.omit(edge, ['outPort', 'inPort']),
       {layer, from: Port.normalize({node: edge.from, port: edge.outPort}), to: Port.normalize({node: edge.to, port: edge.inPort})})
@@ -61,7 +64,11 @@ export function normalize (edge) {
  * @returns {boolean} True if the edges are equal (i.e. they connect the same ports), false otherwise.
  */
 export const equal = curry((edge1, edge2) => {
-  return Port.equal(edge1.from, edge2.from) && Port.equal(edge1.to, edge2.to) && edge1.layer === edge2.layer
+  if (edge1.layer === 'dataflow') {
+    return Port.equal(edge1.from, edge2.from) && Port.equal(edge1.to, edge2.to) && edge1.layer === edge2.layer
+  } else {
+    return edge1.from === edge2.from && edge1.to === edge2.to && edge1.layer === edge2.layer
+  }
 })
 
 /**

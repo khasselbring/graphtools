@@ -24,7 +24,7 @@ export function create (node) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = merge(node, {id: '#' + cuid(), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, {id: '#' + cuid(), settings: merge({}, node.settings), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
@@ -176,6 +176,16 @@ export const hasPort = curry((name, node) => {
 export function isReference (node) {
   return has('ref', node)
 }
+
+export function component (node) {
+  return node.componentId
+}
+
+export const set = curry((value, node) => {
+  return merge(node, {settings: merge(value)})
+})
+
+export const get = curry((key, node) => node.settings[key])
 
 /**
  * Checks whether a node is an atomic node.

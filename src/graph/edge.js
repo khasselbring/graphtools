@@ -29,32 +29,39 @@ function checkEdge (graph, edge) {
     throw new Error('Cannot create edge connection from not existing node: ' + Port.toString(edge.from) + ' to: ' + Port.toString(edge.to))
   } else if (edge.to.node !== '' && !hasNode(edge.to, graph)) {
     throw new Error('Cannot create edge connection from: ' + Port.toString(edge.from) + ' to not existing node: ' + Port.toString(edge.to))
-  } else if (Port.equal(edge.from, edge.to)) {
-    throw new Error('Cannot add loops to the port graph from=to=' + Port.toString(edge.from))
-  } else if (!Node.isReference(from) && !Node.hasPort(edge.from, from)) {
-    throw new Error('The source node "' + Port.node(edge.from) + '" does not have the outgoing port "' + Port.portName(edge.from) + '".')
-  } else if (!Node.isReference(from) && !Node.hasPort(edge.to, to)) {
-    throw new Error('The target node "' + Port.node(edge.to) + '" does not have the ingoing port "' + Port.portName(edge.inPort) + '".')
-  } else if (!Node.isReference(from) && (Node.port(edge.from, from).kind !== ((edge.innerCompoundOutput) ? 'input' : 'output'))) {
-    throw new Error('The source port "' + Port.portName(edge.from) + '" = "' + JSON.stringify(Node.port(edge.from, from)) + '" must be ' +
-    ((edge.innerCompoundOutput)
-    ? 'an inner input port of the compound node ' + edge.parent
-    : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
-  } else if (!Node.isReference(from) && (Node.port(edge.to, to).kind !== ((edge.innerCompoundInput) ? 'output' : 'input'))) {
-    throw new Error('The target port "' + Port.portName(edge.to) + '" = "' + JSON.stringify(Node.port(edge.to, to)) + ' must be ' +
-      ((edge.innerCompoundInput)
-      ? 'an inner output port of the compound node ' + edge.parent
+  }
+  if (edge.layer === 'dataflow') {
+    if (Port.equal(edge.from, edge.to)) {
+      throw new Error('Cannot add loops to the port graph from=to=' + Port.toString(edge.from))
+    } else if (!Node.isReference(from) && !Node.hasPort(edge.from, from)) {
+      throw new Error('The source node "' + Port.node(edge.from) + '" does not have the outgoing port "' + Port.portName(edge.from) + '".')
+    } else if (!Node.isReference(from) && !Node.hasPort(edge.to, to)) {
+      throw new Error('The target node "' + Port.node(edge.to) + '" does not have the ingoing port "' + Port.portName(edge.inPort) + '".')
+    } else if (!Node.isReference(from) && (Node.port(edge.from, from).kind !== ((edge.innerCompoundOutput) ? 'input' : 'output'))) {
+      throw new Error('The source port "' + Port.portName(edge.from) + '" = "' + JSON.stringify(Node.port(edge.from, from)) + '" must be ' +
+      ((edge.innerCompoundOutput)
+      ? 'an inner input port of the compound node ' + edge.parent
       : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
+    } else if (!Node.isReference(from) && (Node.port(edge.to, to).kind !== ((edge.innerCompoundInput) ? 'output' : 'input'))) {
+      throw new Error('The target port "' + Port.portName(edge.to) + '" = "' + JSON.stringify(Node.port(edge.to, to)) + ' must be ' +
+        ((edge.innerCompoundInput)
+        ? 'an inner output port of the compound node ' + edge.parent
+        : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
+    }
   }
 }
 
 function pathsToIDs (edge, graph) {
   var from = node(edge.from, graph)
   var to = node(edge.to, graph)
-  return merge(edge, {
-    from: {node: Node.id(from)},
-    to: {node: Node.id(to)}
-  })
+  if (edge.layer === 'dataflow') {
+    return merge(edge, {
+      from: {node: Node.id(from)},
+      to: {node: Node.id(to)}
+    })
+  } else {
+    return merge(edge, {from: Node.id(from), to: Node.id(to)})
+  }
 }
 
 function edgeParent (edge, graph) {
@@ -72,6 +79,7 @@ function edgeParent (edge, graph) {
 }
 
 function setInnerCompound (edge, graph) {
+  if (edge.layer !== 'dataflow') return edge
   var parentFrom = Node.path(parent(edge.from, graph))
   var parentTo = Node.path(parent(edge.to, graph))
   var from = Node.path(node(edge.from, graph))
