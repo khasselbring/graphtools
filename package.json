@@ -1,13 +1,13 @@
 {
   "name": "@buggyorg/graphtools",
-  "version": "0.3.2",
+  "version": "0.4.0-pre.4",
   "description": "Tools for processing buggy graphs.",
   "main": "lib/api.js",
   "scripts": {
     "test": "node node_modules/standard/bin/cmd.js src/**/*.js && node_modules/mocha/bin/mocha --compilers js:babel-register",
     "build": "babel src -d lib",
-    "doc": "jsdoc -c .jsdoc.json",
-    "publish-docs": "jsdoc -c .jsdoc.json && git subtree split --prefix jsdoc -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages",
+    "doc": "jsdoc -c .jsdoc.json && cp -r doc jsdoc/@buggyorg/graphtools/`node -e \"console.log(require('./package.json').version)\"`",
+    "publish-docs": "npm run doc && (git diff --exit-code > /dev/null || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1))  && (git diff --cached --exit-code  > /dev/null  || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1)) && git add -f jsdoc/* && git commit -m '(doc) New documentation.' && git subtree split --prefix jsdoc/@buggyorg/graphtools/`node -e \"console.log(require('./package.json').version)\"` -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages && git reset HEAD~1",
     "prepublish": "babel src -d lib"
   },
   "keywords": [
@@ -16,10 +16,15 @@
   "author": "Maximilian Klein",
   "license": "MIT",
   "dependencies": {
+    "cuid": "^1.3.8",
+    "debug": "^2.2.0",
+    "deprecate": "^0.1.0",
     "graphlib": "^2.1.0",
     "json-query": "^2.1.0",
     "lodash": "^4.6.1",
-    "object-hash": "^1.1.2"
+    "object-hash": "^1.1.2",
+    "omit-deep-lodash": "^0.8.0",
+    "semver": "^5.3.0"
   },
   "devDependencies": {
     "@buggyorg/dupjoin": "^0.1.17",
@@ -30,6 +35,7 @@
     "chai": "^3.4.1",
     "jsdoc": "^3.4.0",
     "mocha": "^2.3.3",
+    "semver": "^5.2.0",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
     "standard": "^6.0.8"

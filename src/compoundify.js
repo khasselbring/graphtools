@@ -1,6 +1,8 @@
+/* not ported yet
 import graphlib from 'graphlib'
 import _ from 'lodash'
 import hash from 'object-hash'
+import {topologicalSort} from './algorithm'
 import { utils, graph as graphAPI } from './api'
 
 var markNodes = function (graph, subset) {
@@ -91,7 +93,7 @@ export function isCompoundable (g, subset) {
   })
   if (!sameParents(graph, subset) || !graph.isCompound() || !contains(graph, subset)) { return false }
   markNodes(graph, subset)
-  var topsort = graphAPI.topoSort(graph)
+  var topsort = topologicalSort(graph)
   var first = firstMarkedIndex(graph, topsort)
   var last = lastMarkedIndex(graph, topsort)
   for (let i = 0; i < topsort.length; i++) {
@@ -125,3 +127,4 @@ export function compoundify (g, subset, name, label) {
   }
   return graph
 }
+*/

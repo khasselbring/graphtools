@@ -2,31 +2,114 @@
 
 import chai from 'chai'
 import * as changeSet from '../src/changeSet.js'
-import * as graphAPI from '../src/graph.js'
-import _ from 'lodash'
+import * as Graph from '../src/graph'
 
 var expect = chai.expect
 
 describe('Change Sets', () => {
-  it('can apply set a field in nodes', () => {
-    var graph = graphAPI.jsonFromFile('test/fixtures/real_add.json')
-    var cS = changeSet.updateNode(graph.nodes[0].v, {NEW_PROP: 'test'})
+  it('can add new nodes', () => {
+    var graph = Graph.empty()
+    var cS = changeSet.insertNode({ id: 'a', ports: [{port: 'test', kind: 'output', type: 'number'}], prop: 'test' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(newGraph.nodes[0].value.NEW_PROP).to.equal('test')
+    expect(newGraph.nodes[0]).to.be.ok
+    expect(newGraph.nodes[0].prop).to.equal('test')
+  })
+
+  it('can set a field in a node', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(),
+      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
+    var cS = changeSet.updateNode('a', { NEW_PROP: 'test' })
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(newGraph.nodes[0].NEW_PROP).to.equal('test')
+  })
+
+  it('can update a field in a node', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(),
+      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
+    var cS = changeSet.updateNode('a', { prop: 'new_test' })
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(newGraph.nodes[0].prop).to.equal('new_test')
+  })
+
+  it('can remove a node', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(),
+      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}], prop: 'test'}))
+    var cS = changeSet.removeNode('a')
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.nodes(newGraph)).to.have.length(0)
   })
 
   it('can insert a new edge', () => {
-    var graph = graphAPI.jsonFromFile('test/fixtures/real_add.json')
-    var cS = changeSet.insertEdge({v: 'test', w: 'test2'})
+    var graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'b', ports: [{port: 'a', kind: 'output', type: 'number'}]})
+    ])
+    var cS = changeSet.insertEdge({ from: 'a', to: 'b' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(_.last(newGraph.edges)).to.eql({v: 'test', w: 'test2'})
+    expect(Graph.edges(newGraph)).to.have.length(1)
   })
 
   it('can remove an edge', () => {
-    var graph = graphAPI.jsonFromFile('test/fixtures/real_add.json')
-    var edgesCnt = graph.edges.length
-    var cS = changeSet.removeEdge({ v: 'numToStr_PORT_output', w: 'out_PORT_input' })
+    var graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'b', ports: [{port: 'a', kind: 'input', type: 'number'}]}),
+      changeSet.insertEdge({ from: 'a', to: 'b', layer: 'c' })
+    ])
+    var cS = changeSet.removeEdge({ from: 'a', to: 'b', layer: 'c' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(newGraph.edges.length).to.equal(edgesCnt - 1)
+    expect(Graph.edges(newGraph)).to.have.length(0)
+
+    graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'b', ports: [{port: 'a', kind: 'input', type: 'number'}]}),
+      changeSet.insertNode({id: 'c', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: 'd', ports: [{port: 'a', kind: 'input', type: 'number'}]}),
+      changeSet.insertEdge({ from: {node: 'a', port: 'a'}, to: {node: 'b', port: 'a'}, layer: 'dataflow' }),
+      changeSet.insertEdge({ from: {node: 'c', port: 'a'}, to: {node: 'd', port: 'a'}, layer: 'dataflow' })
+    ])
+    cS = changeSet.removeEdge({ from: {node: 'c', port: 'a'}, to: {node: 'd', port: 'a'}, layer: 'dataflow' })
+    newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.edges(newGraph)).to.have.length(1)
+    expect(Graph.edges(newGraph)[0].from.node).to.eql('a')
+  })
+
+  it('can set meta information', () => {
+    var graph = Graph.empty()
+    var newGraph = changeSet.applyChangeSet(graph, changeSet.setMetaInformation({metaID: 'ABC'}))
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('ABC')
+  })
+
+  it('can add meta keys', () => {
+    var graph = Graph.empty()
+    var newGraph = changeSet.applyChangeSet(graph, changeSet.addMetaInformation('metaID', 'ABC'))
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('ABC')
+  })
+
+  it('can update meta information', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.setMetaInformation({metaID: 'ABC'}))
+    const cS = changeSet.setMetaInformation({metaID: 'DEF'})
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('DEF')
+  })
+
+  it('can update meta keys', () => {
+    var graph = changeSet.applyChangeSet(Graph.empty(), changeSet.setMetaInformation({metaID: 'ABC'}))
+    const cS = changeSet.addMetaInformation('metaID', 'DEF')
+    var newGraph = changeSet.applyChangeSet(graph, cS)
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph).metaID).to.equal('DEF')
+  })
+
+  it('can apply multiple change sets', () => {
+    var graph = Graph.empty()
+    var newGraph = changeSet.applyChangeSets(graph, [
+      changeSet.setMetaInformation({metaID: 'ABC'}),
+      changeSet.addMetaInformation('name', 'test')
+    ])
+    expect(Graph.meta(newGraph)).to.have.property('metaID')
+    expect(Graph.meta(newGraph)).to.have.property('name')
   })
 })
