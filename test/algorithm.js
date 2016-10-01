@@ -7,7 +7,7 @@ import * as Node from '../src/node'
 
 const expect = chai.expect
 
-describe.skip('Graph Algorithms', () => {
+describe('Graph Algorithms', () => {
   describe('Topological sort', () => {
     it('Can sort the empty graph', () => {
       var graph = Graph.empty()
