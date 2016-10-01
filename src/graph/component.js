@@ -23,7 +23,9 @@ export function componentIds (graph) {
 }
 
 /**
- * Returns the component with the given component id. [Performance O(|V|)]
+ * @function
+ * @name component
+ * @description Returns the component with the given component id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
  * @param {Component|string} comp The component or its component id.
  * @returns {Component} The component in the graph
@@ -39,7 +41,9 @@ export const component = curry((comp, graph) => {
 })
 
 /**
- * Checks whether the graph has a component with the given component id. [Performance O(|V|)]
+ * @function
+ * @name hasComponent
+ * @description Checks whether the graph has a component with the given component id. [Performance O(|V|)]
  * @param {PortGraph} graph The graph.
  * @param {Component|string} comp The component or its component id you want to check for.
  * @returns {boolean} True if the graph has a component with the given component id, false otherwise.
@@ -57,7 +61,9 @@ function checkComponent (graph, comp) {
 }
 
 /**
- * Add a component to the graph. [Performance O(|V| + |E|)]
+ * @function
+ * @name addComponent
+ * @description Add a component to the graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
  * @param {Component} comp The component object that should be added.
  * @returns {PortGraph} A new graph that includes the component.
@@ -71,7 +77,9 @@ export const addComponent = curry((comp, graph) => {
 })
 
 /**
- * Removes a component from the graph. [Performance O(|V| + |E|)]
+ * @function
+ * @name removeComponent
+ * @description Removes a component from the graph. [Performance O(|V| + |E|)]
  * @param {PortGraph} graph The graph.
  * @param {Component|string} comp The component that shall be removed, either the component object or the component id.
  * @returns {PortGraph} A new graph without the given component.

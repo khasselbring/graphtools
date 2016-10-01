@@ -1,4 +1,8 @@
-/** @module ChangeSet */
+/** @module ChangeSet
+ * @overview
+ * This methods are for internal usage. They do not check for bad inputs and can create broken graphs.
+ * If you know what you are doing you can include them via `import * as ChangeSet from '@buggyorg/graphtools/changeSet'`.
+ */
 
 /**
  * A change set contains information about how to transform a graph, e.g. insert an edge or modify a node.

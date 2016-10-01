@@ -1,5 +1,9 @@
 /**
- * A location is an object that defines a port or a node in the graph.
+ * A location is an object that defines a port or a node in the graph. A location can be one of the following:
+ * - id,
+ * - compound path
+ * - node object
+ * - port object.
  */
 
 import curry from 'lodash/fp/curry'
@@ -145,6 +149,13 @@ export function location (loc, graph) {
   }
 }
 
+/**
+ * Create a query function for a location.
+ * @param {Location} loc A location identifier.
+ * @param {PortGraph} graph The graph in which the location is valid.
+ * @returns {function} A function that takes another location or location identifier
+ * and compares it to the specified location `loc`. See `Location.identifies`.
+ */
 export function query (loc, graph) {
   return identifies(location(loc, graph))
 }
@@ -165,7 +176,9 @@ function isRootNode (n) {
 }
 
 /**
- * Checks whether a location identifies the given object. This is true if
+ * @function
+ * @name identifies
+ * @description Checks whether a location identifies the given object. This is true if
  * for example the location points to a node and the other object is the node.
  * Or if the other object is simply the ID of the node.
  * It also identifies a node if the location specifies the port. If you don't want

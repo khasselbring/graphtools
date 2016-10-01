@@ -1,4 +1,5 @@
-/** @module CompoundPath
+/** @module CompoundPath */
+/** @overview
  * A compound path is a unique representation of a node in the graph. It is defined as an array of
  * parent nodes starting at the root level, e.g. `['A', 'B', 'C']` points to the node `C` whose parent
  * is `B` and the parent of `B` is `A`. All methods accept the array notation or the shorthand string
@@ -33,7 +34,7 @@ export function fromString (compoundPathStr) {
 /**
  * Returns whether a string represents a compound path or not.
  * @param {string} path The path string to test.
- * @returns True if the path represents a compound path, false otherwise.
+ * @returns {boolean} True if the path represents a compound path, false otherwise.
  */
 export function isCompoundPath (path) {
   return Array.isArray(path) || (typeof (path) === 'string' && path[0] === '»')
@@ -42,7 +43,7 @@ export function isCompoundPath (path) {
 /**
  * Convert a path representation into its normalized array form.
  * @param {string|string[]} path The path as a string or array.
- * @returns {Path} The normalized path.
+ * @returns {CompoundPath} The normalized path.
  */
 export function normalize (path) {
   if (Array.isArray(path)) {
@@ -54,9 +55,9 @@ export function normalize (path) {
 
 /**
  * Joins two paths into one.
- * @param {Path} base The prefix of the new path
- * @param {Path} rest The postfix of the new path.
- * @returns {Path} The new path in the form `<base>»<rest>`.
+ * @param {CompoundPath} base The prefix of the new path
+ * @param {CompoundPath} rest The postfix of the new path.
+ * @returns {CompoundPath} The new path in the form `<base>»<rest>`.
  */
 export function join (base, rest) {
   if (!base) return rest
@@ -65,7 +66,7 @@ export function join (base, rest) {
 
 /**
  * Returns whether a path points to the root element or not.
- * @param {Path} path The path to check
+ * @param {CompoundPath} path The path to check
  * @returns {boolean} True if the path points to the root element ('', '»' or []), false otherwise.
  */
 export function isRoot (path) {
@@ -78,8 +79,8 @@ export function isRoot (path) {
 
 /**
  * Returns the parent of a compound path.
- * @param {string[]|string} path The path either as a string or an array.
- * @returns {string[]|string} The parent of the path in the same format as the input.
+ * @param {CompoundPath|string} path The path either as a string or an array.
+ * @returns {CompoundPath|string} The parent of the path in the same format as the input.
  * @throws {Error} If the input format is invalid.
  */
 export function parent (path) {
@@ -111,6 +112,11 @@ export function base (path) {
   }
 }
 
+/**
+ * Returns the node element, i.e. the last element in the path.
+ * @param {CompoundPath} path The path
+ * @returns {String} The id of the the element at the end of the path chain.
+ */
 export function node (path) {
   if (typeof (path) === 'string') {
     return node(fromString(path))
@@ -136,6 +142,15 @@ export function rest (path) {
   }
 }
 
+/**
+ * @function
+ * @name relativeTo
+ * @description Creates a new path that shortens path1 assuming that path2 is a prefix to path1.
+ * @param {CompoundPath} path1 The path to shorten
+ * @param {CompoundPath} path2 The path that is a prefix of path1 and by what path1 is shortend.
+ * @returns {CompoundPath} A new shortend path that has the prefix path2 removed.
+ * @throws {Error} Of path2 is no prefix of path2.
+ */
 export const relativeTo = curry((path1, path2) => {
   if (path2.length > path1.length) {
     throw new Error('Cannot calculate relative path to a longer path. Tried to get express: ' + path1 + ' relative to: ' + path2)
@@ -156,6 +171,21 @@ const isPrefix = (path1, path2, idx = 0) => {
   } else return false
 }
 
+/**
+ * @function
+ * @name prefix
+ * @description Prefixes path1 by path2. Does not duplicate entries in path1 if they are already part of path1.
+ * Every entry in the path is a unique id and if path1 already has a subset of path2 this subset is not prefixed too.
+ * @example
+ * // Compound paths contain IDs which are usually not that short. Only for brevity.
+ * prefix([d, e], [a, b]) => [a, b, d, e]
+ * prefix([b, c], [a, b]) => [a, b, c]
+ * prefix([a, b, c], [a, b]) => [a, b, c]
+ * prefix([a, c], [a, b]) => Throws exception as path2 cannot be a prefix!
+ * @param {CompoundPath} path1 The path that gets its prefix.
+ * @param {CompoundPath} path2 The prefix path.
+ * @returns {CompoundPath} A new path that prefixed path2 onto path1
+ */
 export const prefix = curry((path1, path2) => {
   if (path2.length === 0) return path1
   if (path2[0] !== path1[0]) {
@@ -168,7 +198,9 @@ export const prefix = curry((path1, path2) => {
 })
 
 /**
- * Returns whether two compound paths are equal
+ * @function
+ * @name equal
+ * @description Returns whether two compound paths are equal
  * @param {CompoundPath} path1 The first path to compare.
  * @param {CompoundPath} path2 The second path to compare.
  * @returns {boolean} True if the paths are the same, false otherwise.
@@ -177,6 +209,12 @@ export const equal = curry((path1, path2) => {
   return _.isEqual(path1, path2)
 })
 
+/**
+ * Returns if the pathes have the same parent node.
+ * @param {CompoundPath} path1 One of the paths.
+ * @param {CompoundPath} path2 The other path.
+ * @returns {boolean} True if path1 and path2 have the same parents, false otherwise.
+ */
 export function sameParents (path1, path2) {
   return path1 && path2 && path1.length > 0 && path2.length > 0 && equal(parent(path1), parent(path2))
 }

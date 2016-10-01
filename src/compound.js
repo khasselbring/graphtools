@@ -1,4 +1,4 @@
-/** @module Edge */
+/** @module Compound */
 
 import omit from 'lodash/fp/omit'
 import merge from 'lodash/fp/merge'
@@ -34,15 +34,28 @@ export function isRecursion (node) {
   return node.isRecursion
 }
 
+/**
+ * Returns the id of the compound
+ * @param {Compound} node The compound node
+ * @returns {String} The id of the compound.
+ */
 export function id (node) {
   if (node.id) {
     return nodeID(node)
   } else return null
 }
 
+/**
+ * Sets the compound path of the compound node.
+ * @param {Compound} node The compound node that gets a new compound path.
+ * @param {CompoundPath} path The new compound path.
+ * @param {function} nodeSetPath A function that sets the path for a node.
+ * @returns {Compound} The new compound with updated paths.
+ */
 export function setPath (node, path, nodeSetPath) {
   return _.merge({}, node,
     {path},
+    // I think `nodeSetPath` is only used due to the fear of importing ./node.js here and ./compound.js in ./node.js (cyclic reference...)
     {nodes: node.nodes.map((n) => nodeSetPath(n, path))},
     {edges: node.edges.map((e) => Edge.setPath(e, path))}
   )
@@ -67,6 +80,13 @@ export function create (node) {
   }, node)
 }
 
+/**
+ * @function
+ * @name children
+ * @description Get the children of the compound node.
+ * @param {Compound} node The compound node
+ * @returns {Node[]} An array of child nodes.
+ */
 export const children = nodes
 export {hasPort, inputPorts, outputPorts, component}
 
@@ -74,7 +94,9 @@ const getPort = (portOrString, node) =>
   (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : merge({node: node.id}, portOrString)
 
 /**
- * Rename a port and return the new node.
+ * @function
+ * @name renamePort
+ * @description Rename a port and return the new node.
  * @param {String|Port} port the Port to rename.
  * @returns {Node} The node with the renamed port. The componentId will be removed, as it is not
  * an implementation of the component anymore.
@@ -89,7 +111,9 @@ export const renamePort = curry((port, newName, node) => {
 })
 
 /**
- * Remove a port from a node
+ * @function
+ * @name removePort
+ * @description Remove a port from a node
  * @param {Port|String} port The port to remove
  * @returns {Node} The node without the given port. The componentId will be removed, as it is not
  * an implementation of the component anymore.
@@ -111,7 +135,9 @@ const addPort = (port, kind, node) => {
 }
 
 /**
- * Adds a new input port to the node.
+ * @function
+ * @name addInputPort
+ * @description Adds a new input port to the node.
  * @params {Port|String} port The port to add.
  * @params {Node} node The node that gets the port.
  * @returns {Node} A new node with the given port.
@@ -123,7 +149,9 @@ export const addInputPort = curry((port, node) => {
 })
 
 /**
- * Adds a new output port to the node.
+ * @function
+ * @name addOutputPort
+ * @description Adds a new output port to the node.
  * @params {Port|String} port The port to add.
  * @params {Node} node The node that gets the port.
  * @returns {Node} A new node with the given port.

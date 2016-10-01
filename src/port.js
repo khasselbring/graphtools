@@ -56,7 +56,7 @@ function assureType (port) {
 }
 
 /**
- * returns the node stored in the port
+ * Returns the node stored in the port
  * @param {Port} port The port in any form.
  * @returns {NodeID} The node of the port.
  */
@@ -65,7 +65,7 @@ export function node (port) {
 }
 
 /**
- * returns the port name stored for the port.
+ * Returns the port name stored for the port.
  * @param {Port} port The port in any form.
  * @returns {string} The name of the port.
  */
@@ -74,7 +74,7 @@ export function portName (port) {
 }
 
 /**
- * returns whether the given port is an output port or not
+ * Returns whether the given port is an output port or not
  * @param {Port} port The port to check
  * @returns {boolean} True if the port is an output port, false otherwise.
  */
@@ -83,7 +83,7 @@ export function isOutputPort (port) {
 }
 
 /**
- * returns whether the given port is an input port or not
+ * Returns whether the given port is an input port or not
  * @param {Port} port The port to check
  * @returns {boolean} True if the port is an input port, false otherwise.
  */
@@ -101,6 +101,11 @@ export function isPort (any) {
     typeof (any) === 'string' && isPortNotation(any)
 }
 
+/**
+ * Returns whether the goven port is valid or not.
+ * @param port The object to test.
+ * @returns {boolean} True if the value is a valid port, false otherwise.
+ */
 export function isValid (port) {
   return typeof (port) === 'object' && port.port && (port.kind === INPUT || port.kind === OUTPUT) && port.type
 }
@@ -114,11 +119,28 @@ export function toString (port) {
   return node(port) + '@' + portName(port)
 }
 
+/**
+ * @function
+ * @name equal
+ * @description Determines if two ports are equal
+ * @param {Port} port1 One of the ports.
+ * @param {Port} port2 The other port..
+ * @returns {boolean} True if the ports are equal, false otherwise.
+ */
 export const equal = curry((port1, port2) => {
   // console.log('port equal', port1, port2, node(port1) === node(port2) && portName(port1) === portName(port2))
   return node(port1) === node(port2) && portName(port1) === portName(port2)
 })
 
+/**
+ * @function
+ * @name create
+ * @description Create a new port object.
+ * @param {Node|String} node A node object or the id of a valid node.
+ * @param {String} port The name of the port
+ * @param {String} kind 'input' or 'output'
+ * @returns {Port} A valid port object.
+ */
 export const create = curry((node, port, kind) => {
   if (typeof (node) === 'object') {
     return normalize({node: node.id, port, kind})
@@ -127,6 +149,15 @@ export const create = curry((node, port, kind) => {
   }
 })
 
+/**
+ * @function
+ * @name port
+ * @description Create a proto port object that can be used as a location. It is no
+ * valid port.
+ * @param {Node|String} node A node object or the id of a valid node.
+ * @param {String} port The name of the port
+ * @returns {Port} A valid port object.
+ */
 export const port = curry((node, port) => {
   if (typeof (node) === 'object') {
     return normalize({node: node.id, port})

@@ -40,8 +40,9 @@ function normalizeStructure (edge) {
  * ```
  *
  * The format must be consistent, you cannot have a mixture for `from` and `to`.
+ * It is not possible to always add those normalized edges into the graph. They must contain
+ * valid IDs of the graph. Use `Graph.normalize` for this.
  *
- * @param {PortGraph} graph The graph in which the port should connect ports.
  * @param {Edge} edge The edge object that should be normalized.
  * @returns {Edge} The normalized form of the edge.
  * @throws {Error} An error is thrown if the edge is not in a consistent format.
@@ -58,7 +59,9 @@ export function normalize (edge) {
 }
 
 /**
- * Checks whether two normalized edges are equal.
+ * @function
+ * @name equal
+ * @description Checks whether two normalized edges are equal.
  * @param {Edge} edge1 The first edge for the comparison.
  * @param {Edge} edge2 The second edge for the comparison.
  * @returns {boolean} True if the edges are equal (i.e. they connect the same ports), false otherwise.
@@ -72,7 +75,7 @@ export const equal = curry((edge1, edge2) => {
 })
 
 /**
- * Returns a copy of the edge where the path is prefixed with the specified path.
+ * Returns a copy of the edge where the path is prefixed with the specified path. [Does nothing currently... can probably be removed. Is used in ./compound.js]
  * @param {Edge} edge The edge that will be prefixed
  * @param {CompoundPath} path The compound path that prefixes the edge paths.
  * @returns {Edge} A new edge that has the prefixed paths.

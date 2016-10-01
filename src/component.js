@@ -7,11 +7,6 @@ import {children, isCompound} from './compound'
 import {create} from './node'
 import semver from 'semver'
 
-/**
- * A node either as an identifier, or as an object containing the property `node` as its identifier.
- * @typedef {(string|Object)} Node
- */
-
 const OUTPUT = 'output'
 const INPUT = 'input'
 
@@ -33,7 +28,9 @@ export function id (component) {
 }
 
 /**
- * Tests whether two components are the same component. This tests only if their component IDs are
+ * @function
+ * @name equal
+ * @description Tests whether two components are the same component. This tests only if their component IDs are
  * the same not if both components contain the same information.
  * @param {Component} comp1 One of the components to test.
  * @param {Component} comp2 The other one.
@@ -79,7 +76,9 @@ export function inputPorts (comp, ignoreCompounds = false) {
 }
 
 /**
- * Returns the port data for a given port.
+ * @function
+ * @name port
+ * @description Returns the port data for a given port.
  * @param {Component} comp The component which has the port.
  * @param {String} name The name of the port.
  * @returns {Port} The port data.
@@ -94,12 +93,14 @@ export const port = curry((name, comp) => {
 })
 
 /**
- * Checks whether the component has the specific port.
- * @param {Component} comp The component which has the port.
+ * @function
+ * @name hasPort
+ * @description Checks whether the component has the specific port.
  * @param {String} name The name of the port.
+ * @param {Component} comp The component which has the port.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
-export const hasPort = curry((comp, name) => {
+export const hasPort = curry((name, comp) => {
   return !!_.find(comp.ports, (p) => Port.portName(p) === name)
 })
 

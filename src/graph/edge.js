@@ -119,7 +119,9 @@ function addEdgeToCompound (edge, graph) {
 }
 
 /**
- * Add an edge to the graph, either by specifying the ports to connect.
+ * @function
+ * @name addEdge
+ * @description Add an edge to the graph.
  * @param {Edge} edge The edge that should be added. This needn't be in standard format.
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph containing the edge.
@@ -138,6 +140,15 @@ export const addEdge = curry((edge, graph) => {
   return addEdgeToCompound(normEdge, graph)
 })
 
+/**
+ * @function
+ * @name removeEdge
+ * @description Remove an edge in the graph
+ * @param {Edge} edge The edge that should be removed. This needn't be in standard format.
+ * @param {PortGraph} graph The graph
+ * @returns {PortGraph} A new graph that does not contain the edge anymore.
+ * @throws {Error} If there is no such edge in the graph.
+ */
 export const removeEdge = curry((edge, graph) => {
   var normEdge = normalize(edge, graph)
   if (!hasEdge(normEdge, graph)) {
@@ -147,8 +158,10 @@ export const removeEdge = curry((edge, graph) => {
 })
 
 /**
- * Checks whether the graph has the given edge.
- * @params {Edge} edge The edge to look for.
+ * @function
+ * @name hasEdge
+ * @description Checks whether the graph has the given edge.
+ * @params {Edge} edge The edge to look for. This needn't be in standard format.
  * @params {PortGraph} graph The graph.
  * @returns {boolean} True if the edge is contained in the graph, false otherwise.
  */
@@ -158,7 +171,9 @@ export const hasEdge = curry((edge, graph) => {
 })
 
 /**
- * Returns the queried edge.
+ * @function
+ * @name edge
+ * @description Returns the queried edge. This needn't be in standard format.
  * @params {Edge} edge A edge mock that only contains the connecting ports but not necessarily further information.
  * @params {PortGraph} graph The graph.
  * @returns {Edge} The edge as it is stored in the graph.

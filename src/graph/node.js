@@ -17,9 +17,10 @@ import {incidents} from './connections'
 import {removeEdge} from './edge'
 
 /**
- * Returns a list of nodes on the root level.
+ * @function
+ * @name nodes
+ * @description Returns a list of nodes on the root level.
  * @param {PortGraph} graph The graph.
- * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodes = (graph) => {
@@ -27,9 +28,11 @@ export const nodes = (graph) => {
 }
 
 /**
- * Returns a list of nodes on the root level.
+ * @function
+ * @name nodesBy
+ * @description Returns a list of nodes on the root level selected by a given predicate.
+ * @param {function} predicate A function that filters nodes.
  * @param {PortGraph} graph The graph.
- * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodesBy = curry((predicate, graph) => {
@@ -41,7 +44,7 @@ function nodesDeepRec (graph, parents) {
 }
 
 /**
- * Get all nodes at all depths. It will go into every compound node and return their nodes
+ * Get all nodes at all depths. It will go into every compound node / lambda node and return their nodes
  * and the nodes of their compound nodes, etc.
  * @param {PortGraph} graph The graph to work on
  * @returns {Node[]} A list of nodes.
@@ -52,8 +55,11 @@ export function nodesDeep (graph) {
 }
 
 /**
- * Get all nodes at all depths that fulfill the given predicate. It will go into every compound node
+ * @function
+ * @name nodesDeepBy
+ * @description Get all nodes at all depths that fulfill the given predicate. It will go into every compound node
  * and return their nodes and the nodes of their compound nodes, etc.
+ * @param {function} predicate A function that filters nodes.
  * @param {PortGraph} graph The graph to work on
  * @returns {Node[]} A list of nodes that fulfill the predicate.
  */
@@ -70,42 +76,33 @@ export function nodeNames (graph) {
   return nodes(graph).map(Node.id)
 }
 
-// function nodeInternal (search, graph) {
-//   var loc = location(search, graph)
-//   var node
-//   switch (loc.type) {
-//     case 'location':
-//       node = nodeByPath(loc.path, graph)
-//       break
-//     default:
-//       return
-//   }
-//   return node
-// }
-
 /**
- * Returns the node with the given id. [Performance O(|V|)]
- * @param {Node|string} node The node, its id or its local name.
+ * @function
+ * @name node
+ * @description Returns the node at the given location. [Performance O(|V|)]
+ * @param {Location} loc A location identifying the node.
  * @param {PortGraph} graph The graph.
  * @returns {Node} The node in the graph
  * @throws {Error} If the queried node does not exist in the graph.
  */
-export const node = curry((searchNode, graph) => {
-  var node = nodeBy(query(searchNode, graph), graph)
+export const node = curry((loc, graph) => {
+  var node = nodeBy(query(loc, graph), graph)
   if (!node) {
-    throw new Error(`Node with id '${Node.id(searchNode) || JSON.stringify(searchNode)}' does not exist in the graph.`)
+    throw new Error(`Node: '${Node.id(loc) || JSON.stringify(loc)}' does not exist in the graph.`)
   }
   return node
 })
 
 /**
- * Checks whether the graph has a node with the given id. [Performance O(|V|)]
- * @param {Node|string} node The node or its id you want to check for.
+ * @function
+ * @name hasNode
+ * @description Checks whether the graph has a node. [Performance O(|V|)]
+ * @param {Location} loc A location identifying the node
  * @param {PortGraph} graph The graph.
  * @returns {boolean} True if the graph has a node with the given id, false otherwise.
  */
-export const hasNode = curry((node, graph) => {
-  return !!nodeBy(query(node, graph), graph)
+export const hasNode = curry((loc, graph) => {
+  return !!nodeBy(query(loc, graph), graph)
 })
 
 function checkNode (graph, node) {
@@ -127,7 +124,9 @@ function checkNode (graph, node) {
 }
 
 /**
- * Add a node at a specific path.
+ * @function
+ * @name addNodeByPath
+ * @description Add a node at a specific path.
  * @param {CompoundPath} parentPath A compound path identifying the location in the compound graph.
  * @param {Node} node The node to add to the graph.
  * @param {PortGraph} graph The graph that is the root for the nodePath
@@ -140,6 +139,19 @@ export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
     var parentGraph = node(parentPath, graph)
     return replaceNode(parentPath, addNode(nodeData, parentGraph, ...cb), graph)
   }
+})
+
+/**
+ * @function
+ * @name addNodeIn
+ * @description Add a node in a given compound node.
+ * @param {Location} parentLoc A location identifying the parent for the new node.
+ * @param {Node} node The node to add to the graph.
+ * @param {PortGraph} graph The graph
+ * @returns {PortGraph} A new graph that contains the node as child of `parentLoc`.
+ */
+export const addNodeIn = curry((parentLoc, nodeData, graph, ...cb) => {
+  return addNodeByPath(Node.path(node(parentLoc, graph)), nodeData, graph, ...cb)
 })
 
 function setPath (node, path) {
@@ -166,8 +178,10 @@ function replaceId (oldId, newId, edge) {
 }
 
 /**
- * Add a node to the graph, returns a new graph. [Performance O(|V| + |E|)]
- * @param {Node} node The node object that should be added.
+ * @function
+ * @name addNode
+ * @description Add a node to the graph (at the root level), returns a new graph. [Performance O(|V| + |E|)]
+ * @param {Node} node The node object that should be added. If the node already exists in the graph it will be copied.
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph that includes the node.
  */
@@ -187,21 +201,25 @@ export const addNode = curry((node, graph, ...cb) => {
 })
 
 /**
- * Sets properties for node.
+ * @function
+ * @name set
+ * @description Sets properties for node.
  * @param {Object} value The properties to set, e.g. `{recursion: true, recursiveRoot: true}`
- * @param {Node} nodeQuery The node or a nodeQuery of the affected node
+ * @param {Location} loc The location identifying the node in which the property should be changed.
  * @param {PortGraph} graph The graph
  * @returns {PortGraph} A graph in which the change is realized.
  */
-export const set = curry((value, nodeQuery, graph) => {
-  var nodeObj = node(nodeQuery, graph)
+export const set = curry((value, loc, graph) => {
+  var nodeObj = node(loc, graph)
   return replaceNode(nodeObj, Node.set(value, nodeObj), graph)
 })
 
 /**
- * Get a property of a node.
+ * @function
+ * @name get
+ * @description Get a property of a node.
  * @param {String} key The key of the property like 'recursion'
- * @param {Node} nodeQuery A node or a query for the node.
+ * @param {Location} loc The location identifying the node for which the property is queried.
  * @param {PortGraph} graph The graph.
  * @returns The value of the property or undefined if the property does not exist in the node.
  */
@@ -228,13 +246,15 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cb) => {
 })
 
 /**
- * Removes a node from the graph. [Performance O(|V| + |E|)]
- * @param {CompoundPath} path The node that shall be removed, either the node object or the id.
+ * @function
+ * @name removeNode
+ * @description Removes a node from the graph. [Performance O(|V| + |E|)]
+ * @param {Location} loc The location identifying the node to delete.
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph without the given node.
  */
-export const removeNode = curry((query, graph, ...cb) => {
-  return removeNodeInternal(query, true, graph, ...cb)
+export const removeNode = curry((loc, graph, ...cb) => {
+  return removeNodeInternal(loc, true, graph, ...cb)
 })
 
 const unID = (node) => {
@@ -269,6 +289,16 @@ function nodeParentPath (path, graph) {
   }
 }
 
+/**
+ * @function
+ * @name replaceNode
+ * @description Replace a node in the graph with another one. It tries to keep all edges.
+ * TODO: currently it will silently ignore the fact that edges are not valid anymore after replacing!
+ * @param {Location} loc A location specifying the node to replace
+ * @param {Node} newNode The new node that replaces the old one.
+ * @param {PortGraph} graph The graph
+ * @returns {PortGraph} A new graph in which the old node was replaces by the new one.
+ */
 export const replaceNode = curry((path, newNode, graph) => {
   return flow(
     removeNodeInternal(path, false),
@@ -279,15 +309,17 @@ export const replaceNode = curry((path, newNode, graph) => {
 })
 
 /**
- * Gets the parent of a node.
+ * @function
+ * @name parent
+ * @description Gets the parent of a node.
+ * @param {Location} loc A location identifying the node whose parent is wanted.
  * @param {PortGraph} graph The graph.
- * @param {Node} node The node for which you want to get the parent.
  * @returns {Node} The node id of the parent node or undefined if the node has no parent.
  */
-export const parent = curry((n, graph) => {
-  if (equal(node(n, graph).path, graph.path)) {
-    // parent points to a node not accessible from this graph (or a n is the root of the whole graph)
+export const parent = curry((loc, graph) => {
+  if (equal(node(loc, graph).path, graph.path)) {
+    // parent points to a node not accessible from this graph (or loc is the root of the whole graph)
     return
   }
-  return node(pathParent(relativeTo(node(n, graph).path, graph.path)), graph)
+  return node(pathParent(relativeTo(node(loc, graph).path, graph.path)), graph)
 })

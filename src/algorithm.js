@@ -1,8 +1,9 @@
 /**
+ * @module Algrithm
+ * @overview
  * A collection of algorithms that act on the port graph.
  */
 
-import curry from 'lodash/fp/curry'
 import * as Graph from './graph'
 import * as Node from './node'
 import * as Compound from './compound'

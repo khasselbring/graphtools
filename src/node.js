@@ -10,13 +10,8 @@ import cuid from 'cuid'
 import {node as pathNode, isCompoundPath, equal as pathEqual, parent} from './compoundPath'
 
 /**
- * A node either as an identifier, or as an object containing the property `node` as its identifier.
- * @typedef {(string|Object)} Node
- */
-
-/**
- * Creates a normalized node object. It makes sure, that the node has all necessary information like an id and a
- * normalized path.
+ * Creates a normalized node object. It makes sure, that the node has all necessary information like an id 
+ * and normalized ports.
  * @param {Node} node A protypical node object.
  * @returns {Node} A complete node object
  */
@@ -74,24 +69,46 @@ export function name (node) {
   }
 }
 
+/**
+ * Checks the node for a name
+ * @param {Node} node The node
+ * @returns {boolean} True if it has a name, false otherwise.
+ */
 export function hasName (node) {
   return !!node.name
 }
 
+/**
+ * Checks the node for a path
+ * @param {Node} node The node
+ * @returns {boolean} True if it has a path, false otherwise.
+ */
 export function hasPath (node) {
   return !!node.path
 }
 
+/**
+ * Checks the node for an id
+ * @param {Node} node The node
+ * @returns {boolean} True if it has an id, false otherwise.
+ */
 export function hasID (node) {
   return !!node.id
 }
 
+/**
+ * Checks the node for children
+ * @param {Node} node The node
+ * @returns {boolean} True if it has children, false otherwise.
+ */
 export function hasChildren (node) {
   return !get('hideChildren', node) && Array.isArray(node.nodes)
 }
 
 /**
- * Tests whether two nodes are the same node. This tests only if their IDs are
+ * @function
+ * @name equal
+ * @description Tests whether two nodes are the same node. This tests only if their IDs are
  * the same not if both nodes contain the same information.
  * @param {Node} node1 One of the nodes to test.
  * @param {Node} node2 The other one.
@@ -148,7 +165,9 @@ export function inputPorts (node, ignoreCompounds = false) {
 }
 
 /**
- * Returns the port data for a given port.
+ * @function
+ * @name port
+ * @description Returns the port data for a given port.
  * @param {Node} node The node which has the port.
  * @param {String|Port} name The name of the port or a port object.
  * @returns {Port} The port data.
@@ -165,15 +184,22 @@ export const port = curry((name, node) => {
   return curPort
 })
 
+/**
+ * Gets the path of a node
+ * @param {Node} node The node
+ * @returns {CompoundPath} The compound path of the node.
+ */
 export function path (node) {
   if (!node) return []
   return node.path
 }
 
 /**
- * Checks whether the node has the specific port.
- * @param {Node} node The node which has the port.
+ * @function
+ * @name hasPort
+ * @description Checks whether the node has the specific port.
  * @param {String|Port} name The name of the port or a port object.
+ * @param {Node} node The node which has the port.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
 export const hasPort = curry((name, node) => {
@@ -192,14 +218,33 @@ export function isReference (node) {
   return has('ref', node)
 }
 
+/**
+ * Checks whether the node is a component.
+ * @param {Node} node The node.
+ * @returns {boolean} True if the node is a component, false otherwise.
+ */
 export function component (node) {
   return node.componentId
 }
 
+/**
+ * @function
+ * @name set
+ * @description Set properties for the node
+ * @param {object} value An object with keys and values that should be set for a node.
+ * @returns {Node} A new node that has the new properties applied.
+ */
 export const set = curry((value, node) => {
   return merge(node, {settings: merge(node.settings, value)})
 })
 
+/**
+ * @function
+ * @name get
+ * @description Get a property for a node
+ * @param {String} key The property key.
+ * @returns The value of the property. If the property is not defined it will return undefined.
+ */
 export const get = curry((key, node) => (node.settings) ? node.settings[key] : node.settings)
 
 /**

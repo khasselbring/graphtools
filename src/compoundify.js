@@ -1,3 +1,4 @@
+/* not ported yet
 import graphlib from 'graphlib'
 import _ from 'lodash'
 import hash from 'object-hash'
@@ -126,3 +127,4 @@ export function compoundify (g, subset, name, label) {
   }
   return graph
 }
+*/
