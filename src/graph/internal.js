@@ -3,7 +3,7 @@ import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 import pick from 'lodash/fp/pick'
 // import {equal as nodeEqual} from '../node'
-import {isCompound} from '../compound'
+import {hasChildren} from '../node'
 import {equal as pathEqual, isRoot, relativeTo} from '../compoundPath'
 import * as changeSet from '../changeSet'
 
@@ -29,7 +29,7 @@ function nodesDeepRec (graph, parents) {
  */
 export function nodesDeep (graph) {
   return nodes(graph)
-    .concat(nodesDeepRec(graph, nodes(graph).filter(isCompound))).concat([graph])
+    .concat(nodesDeepRec(graph, nodes(graph).filter(hasChildren))).concat([graph])
 }
 
 // /**

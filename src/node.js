@@ -86,6 +86,10 @@ export function hasID (node) {
   return !!node.id
 }
 
+export function hasChildren (node) {
+  return !get('hideChildren', node) && Array.isArray(node.nodes)
+}
+
 /**
  * Tests whether two nodes are the same node. This tests only if their IDs are
  * the same not if both nodes contain the same information.
@@ -196,7 +200,7 @@ export const set = curry((value, node) => {
   return merge(node, {settings: merge(node.settings, value)})
 })
 
-export const get = curry((key, node) => node.settings[key])
+export const get = curry((key, node) => (node.settings) ? node.settings[key] : node.settings)
 
 /**
  * Checks whether a node is an atomic node.
