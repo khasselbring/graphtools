@@ -360,6 +360,24 @@ describe('Basic graph functions', () => {
       expect(Graph.predecessors('c', graph)).to.have.length(1)
       expect(Graph.successors('c', graph)).to.have.length(1)
     })
+
+    it('is possible to set node values deep in the graph', () => {
+      var cmpd1 = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input'}]})
+      )(Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output'}]}))
+      var cmpd2 = Graph.flow(
+        Graph.addNode(cmpd1)
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output'}]}))
+      var graph = Graph.flow(
+        Graph.addNode(cmpd2)
+      )()
+      var settedGraph = Graph.set({isSet: true}, '»c»b»a', graph)
+      expect(Graph.get('isSet', '»c»b»a', settedGraph)).to.be.true
+      var settedGraph2 = Graph.set({isSet: true}, '»c»b', graph)
+      expect(Graph.get('isSet', '»c»b', settedGraph2)).to.be.true
+      var settedGraph3 = Graph.set({isSet: true}, 'c', graph)
+      expect(Graph.get('isSet', 'c', settedGraph3)).to.be.true
+    })
   })
 
   describe('Edge functions', () => {

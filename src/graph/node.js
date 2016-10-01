@@ -172,10 +172,10 @@ function replaceId (oldId, newId, edge) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export const addNode = curry((node, graph, ...cb) => {
-  if (hasNode(unID(node), graph) && !Node.equal(unID(node), graph)) {
+  var newNode = setPath(Node.create(unID(node)), Node.path(graph))
+  if (hasNode(unID(newNode), graph) && !Node.equal(unID(newNode), graph)) {
     throw new Error('Cannot add already existing node: ' + Node.name(node))
   }
-  var newNode = Node.create(unID(node))
   checkNode(graph, newNode)
   if (cb.length > 0) {
     cb[0](newNode)
@@ -183,7 +183,7 @@ export const addNode = curry((node, graph, ...cb) => {
   if (isCompound(newNode)) {
     newNode.edges = newNode.edges.map((e) => replaceId(node.id, newNode.id, e))
   }
-  return changeSet.applyChangeSet(graph, changeSet.insertNode(setPath(newNode, Node.path(graph))))
+  return changeSet.applyChangeSet(graph, changeSet.insertNode(newNode))
 })
 
 /**

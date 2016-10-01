@@ -74,7 +74,11 @@ function edgeParent (edge, graph) {
   } else if (equal(Node.path(node(edge.to, graph)), parentFrom)) {
     return parentFrom
   } else {
-    throw new Error('Unable to determine parent for the edge:', JSON.stringify(edge))
+    if (edge.layer !== 'dataflow') {
+      // TODO is there any sensible parent for an arbitrary edge?
+      return parentFrom
+    }
+    throw new Error('Unable to determine parent for the edge:' + JSON.stringify(edge))
   }
 }
 

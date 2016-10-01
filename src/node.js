@@ -7,7 +7,7 @@ import has from 'lodash/fp/has'
 import every from 'lodash/fp/every'
 import * as Port from './port'
 import cuid from 'cuid'
-import {node as pathNode, isCompoundPath} from './compoundPath'
+import {node as pathNode, isCompoundPath, equal as pathEqual, parent} from './compoundPath'
 
 /**
  * A node either as an identifier, or as an object containing the property `node` as its identifier.
@@ -78,6 +78,14 @@ export function hasName (node) {
   return !!node.name
 }
 
+export function hasPath (node) {
+  return !!node.path
+}
+
+export function hasID (node) {
+  return !!node.id
+}
+
 /**
  * Tests whether two nodes are the same node. This tests only if their IDs are
  * the same not if both nodes contain the same information.
@@ -86,12 +94,15 @@ export function hasName (node) {
  * @returns {boolean} True if they have the same id, false otherwise.
  */
 export const equal = curry((node1, node2) => {
-  if ((isValid(node1) || isID(node1)) && (isValid(node2) || isID(node2))) {
+  if (((isValid(node1) && (hasID(node1) || !isReference(node1))) || isID(node1)) &&
+      ((isValid(node2) && (hasID(node2) || !isReference(node2))) || isID(node2))) {
     return id(node1) && id(node2) && id(node1) === id(node2)
   } else if (Port.isPort(node1)) {
     return equal(Port.node(node1), node2)
   } else if (Port.isPort(node2)) {
     return equal(node1, Port.node(node2))
+  } else if (hasPath(node1) && hasPath(node2)) {
+    return pathEqual(parent(node1), parent(node2)) && name(node1) === name(node2)
   } else {
     return name(node1) === name(node2)
   }
@@ -182,7 +193,7 @@ export function component (node) {
 }
 
 export const set = curry((value, node) => {
-  return merge(node, {settings: merge(value)})
+  return merge(node, {settings: merge(node.settings, value)})
 })
 
 export const get = curry((key, node) => node.settings[key])
