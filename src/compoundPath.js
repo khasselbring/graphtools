@@ -1,15 +1,13 @@
-/** @module CompoundPath */
 /**
- * @overview
- * Accessible via `require('@buggyorg/graphtools').CompoundPath`
- * 
+ *  Accessible via `require('@buggyorg/graphtools').CompoundPath`
+ *
  * A compound path is a unique representation of a node in the graph. It is defined as an array of
  * parent nodes starting at the root level, e.g. `['A', 'B', 'C']` points to the node `C` whose parent
  * is `B` and the parent of `B` is `A`. All methods accept the array notation or the shorthand string
  * notation. The shorthand string notation starts with a `»` (ALT-GR+Y) and separates each node with
  * a `»`, e.g. `»A»B»C` describes the exact same path as above. For elements on the root level it is
  * okay to omit the `»`, i.e. `»A` is the same as `A`.
- */
+ * @module CompoundPath */
 
 import curry from 'lodash/fp/curry'
 import _ from 'lodash'

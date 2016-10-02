@@ -1,4 +1,6 @@
-/** @module Component */
+/**
+ * Accessible via `require('@buggyorg/graphtools').Component`
+ * @module Component */
 
 import curry from 'lodash/fp/curry'
 import _ from 'lodash'
