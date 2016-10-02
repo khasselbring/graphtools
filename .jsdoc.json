@@ -3,8 +3,7 @@
   "source": {
     "include": ["src/compoundPath.js", "src/graph.js", "src/changeSet.js", "src/edge.js", "src/algorithm.js",
       "src/port.js", "src/location.js",
-      "src/node.js", "src/component.js", "README.md", "package.json", "src/graph"],
-    "includePattern": "src/graph/.+\\.js"
+      "src/node.js", "src/component.js", "README.md", "package.json", "src/graph"]
   },
   "opts": {
     "encoding": "utf8",

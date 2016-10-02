@@ -1,6 +1,8 @@
+/** @module Algrithm */
 /**
- * @module Algrithm
  * @overview
+ * Accessible via `require('@buggyorg/graphtools').Algorithm`
+ *
  * A collection of algorithms that act on the port graph.
  */
 

@@ -1,5 +1,8 @@
 /** @module CompoundPath */
-/** @overview
+/**
+ * @overview
+ * Accessible via `require('@buggyorg/graphtools').CompoundPath`
+ * 
  * A compound path is a unique representation of a node in the graph. It is defined as an array of
  * parent nodes starting at the root level, e.g. `['A', 'B', 'C']` points to the node `C` whose parent
  * is `B` and the parent of `B` is `A`. All methods accept the array notation or the shorthand string

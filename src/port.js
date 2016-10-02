@@ -1,4 +1,8 @@
-/** @module Port
+/** @module Port */
+/**
+ * @overview
+ * Accessible via `require('@buggyorg/graphtools').Port`
+ * 
  * Methods for handling ports. A port is attached to a node and connects data sources with sinks.
  * The port format is a unique identifier for the port and its node unlike the port name.
  */

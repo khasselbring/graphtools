@@ -1,4 +1,8 @@
 /** @module Edge */
+/**
+ * @overview
+ * Accessible via `require('@buggyorg/graphtools').Edge`
+ */
 
 import curry from 'lodash/fp/curry'
 import _ from 'lodash'

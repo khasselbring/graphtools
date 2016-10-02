@@ -1,4 +1,8 @@
 /** @module Node */
+/**
+ * @overview
+ * Accessible via `require('@buggyorg/graphtools').Node`
+ */
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
