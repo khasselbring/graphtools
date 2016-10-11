@@ -2,7 +2,7 @@
 import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 // import find from 'lodash/fp/find'
-import flow from './flow'
+// import flow from './flow'
 import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
 import {isCompound, setPath as compoundSetPath} from '../compound'
@@ -214,7 +214,6 @@ export const set = curry((value, loc, graph) => {
   var nodeObj = node(loc, graph)
   return replaceNode(nodeObj, Node.set(value, nodeObj), graph)
 })
-
 
 /**
  * @function
