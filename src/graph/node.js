@@ -2,6 +2,7 @@
 import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 // import find from 'lodash/fp/find'
+import flow from './flow'
 import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
 import {isCompound, setPath as compoundSetPath} from '../compound'
@@ -212,6 +213,24 @@ export const addNode = curry((node, graph, ...cb) => {
 export const set = curry((value, loc, graph) => {
   var nodeObj = node(loc, graph)
   return replaceNode(nodeObj, Node.set(value, nodeObj), graph)
+})
+
+
+/**
+ * @function
+ * @name addNodeTuple
+ * @description Add a node an return an array of the graph and id.
+ * @param {Node} node The node object that should be added. If the node already exists in the graph it will be copied.
+ * @param {PortGraph} graph The graph.
+ * @returns {PortGraph} A new graph that includes the node and the id as an array in [graph, id].
+ */
+export const addNodeTuple = curry((node, graph, ...cb) => {
+  var id
+  var newGraph = flow(
+    addNode(node),
+    (graph, objs) => { id = Node.id(objs()[0]); return graph }
+  )(graph)
+  return [newGraph, id]
 })
 
 /**
