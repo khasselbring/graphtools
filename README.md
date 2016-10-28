@@ -18,11 +18,11 @@ for a graph is JSON which contains five basic fields:
   "nodes": [
     {"ref": "<meta-id>", "id": "<some-unique-id>"},
     {"id": "<u-id>", "version": "<semver-version>", "componentId": "<component-id>",
-     "ports": [{"name": "<port-name>", "kind": "input|output", "type": "number"}],
-     "atomic": "true", "MetaInformation": {"some-key": "some-value"}},
+     "ports": [{"port": "<port-name>", "kind": "input|output", "type": "number"}],
+     "atomic": "true", "metaInformation": {"some-key": "some-value"}},
     {"id": "<u-id>", "version": "<semver-version>", "atomic": false,
-     "ports": [{"name": "<port-name>", "kind": "input|output", "type": "number"}],
-     "Nodes": <Sub-Nodes>, "Edges": <Sub-Edges>, "MetaInformation": {"some-key": "some-value"}},
+     "ports": [{"port": "<port-name>", "kind": "input|output", "type": "number"}],
+     "nodes": <Sub-Nodes>, "edges": <Sub-Edges>, "metaInformation": {"some-key": "some-value"}},
   ],
   "edges": [
     {"from": "<node-id>:<port-name>", "to": "<node-id>:<port-name>", "layer": "dataflow"}
@@ -30,7 +30,7 @@ for a graph is JSON which contains five basic fields:
   "version": "<semver-version of graph API>",
   "components": [
     {"componentId": "<component-id>", "ports": [...], "atomic": true},
-    {"componentId": "<component-id>", "ports": [...], "Nodes": <Sub-Nodes>, "Edges": <Sub-Edges>}
+    {"componentId": "<component-id>", "ports": [...], "nodes": <Sub-Nodes>, "edges": <Sub-Edges>}
   ],
   "metaInformation": {"some-key": "some-value"}
 }
