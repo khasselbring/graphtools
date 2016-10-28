@@ -25,7 +25,7 @@ import {removeEdge} from './edge'
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodes = (graph) => {
-  return graph.nodes
+  return graph.nodes || []
 }
 
 /**
@@ -183,6 +183,8 @@ function replaceId (oldId, newId, edge) {
  * @name addNode
  * @description Add a node to the graph (at the root level), returns a new graph. [Performance O(|V| + |E|)]
  * @param {Node} node The node object that should be added. If the node already exists in the graph it will be copied.
+ *   The node object must contain at least one valid ports. This functions checks if the node has ports AND if
+ *   every port is a valid port (i.e. has a name as `port` and the port type (output/input) as `kind`).
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph that includes the node.
  */

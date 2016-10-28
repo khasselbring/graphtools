@@ -125,6 +125,11 @@ describe('Basic graph functions', () => {
       expect(Graph.nodes(graph)).to.have.length(2)
     })
 
+    it('gets an empty array for the child nodes of an atomic node', () => {
+      var nodes = Graph.nodes(Node.create({ports: [{port: 'a', kind: 'output'}]}))
+      expect(nodes).to.have.length(0)
+    })
+
     it('sets the type of ports to `generic` if no type is given', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'input'}]}))()
