@@ -617,5 +617,84 @@ describe('Basic graph functions', () => {
       expect(meta).to.have.property('a')
       expect(meta.a).to.equal('b')
     })
+
+    it('import from JSON', () => {
+      var graphJSON = {
+        nodes:[],
+        edges:[],
+        metaInformation: {a: 'test'}
+      }
+      var graph = Graph.fromJSON(graphJSON)
+      expect(graph).to.be.ok
+      var meta = Graph.meta(graph)
+      expect(meta).to.be.an('object')
+      expect(meta).to.have.property('a')
+      expect(meta.a).to.equal(graphJSON.metaInformation.a)
+    })
+  })
+
+  describe('Wip temp tests', () => {
+
+    // it('Compound addEdge ...', () => {
+    //   var comp = Graph.addEdge({from: '@inC', to: '@outC'},
+    //     Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
+    //   expect(Graph.predecessors('', comp)).to.have.length(1)
+    //   expect(Graph.successors('', comp)).to.have.length(1)
+    //   var graph = Graph.addNode(comp, Graph.empty())
+    //   expect(Graph.predecessors('c', graph)).to.have.length(1)
+    //   expect(Graph.successors('c', graph)).to.have.length(1)
+
+    //   console.log(Graph.toJSON(comp))
+    //   console.log(Graph.toJSON(graph))
+    // })
+
+    it('Compound addEdge', () => {
+      var graphJSON = {
+        nodes:
+        [{
+          ref: 'math/add',
+          id: '#ciujt9ktl0003lumriay99r9m',
+          settings: {},
+          ports: []
+        },
+        {
+          ref: 'std/const',
+          MetaInformation: [Object],
+          id: '#ciujt9ktp0004lumrth5o5vnd',
+          settings: {},
+          ports: []
+        }],
+        metaInformation: {},
+        edges: [],
+        components: [],
+        ports:
+        [{ name: 'x', kind: 'input', type: 'generic' },
+        { name: 'value', kind: 'output', type: 'generic' }],
+        atomic: false,
+        id: '#ciujt9kti0002lumr7poczkzx',
+        version: '0.0.0',
+        componentId: 'myInc'
+      }
+      var graph = Graph.fromJSON(graphJSON)
+      expect(graph).to.be.ok
+      expect(Graph.nodes(graph)).to.have.length(2)
+      expect(Graph.edges(graph)).to.have.length(0)
+      expect(Graph.components(graph)).to.have.length(0)
+      expect(graph.ports).to.be.deep.equal(graphJSON.ports)
+
+      var cmpt = Graph.compound(graphJSON)
+      var newGraphA = Graph.addEdge({from: '@x', to: '@value'}, cmpt)
+      var newGraphB = Graph.addEdge({from: '@x', to: '@value'}, graph)
+
+      expect(newGraphA).to.be.ok
+      expect(newGraphB).to.be.ok
+
+      expect(Graph.nodes(newGraph)).to.have.length(2)
+      expect(Graph.edges(newGraph)).to.have.length(1)
+      expect(Graph.components(newGraph)).to.have.length(0)
+
+
+      console.log(Graph.toJSON(newGraph))
+    })
   })
 })
