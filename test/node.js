@@ -93,4 +93,13 @@ describe('Node API', () => {
     expect(Node.hasPort({port: 'a', node: ''}, {ports: [{port: 'b'}]})).to.be.false
     expect(Node.hasPort('a', {})).to.be.false
   })
+
+  it('`component` gets the referenced component in references', () => {
+    expect(Node.component({ref: 'ABC'})).to.equal('ABC')
+    expect(Node.component({ref: 'ABC', componentId: 'blubb'})).to.equal('ABC')
+  })
+
+  it('`component` gets the component of a standard node', () => {
+    expect(Node.component({componentId: 'ABC'})).to.equal('ABC')
+  })
 })
