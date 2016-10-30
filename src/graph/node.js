@@ -7,7 +7,7 @@ import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
 import {isCompound, setPath as compoundSetPath} from '../compound'
 import {isRoot, join, rest as pathRest, base as pathBase, parent as pathParent, isCompoundPath, relativeTo, equal} from '../compoundPath'
-// import {isPort, node as portNode} from '../port'
+import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
@@ -92,6 +92,20 @@ export const node = curry((loc, graph) => {
     throw new Error(`Node: '${Node.id(loc) || JSON.stringify(loc)}' does not exist in the graph.`)
   }
   return node
+})
+
+/**
+ * @function
+ * @name port
+ * @description Returns a port specified by the short notation or a port query object. [Performance O(|V|)]
+ * @param {Port} port A port object or a short notation for a port.
+ * @param {PortGraph} graph The graph.
+ * @returns {Node} The actual port object with type information.
+ * @throws {Error} If the queried port does not exist in the graph.
+ */
+export const port = curry((port, graph) => {
+  var nodeObj = node(port, graph)
+  return Node.port(normalizePort(port), nodeObj)
 })
 
 /**
