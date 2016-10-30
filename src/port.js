@@ -76,6 +76,24 @@ export function portName (port) {
 }
 
 /**
+ * Returns the data type of the port.
+ * @param {Port} port The port
+ * @returns The type of the port.
+ */
+export function type (port) {
+  return normalize(port).type
+}
+
+/**
+ * Returns the kind of the port. Either output or input.
+ * @param {Port} port The port
+ * @returns The kind of the port. It is either 'input' or 'output'.
+ */
+export function kind (port) {
+  return normalize(port).kind
+}
+
+/**
  * Returns whether the given port is an output port or not
  * @param {Port} port The port to check
  * @returns {boolean} True if the port is an output port, false otherwise.
