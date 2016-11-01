@@ -35,21 +35,8 @@ describe('Basic graph functions', () => {
 
   it('imports a graph from json', () => {
     var graphJSON = {
-      Nodes: [{name: 'a', ports: [{port: 'b', kind: 'output'}]}, {name: 'b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],
-      Edges: [{from: 'a@b', to: 'b@b'}],
-      Components: [{componentId: 'c', version: '0.1.0', ports: [{port: 'b', kind: 'output', type: 'c'}]}]
-    }
-    var graph = Graph.fromJSON(graphJSON)
-    expect(graph).to.be.ok
-    expect(Graph.nodes(graph)).to.have.length(2)
-    expect(Graph.edges(graph)).to.have.length(1)
-    expect(Graph.components(graph)).to.have.length(1)
-  })
-
-  it('importing JSON files is case insensitive', () => {
-    var graphJSON = {
-      nodes: [{name: 'a', ports: [{port: 'b', kind: 'output', type: 'c'}]}, {name: 'b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],
-      edges: [{from: 'a@b', to: 'b@b'}],
+      nodes: [{id: '#a', ports: [{port: 'b', kind: 'output', type: 'a'}]}, {id: '#b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],
+      edges: [{from: {node: '#a', port: 'b'}, to: {node: '#b', port: 'b'}, layer: 'dataflow'}],
       components: [{componentId: 'c', version: '0.1.0', ports: [{port: 'b', kind: 'output', type: 'c'}]}]
     }
     var graph = Graph.fromJSON(graphJSON)
@@ -60,18 +47,24 @@ describe('Basic graph functions', () => {
   })
 
   it('fails if the json graph is not valid', () => {
-    var graph1 = {
-      Nodes: [{id: 'a', ports: [{port: 'b', koind: 'output', type: 'c'}]}, {id: 'b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],
-      Edges: [{from: 'a@b', to: 'b@b'}],
+    var graph1 = { // port in 'a' has the attribute 'koind' instead of 'kind'
+      Nodes: [{id: '#a', ports: [{port: 'b', koind: 'output', type: 'c'}]}, {id: '#b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],
+      Edges: [{from: {node: '#a', port: 'b'}, to: {node: '#b', port: 'b'}, layer: 'dataflow'}],
       Components: [{componentId: 'c', version: '0.1.0', ports: [{port: 'b', kind: 'output', type: 'c'}]}]
     }
     expect(() => Graph.fromJSON(graph1)).to.throw(Error)
-    var graph2 = {
+    var graph2 = { // Edge targets a non existing port 'b@b'
       Nodes: [{id: 'a', ports: [{port: 'b', kind: 'output', type: 'c'}]}, {id: 'b', ports: [{port: 'c', kind: 'input', type: 'c'}]}],
       Edges: [{from: 'a@b', to: 'b@b'}],
       Components: [{componentId: 'c', version: '0.1.0', ports: [{port: 'b', kind: 'output', type: 'c'}]}]
     }
     expect(() => Graph.fromJSON(graph2)).to.throw(Error)
+    var graph3 = { // Edge targets a non existing port 'b@b'
+      Nodes: [{id: 'a', ports: [{port: 'b', kind: 'output', type: 'c'}]}, {id: 'b', ports: [{port: 'c', kind: 'input', type: 'c'}]}],
+      Edges: [{from: 'a@b', to: 'b@b', layer: 'dataflow'}],
+      Components: [{componentId: 'c', version: '0.1.0', ports: [{port: 'b', kind: 'output', type: 'c'}]}]
+    }
+    expect(() => Graph.fromJSON(graph3)).to.throw(Error)
   })
 
   it('can have edges between references', () => {
@@ -639,9 +632,10 @@ describe('Basic graph functions', () => {
   })
 
   describe('Wip temp tests', () => { // TODO: rename
-    var graphJSON = {
-        nodes:
-        [{
+    var graphJSON = () => ({
+      nodes:
+      [
+        {
           ref: 'math/add',
           id: '#ciujt9ktl0003lumriay99r9m'
         },
@@ -649,18 +643,18 @@ describe('Basic graph functions', () => {
           ref: 'std/const',
           id: '#ciujt9ktp0004lumrth5o5vnd'
         }],
-        ports:
-          [{ port: 'x', kind: 'input', type: 'generic' },
-           { port: 'value', kind: 'output', type: 'generic' }],
-        atomic: false,
-        id: '#ciujt9kti0002lumr7poczkzx',
-        version: '0.0.0',
-        componentId: 'myInc',
-        name: 'c'
-      }
+      ports:
+        [{ port: 'x', kind: 'input', type: 'generic' },
+          { port: 'value', kind: 'output', type: 'generic' }],
+      atomic: false,
+      id: '#ciujt9kti0002lumr7poczkzx',
+      version: '0.0.0',
+      componentId: 'myInc',
+      name: 'c'
+    })
 
     it('import', () => {
-      var graph = Graph.fromJSON(graphJSON)
+      var graph = Graph.fromJSON(graphJSON())
       expect(graph).to.be.ok
       expect(Graph.nodes(graph)).to.have.length(2)
       expect(Graph.edges(graph)).to.have.length(0)
@@ -669,7 +663,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Simple add edge test', () => {
-      var comp = Graph.addEdge({from: '@x', to: '@value'}, Graph.compound(graphJSON))
+      var comp = Graph.addEdge({from: '@x', to: '@value'}, Graph.compound(graphJSON()))
       expect(comp).to.be.ok
 
       expect(Graph.predecessors('', comp)).to.have.length(1)
@@ -680,7 +674,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Use addEdge @name notation', () => {
-      var graph = Graph.fromJSON(graphJSON)
+      var graph = Graph.fromJSON(graphJSON())
       var cmpt = Graph.compound(graphJSON)
       var out = Graph.addEdge({from: '@x', to: '@value'}, cmpt)
       var out2 = Graph.addEdge({from: '@x', to: '@value'}, graph)
@@ -689,7 +683,7 @@ describe('Basic graph functions', () => {
     })
 
     it('Use addEdge @Number notation', () => {
-      var graph = Graph.fromJSON(graphJSON)
+      var graph = Graph.fromJSON(graphJSON())
       var out = Graph.addEdge({from: '@0', to: '@0'}, graph) // or should it be: {from: '@0', to: '@1'} ?
       var out2 = Graph.addEdge({from: '@0', to: '#ciujt9ktl0003lumriay99r9m@0'}, graph)
       expect(out).to.be.ok
@@ -697,12 +691,12 @@ describe('Basic graph functions', () => {
     })
 
     it('Use addEdge #id@name notation', () => {
-      var out = Graph.addEdge({from: '#ciujt9kti0002lumr7poczkzx@x', to: '#ciujt9kti0002lumr7poczkzx@value'}, Graph.compound(graphJSON))
+      var out = Graph.addEdge({from: '#ciujt9kti0002lumr7poczkzx@x', to: '#ciujt9kti0002lumr7poczkzx@value'}, Graph.compound(graphJSON()))
       expect(out).to.be.ok
     })
 
     it('Use addEdge #id@Number notation', () => {
-      var graph = Graph.fromJSON(graphJSON)
+      var graph = Graph.fromJSON(graphJSON())
       var out = Graph.addEdge({from: '#ciujt9kti0002lumr7poczkzx@0', to: '#ciujt9kti0002lumr7poczkzx@0'}, graph)
       var out2 = Graph.addEdge({from: '#ciujt9kti0002lumr7poczkzx@0', to: '#ciujt9ktl0003lumriay99r9m@0'}, graph)
       expect(out).to.be.ok

@@ -12,7 +12,7 @@ import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
 import {flow} from './flow'
-import {nodeBy, mergeNodes} from './internal'
+import {nodeBy, mergeNodes, rePath} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
 import {removeEdge} from './edge'
@@ -293,26 +293,6 @@ export const removeNode = curry((loc, graph, ...cb) => {
 
 const unID = (node) => {
   return omit(['id', 'path'], node)
-}
-
-/**
- * Updates all pathes in the graph.
- * @param {PortGraph} graph The graph to update
- * @returns {PortGraph} The port graph with all valid paths.
- */
-const rePath = (graph) => {
-  return rePathRec([], graph)
-}
-
-const rePathRec = (basePath, graph) => {
-  nodes(graph).forEach((n) => {
-    var newPath = join(basePath, Node.id(n))
-    n.path = newPath
-    if (isCompound(n)) {
-      rePathRec(newPath, n)
-    }
-  })
-  return graph
 }
 
 function nodeParentPath (path, graph) {

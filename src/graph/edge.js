@@ -21,7 +21,7 @@ export function edges (graph) {
   return compact(flatten(map('edges', nodesDeep(graph).concat([graph]))))
 }
 
-function checkEdge (graph, edge) {
+export const checkEdge = curry((graph, edge) => {
   var from = node(edge.from, graph)
   var to = node(edge.to, graph)
   // TODO: check for edge/ from parent node is not correct anymore.. normEdge.from is a port object. (Same holds for normEdge.to)
@@ -31,7 +31,9 @@ function checkEdge (graph, edge) {
     throw new Error('Cannot create edge connection from: ' + Port.toString(edge.from) + ' to not existing node: ' + Port.toString(edge.to))
   }
   if (edge.layer === 'dataflow') {
-    if (Port.equal(edge.from, edge.to)) {
+    if (typeof (edge.from) === 'string' || typeof (edge.to) === 'string') {
+      throw new Error('A normalized edge is expected. No short-fort edges are allowed: ' + JSON.stringify(edge))
+    } else if (Port.equal(edge.from, edge.to)) {
       throw new Error('Cannot add loops to the port graph from=to=' + Port.toString(edge.from))
     } else if (!Node.isReference(from) && !Node.hasPort(edge.from, from)) {
       throw new Error('The source node "' + Port.node(edge.from) + '" does not have the outgoing port "' + Port.portName(edge.from) + '".')
@@ -48,8 +50,10 @@ function checkEdge (graph, edge) {
         ? 'an inner output port of the compound node ' + edge.parent
         : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
     }
+  } else if (!edge.layer) {
+    throw new Error('Edge must have a layer attribute: ' + JSON.stringify(edge))
   }
-}
+})
 
 function pathsToIDs (edge, graph) {
   var from = node(edge.from, graph)

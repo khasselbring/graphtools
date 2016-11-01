@@ -1,6 +1,9 @@
 
-import concat from 'lodash/fp/concat'
 import cloneDeep from 'lodash/fp/cloneDeep'
+import {nodesDeep} from './node'
+import {edges, checkEdge} from './edge'
+import {isValid} from '../node'
+import {rePath} from './internal'
 // import {empty} from './basic'
 // import {addNode, addNodeTuple} from './node'
 // import {addEdge} from './edge'
@@ -15,10 +18,13 @@ import cloneDeep from 'lodash/fp/cloneDeep'
  */
 export function fromJSON (jsonGraph) {
   var graph = cloneDeep(jsonGraph)
-  if (!graph.path) { graph.path = [] }
-  if (!graph.nodes) { graph.nodes = concat(jsonGraph.Nodes || [], (Array.isArray(jsonGraph.nodes)) ? jsonGraph.nodes : []) }
-  if (!graph.edges) { graph.edges = concat(jsonGraph.Edges || [], (Array.isArray(jsonGraph.edges)) ? jsonGraph.edges : []) }
-  if (!graph.components) { graph.components = concat(jsonGraph.Components || [], (Array.isArray(jsonGraph.components)) ? jsonGraph.components : []) }
+  rePath(graph)
+  nodesDeep(graph).forEach((n) => {
+    if (!isValid(n)) {
+      throw new Error('Cannot import graph with invalid node: ', JSON.stringify(n))
+    }
+  })
+  edges(graph).forEach(checkEdge(graph))
   return graph
   // TODO: add checks back in again
   // var nodes = concat(jsonGraph.Nodes || [], (Array.isArray(jsonGraph.nodes)) ? jsonGraph.nodes : [])

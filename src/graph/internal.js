@@ -8,9 +8,9 @@
 import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 import pick from 'lodash/fp/pick'
-// import {equal as nodeEqual} from '../node'
-import {hasChildren} from '../node'
-import {equal as pathEqual, isRoot, relativeTo} from '../compoundPath'
+import * as Node from '../node'
+import {equal as pathEqual, isRoot, relativeTo, join} from '../compoundPath'
+import {isCompound} from '../compound'
 import * as changeSet from '../changeSet'
 
 /**
@@ -37,7 +37,7 @@ function nodesDeepRec (graph, parents) {
  */
 export function nodesDeep (graph) {
   return nodes(graph)
-    .concat(nodesDeepRec(graph, nodes(graph).filter(hasChildren))).concat([graph])
+    .concat(nodesDeepRec(graph, nodes(graph).filter(Node.hasChildren))).concat([graph])
 }
 
 /**
@@ -97,3 +97,24 @@ export const mergeNodes = curry((oldNode, newNode, graph, ...cb) => {
   }
   return mergeGraph
 })
+
+/**
+ * Updates all pathes in the graph.
+ * @param {PortGraph} graph The graph to update
+ * @returns {PortGraph} The port graph with all valid paths.
+ */
+export const rePath = (graph) => {
+  graph.path = graph.path || []
+  return rePathRec(graph.path, graph)
+}
+
+const rePathRec = (basePath, graph) => {
+  nodes(graph).forEach((n) => {
+    var newPath = join(basePath, Node.id(n))
+    n.path = newPath
+    if (isCompound(n)) {
+      rePathRec(newPath, n)
+    }
+  })
+  return graph
+}
