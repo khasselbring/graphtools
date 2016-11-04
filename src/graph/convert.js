@@ -1,5 +1,6 @@
 
 import cloneDeep from 'lodash/fp/cloneDeep'
+import merge from 'lodash/fp/merge'
 import {nodesDeep} from './node'
 import {edges, checkEdge} from './edge'
 import {isValid} from '../node'
@@ -25,7 +26,7 @@ export function fromJSON (jsonGraph) {
     }
   })
   edges(graph).forEach(checkEdge(graph))
-  return graph
+  return merge({components: [], edges: [], nodes: []}, graph)
   // TODO: add checks back in again
   // var nodes = concat(jsonGraph.Nodes || [], (Array.isArray(jsonGraph.nodes)) ? jsonGraph.nodes : [])
   // var edges = concat(jsonGraph.Edges || [], (Array.isArray(jsonGraph.edges)) ? jsonGraph.edges : [])

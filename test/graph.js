@@ -631,7 +631,7 @@ describe('Basic graph functions', () => {
     })
   })
 
-  describe('Wip temp tests', () => { // TODO: rename
+  describe('References', () => {
     var graphJSON = () => ({
       nodes:
       [
@@ -659,7 +659,7 @@ describe('Basic graph functions', () => {
       expect(Graph.nodes(graph)).to.have.length(2)
       expect(Graph.edges(graph)).to.have.length(0)
       expect(Graph.components(graph)).to.have.length(0)
-      expect(graph.ports).to.be.deep.equal(graphJSON.ports)
+      expect(graph.ports).to.be.deep.equal(graphJSON().ports)
     })
 
     it('Simple add edge test', () => {
@@ -675,24 +675,33 @@ describe('Basic graph functions', () => {
 
     it('Use addEdge @name notation', () => {
       var graph = Graph.fromJSON(graphJSON())
-      var cmpt = Graph.compound(graphJSON)
+      var cmpt = Graph.compound(graphJSON())
       var out = Graph.addEdge({from: '@x', to: '@value'}, cmpt)
       var out2 = Graph.addEdge({from: '@x', to: '@value'}, graph)
       expect(out).to.be.ok
+      expect(Graph.edges(out)).to.have.length(1)
       expect(out2).to.be.ok
+      expect(Graph.edges(out2)).to.have.length(1)
     })
 
     it('Use addEdge @Number notation', () => {
       var graph = Graph.fromJSON(graphJSON())
-      var out = Graph.addEdge({from: '@0', to: '@0'}, graph) // or should it be: {from: '@0', to: '@1'} ?
-      var out2 = Graph.addEdge({from: '@0', to: '#ciujt9ktl0003lumriay99r9m@0'}, graph)
+      var out = Graph.addEdge({from: '@0', to: '#ciujt9ktl0003lumriay99r9m@0'}, graph)
       expect(out).to.be.ok
-      expect(out2).to.be.ok
+      expect(Graph.edges(out)).to.have.length(1)
+    })
+
+    it('Use addEdge @Number for inner edges', () => {
+      var graph = Graph.fromJSON(graphJSON())
+      var out = Graph.addEdge({from: '@0', to: '@0'}, graph)
+      expect(out).to.be.ok
+      expect(Graph.edges(out)).to.have.length(1)
     })
 
     it('Use addEdge #id@name notation', () => {
       var out = Graph.addEdge({from: '#ciujt9kti0002lumr7poczkzx@x', to: '#ciujt9kti0002lumr7poczkzx@value'}, Graph.compound(graphJSON()))
       expect(out).to.be.ok
+      expect(Graph.edges(out)).to.have.length(1)
     })
 
     it('Use addEdge #id@Number notation', () => {
@@ -700,7 +709,9 @@ describe('Basic graph functions', () => {
       var out = Graph.addEdge({from: '#ciujt9kti0002lumr7poczkzx@0', to: '#ciujt9kti0002lumr7poczkzx@0'}, graph)
       var out2 = Graph.addEdge({from: '#ciujt9kti0002lumr7poczkzx@0', to: '#ciujt9ktl0003lumriay99r9m@0'}, graph)
       expect(out).to.be.ok
-      expect(out).to.be.ok
+      expect(Graph.edges(out)).to.have.length(1)
+      expect(out2).to.be.ok
+      expect(Graph.edges(out2)).to.have.length(1)
     })
   })
 })

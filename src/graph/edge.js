@@ -37,14 +37,14 @@ export const checkEdge = curry((graph, edge) => {
       throw new Error('Cannot add loops to the port graph from=to=' + Port.toString(edge.from))
     } else if (!Node.isReference(from) && !Node.hasPort(edge.from, from)) {
       throw new Error('The source node "' + Port.node(edge.from) + '" does not have the outgoing port "' + Port.portName(edge.from) + '".')
-    } else if (!Node.isReference(from) && !Node.hasPort(edge.to, to)) {
-      throw new Error('The target node "' + Port.node(edge.to) + '" does not have the ingoing port "' + Port.portName(edge.inPort) + '".')
+    } else if (!Node.isReference(to) && !Node.hasPort(edge.to, to)) {
+      throw new Error('The target node "' + Port.node(edge.to) + '" does not have the ingoing port "' + Port.portName(edge.to) + '".')
     } else if (!Node.isReference(from) && (Node.port(edge.from, from).kind !== ((edge.innerCompoundOutput) ? 'input' : 'output'))) {
       throw new Error('The source port "' + Port.portName(edge.from) + '" = "' + JSON.stringify(Node.port(edge.from, from)) + '" must be ' +
       ((edge.innerCompoundOutput)
-      ? 'an inner input port of the compound node ' + edge.parent
+      ? 'an inner input port of the compound node ' + edgeParent(edge, graph)
       : 'an input port') + ' for the edge: ' + JSON.stringify(edge))
-    } else if (!Node.isReference(from) && (Node.port(edge.to, to).kind !== ((edge.innerCompoundInput) ? 'output' : 'input'))) {
+    } else if (!Node.isReference(to) && (Node.port(edge.to, to).kind !== ((edge.innerCompoundInput) ? 'output' : 'input'))) {
       throw new Error('The target port "' + Port.portName(edge.to) + '" = "' + JSON.stringify(Node.port(edge.to, to)) + ' must be ' +
         ((edge.innerCompoundInput)
         ? 'an inner output port of the compound node ' + edge.parent
@@ -105,9 +105,29 @@ function setInnerCompound (edge, graph) {
   }
 }
 
+function unIDPort (port, inner, graph) {
+  var fromNode = node(port, graph)
+  if (Node.isReference(fromNode)) return port
+  if (!Number.isNaN(parseInt(Port.portName(port)))) {
+    var portId = parseInt(Port.portName(port))
+    var ports = Node[inner ? 'inputPorts' : 'outputPorts'](fromNode, true)
+    if (portId >= ports.length) {
+      throw new Error('Node does not have a ' + portId + '-th port.')
+    }
+    return merge(port, {port: Port.portName(ports[portId])})
+  }
+  return port
+}
+
+function unIDPorts (edge, graph) {
+  return merge(edge, {
+    from: unIDPort(edge.from, edge.innerCompoundOutput, graph),
+    to: unIDPort(edge.to, !edge.innerCompoundInput, graph)})
+}
+
 function normalize (edge, graph) {
   var normEdge = Edge.normalize(edge)
-  return setInnerCompound(pathsToIDs(normEdge, graph), graph)
+  return unIDPorts(setInnerCompound(pathsToIDs(normEdge, graph), graph), graph)
 }
 
 function addEdgeToCompound (edge, graph) {
