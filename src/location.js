@@ -10,7 +10,7 @@ import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
 import {nodeByPath, idToPath} from './graph/internal'
 import {isPort} from './port'
-import {isValid as isNode, equal, id, isID} from './node'
+import {isValid as isNode, equal, id, isID, isReference} from './node'
 import {rest, prefix} from './compoundPath'
 
 /** A port notation can have every of the other notations for the node and as such
@@ -189,6 +189,9 @@ function isRootNode (n) {
  */
 export const identifies = curry((loc, other) => {
   if (loc.type === 'query' && loc.queryType === 'component') {
+    if (isReference(other)) {
+      return other.ref === loc.query
+    }
     return other.componentId === loc.query
   } else if (loc.locType === 'port' && isPort(other)) {
     return isPort(other) && identifiesPort(loc, other)

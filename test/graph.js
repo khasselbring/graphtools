@@ -217,6 +217,15 @@ describe('Basic graph functions', () => {
       expect(Graph.node('/b', graph).name).to.equal('B')
     })
 
+    it('can get a node by component ref', () => {
+      var graph = Graph.flow(
+        Graph.addNode({ref: 'a', name: 'A', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),
+        Graph.addNode({ref: 'b', name: 'B', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+      )()
+      expect(Graph.node('/a', graph).name).to.equal('A')
+      expect(Graph.node('/b', graph).name).to.equal('B')
+    })
+
     it('removes a node on the root level', () => {
       var graph = Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}, Graph.empty())
       var remGraph = Graph.removeNode('a', graph)
