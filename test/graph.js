@@ -328,6 +328,19 @@ describe('Basic graph functions', () => {
       expect(Graph.node('»123»b', graph).id).to.eql(Graph.node(Graph.node('»123»b', graph).id, graph).id)
     })
 
+    it('replaces ports in short notation in edges when replacing', () => {
+      var impl = Graph.flow(
+        Graph.addEdge({from: '@in', to: '@out'})
+      )(Graph.compound({componentId: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}, {port: 'in', kind: 'input', type: 'string'}]}))
+      var replGraph = Graph.addNode({ref: 'abc', name: '123'}, Graph.empty())
+      var graph = Graph.replaceNode(
+        '123', impl, replGraph)
+      var edges = Graph.incidents('123', graph)
+      expect(edges).to.have.length(1)
+      expect(Graph.isFrom('123', graph, edges[0])).to.be.true
+      expect(Graph.pointsTo('123', graph, edges[0])).to.be.true
+    })
+
     it('copes with multiple levels of compound nodes', () => {
       var impl = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}),

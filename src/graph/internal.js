@@ -8,6 +8,8 @@
 import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 import pick from 'lodash/fp/pick'
+import set from 'lodash/fp/set'
+import merge from 'lodash/fp/merge'
 import * as Node from '../node'
 import {equal as pathEqual, isRoot, relativeTo, join} from '../compoundPath'
 import {isCompound} from '../compound'
@@ -66,7 +68,7 @@ export function nodeBy (fn, graph) {
 /**
  * @function
  * @name idToPath
- * @description Returns the path that points to the node in the graph by its id. The id is preseved when moving or editing nodes.
+ * @description Returns the path that points to the node in the graph by its id. The id is preserved when moving or editing nodes.
  * The path might change. To fixate a node one can use the ID.
  * @param {string} id The id of the node
  * @param {PortGraph} graph The graph to search in
@@ -77,11 +79,21 @@ export const idToPath = curry((id, graph) => {
   return nodesDeep(graph).find((n) => n.id === id).path
 })
 
+function replacePortIDs (port, id, replaceId) {
+  if (port.node === replaceId) return set('node', id, port)
+  else return port
+}
+
+export function replaceEdgeIDs (edges, id, replaceId) {
+  return edges.map((edge) => set('to', replacePortIDs(edge.to, id, replaceId),
+    set('from', replacePortIDs(edge.from, id, replaceId), edge)))
+}
+
 /**
  * @function
  * @name mergeNodes
  * @description Merges the contents of a node with the given data. This CAN destroy the structure of the
- * graph so be cautiuos and prefer updateNode whenever possible.
+ * graph so be cautious and prefer updateNode whenever possible.
  * @param {Node} oldNode The old node that should get updated
  * @param {Object} newNode New values for the old node as an object that gets merged into the node.
  * @param {PortGraph} graph The graph
@@ -91,7 +103,8 @@ export const idToPath = curry((id, graph) => {
 export const mergeNodes = curry((oldNode, newNode, graph, ...cb) => {
   var path = idToPath(newNode.id, graph)
   var mergeGraph = changeSet.applyChangeSet(graph,
-    changeSet.updateNode(relativeTo(path, graph.path), pick(['id', 'name', 'path'], oldNode)))
+    changeSet.updateNode(relativeTo(path, graph.path), merge(
+      pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id)})))
   if (cb.length > 0) {
     cb[0](nodeByPath(path, graph))
   }

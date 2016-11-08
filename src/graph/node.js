@@ -5,6 +5,7 @@ import flatten from 'lodash/fp/flatten'
 // import flow from './flow'
 import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
+import setObj from 'lodash/fp/set'
 import {isCompound, setPath as compoundSetPath} from '../compound'
 import {isRoot, join, rest as pathRest, base as pathBase, parent as pathParent, isCompoundPath, relativeTo, equal} from '../compoundPath'
 import {normalize as normalizePort} from '../port'
@@ -12,7 +13,7 @@ import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
 import {flow} from './flow'
-import {nodeBy, mergeNodes, rePath} from './internal'
+import {nodeBy, mergeNodes, rePath, replaceEdgeIDs} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
 import {removeEdge} from './edge'
@@ -177,6 +178,7 @@ function setPath (node, path) {
   return merge(node, {path: nodePath})
 }
 
+/*
 function replaceIdInPort (oldId, newId, port, layer) {
   if (layer === 'dataflow') {
     return merge(port, {node: (port.node === oldId) ? newId : port.node})
@@ -190,7 +192,7 @@ function replaceId (oldId, newId, edge) {
     from: replaceIdInPort(oldId, newId, edge.from, edge.layer),
     to: replaceIdInPort(oldId, newId, edge.to, edge.layer)
   })
-}
+}*/
 
 /**
  * @function
@@ -208,11 +210,11 @@ export const addNode = curry((node, graph, ...cb) => {
     throw new Error('Cannot add already existing node: ' + Node.name(node))
   }
   checkNode(graph, newNode)
+  if (isCompound(newNode)) {
+    newNode = setObj('edges', replaceEdgeIDs(newNode.edges, newNode.id, node.id), newNode)
+  }
   if (cb.length > 0) {
     cb[0](newNode)
-  }
-  if (isCompound(newNode)) {
-    newNode.edges = newNode.edges.map((e) => replaceId(node.id, newNode.id, e))
   }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(newNode))
 })
@@ -316,7 +318,7 @@ function nodeParentPath (path, graph) {
 export const replaceNode = curry((path, newNode, graph) => {
   return flow(
     removeNodeInternal(path, false),
-    addNodeByPath(nodeParentPath(path, graph), unID(newNode)),
+    addNodeByPath(nodeParentPath(path, graph), newNode),
     (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
     rePath
   )(graph)
