@@ -488,7 +488,7 @@ describe('Basic graph functions', () => {
       expect(Graph.hasEdge({from: '/AAA@outAA', to: '/BBB@inBB'}, newGraph)).to.be.true
     })
 
-    it.only('Check whether an edge is in the graph with /componentId syntax for multiple components', () => {
+    it('Check whether an edge is in the graph with /componentId syntax for multiple components', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'b', ref: 'BB', ports: [{port: 'inB', kind: 'input', type: 'a'}]}),
         Graph.addNode({name: 'a', ref: 'AA', ports: [{port: 'outA', kind: 'output', type: 'a'}]}),
