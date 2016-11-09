@@ -11,6 +11,7 @@ import * as Edge from '../edge'
 import {equal, isRoot} from '../compoundPath'
 import {node, hasNode, nodesDeep, parent, replaceNode} from './node'
 import * as changeSet from '../changeSet'
+import {location, identifies as locIdentifies} from '../location'
 
 /**
  * Returns a list of edges in the graph.
@@ -56,6 +57,7 @@ export const checkEdge = curry((graph, edge) => {
 })
 
 function pathsToIDs (edge, graph) {
+  if (edge.query) return edge
   var from = node(edge.from, graph)
   var to = node(edge.to, graph)
   if (edge.layer === 'dataflow') {
@@ -181,9 +183,17 @@ export const removeEdge = curry((edge, graph) => {
   return changeSet.applyChangeSet(graph, changeSet.removeEdge(normEdge))
 })
 
-function findEdge = (edge, graph) => {
+function identifies (edge, graph) {
+  if (!edge.query) return Edge.equal(edge)
+  var fromLoc = location(edge.from, graph)
+  var toLoc = location(edge.to, graph)
+  return (cmpEdge) => locIdentifies(fromLoc, node(cmpEdge.from, graph)) &&
+    locIdentifies(toLoc, node(cmpEdge.to, graph))
+}
+
+function findEdge (edge, graph) {
   var normEdge = normalize(edge, graph)
-  return find(Edge.identifies(normEdge), edges(graph))
+  return find(identifies(normEdge, graph), edges(graph))
 }
 
 /**

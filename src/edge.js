@@ -3,6 +3,7 @@
  * @module Edge */
 
 import curry from 'lodash/fp/curry'
+import merge from 'lodash/fp/merge'
 import _ from 'lodash'
 import * as Port from './port'
 
@@ -14,8 +15,12 @@ function normalizeStructure (edge) {
   if (layer !== 'dataflow') {
     return edge
   }
-  if (typeof (edge.from) === 'string' && edge.from[0] === '/') {
-
+  if ((typeof (edge.from) === 'string' && edge.from[0] === '/')
+    || (typeof(edge.to) === 'string' && edge.to[0] === '/')) {
+    return merge(edge, {query: true,
+        from: (Port.isPort(edge.from)) ? Port.normalize(edge.from) : edge.from,
+        to: (Port.isPort(edge.to)) ? Port.normalize(edge.to) : edge.to
+      })
   } if (edge.outPort && edge.inPort) {
     return _.merge({}, _.omit(edge, ['outPort', 'inPort']),
       {layer, from: Port.normalize({node: edge.from, port: edge.outPort}), to: Port.normalize({node: edge.to, port: edge.inPort})})
