@@ -14,7 +14,9 @@ function normalizeStructure (edge) {
   if (layer !== 'dataflow') {
     return edge
   }
-  if (edge.outPort && edge.inPort) {
+  if (typeof (edge.from) === 'string' && edge.from[0] === '/') {
+
+  } if (edge.outPort && edge.inPort) {
     return _.merge({}, _.omit(edge, ['outPort', 'inPort']),
       {layer, from: Port.normalize({node: edge.from, port: edge.outPort}), to: Port.normalize({node: edge.to, port: edge.inPort})})
   } else if (!edge.outPort && !edge.inPort && Port.isPort(edge.from) && Port.isPort(edge.to)) {

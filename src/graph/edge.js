@@ -181,6 +181,11 @@ export const removeEdge = curry((edge, graph) => {
   return changeSet.applyChangeSet(graph, changeSet.removeEdge(normEdge))
 })
 
+function findEdge = (edge, graph) => {
+  var normEdge = normalize(edge, graph)
+  return find(Edge.identifies(normEdge), edges(graph))
+}
+
 /**
  * @function
  * @name hasEdge
@@ -190,8 +195,7 @@ export const removeEdge = curry((edge, graph) => {
  * @returns {boolean} True if the edge is contained in the graph, false otherwise.
  */
 export const hasEdge = curry((edge, graph) => {
-  var normEdge = normalize(edge, graph)
-  return !!find(Edge.equal(normEdge), edges(graph))
+  return !!findEdge(edge, graph)
 })
 
 /**
@@ -204,8 +208,7 @@ export const hasEdge = curry((edge, graph) => {
  * @throws {Error} If the edge is not contained in the graph.
  */
 export const edge = curry((edge, graph) => {
-  var normEdge = normalize(edge, graph)
-  var retEdge = find(Edge.equal(normEdge), edges(graph))
+  var retEdge = findEdge(edge, graph)
   if (!retEdge) {
     throw new Error('Edge is not defined in the graph: ' + JSON.stringify(edge))
   }
