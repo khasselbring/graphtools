@@ -136,7 +136,11 @@ export function location (loc, graph) {
   } else if (Array.isArray(loc)) {
     return fullLocation({type: 'location', locType: 'node', path: loc}, graph)
   } else if (typeof (loc) === 'object' && isPort(loc)) {
-    return fullLocation(merge(location(loc.node, graph), {type: 'location', locType: 'port', port: loc.port}), graph)
+    var locObj = location(loc.node, graph)
+    var merged = (locObj.type === 'query')
+      ? merge({locType: 'port', port: loc.port}, location(loc.node, graph))
+      : merge(location(loc.node, graph), {type: 'location', locType: 'port', port: loc.port})
+    return fullLocation(merged, graph)
   } else if (typeof (loc) === 'object' && loc.id) {
     return fullLocation(fromString(loc.id), graph)
   } else if (typeof (loc) === 'object' && loc.name) {
@@ -182,7 +186,7 @@ function isRootNode (n) {
  * for example the location points to a node and the other object is the node.
  * Or if the other object is simply the ID of the node.
  * It also identifies a node if the location specifies the port. If you don't want
- * this behaviour use equals (it is the strict version of identifies).
+ * this behavior use equals (it is the strict version of identifies).
  * @params {Location} location A location object.
  * @params other Any type that can be a location.
  * @returns True if the location identifies the object stored in other.

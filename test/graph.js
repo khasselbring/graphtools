@@ -471,23 +471,36 @@ describe('Basic graph functions', () => {
       expect(Graph.hasEdge({from: 'a@out', to: 'b@in'}, newGraph)).to.be.true
     })
 
-    it('Check whether an edge is in the graph with /ref or /componentId syntax ', () => {
+    it('Check whether an edge is in the graph with /ref or /componentId syntax in nodes', () => {
       var graph = Graph.flow(
-        Graph.addNode({name: 'b', ref: 'AA', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
-        Graph.addNode({name: 'a', ref: 'BB', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
-        Graph.addNode({name: 'bb', componentId: 'AAA', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
-        Graph.addNode({name: 'aa', componentId: 'BBB', ports: [{port: 'out', kind: 'output', type: 'a'}]})
+        Graph.addNode({name: 'b', ref: 'BB', ports: [{port: 'inB', kind: 'input', type: 'a'}]}),
+        Graph.addNode({name: 'a', ref: 'AA', ports: [{port: 'outA', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'bb', componentId: 'BBB', ports: [{port: 'inBB', kind: 'input', type: 'a'}]}),
+        Graph.addNode({name: 'aa', componentId: 'AAA', ports: [{port: 'outAA', kind: 'output', type: 'a'}]})
       )()
-      var newGraph = Graph.addEdge({from: 'a@out', to: 'b@in'}, 
-                     Graph.addEdge({from: 'aa@out', to: 'bb@in'}, graph))
+      var newGraph = Graph.addEdge({from: 'a@outA', to: 'b@inB'}, 
+                     Graph.addEdge({from: 'aa@outAA', to: 'bb@inBB'}, graph))
       // ref
-      expect(Graph.hasEdge({from: '/AA@out', to: '/BB@in'}, graph)).to.be.false
-      expect(Graph.hasEdge({from: '/AA@out', to: '/BB@in'}, newGraph)).to.be.true
+      expect(Graph.hasEdge({from: '/AA@outA', to: '/BB@inB'}, graph)).to.be.false
+      expect(Graph.hasEdge({from: '/AA@outA', to: '/BB@inB'}, newGraph)).to.be.true
+      // componentId
+      expect(Graph.hasEdge({from: '/AAA@outAA', to: '/BBB@inBB'}, graph)).to.be.false
+      expect(Graph.hasEdge({from: '/AAA@outAA', to: '/BBB@inBB'}, newGraph)).to.be.true
+    })
+
+    it.skip('Check whether an edge is in the graph with /ref or /componentId syntax in edges', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'b', ref: 'BB', ports: [{port: 'inB', kind: 'input', type: 'a'}]}),
+        Graph.addNode({name: 'a', ref: 'AA', ports: [{port: 'outA', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'bb', componentId: 'BBB', ports: [{port: 'inBB', kind: 'input', type: 'a'}]}),
+        Graph.addNode({name: 'aa', componentId: 'AAA', ports: [{port: 'outAA', kind: 'output', type: 'a'}]})
+      )()
+      var newGraph = Graph.addEdge({from: 'a@outA', to: 'b@inB'}, 
+                     Graph.addEdge({from: 'aa@outAA', to: 'bb@inBB'}, graph))
+      // ref
       expect(Graph.hasEdge({from: '/AA', to: '/BB'}, graph)).to.be.false
       expect(Graph.hasEdge({from: '/AA', to: '/BB'}, newGraph)).to.be.true
       // componentId
-      expect(Graph.hasEdge({from: '/AAA@out', to: '/BBB@in'}, graph)).to.be.false
-      expect(Graph.hasEdge({from: '/AAA@out', to: '/BBB@in'}, newGraph)).to.be.true
       expect(Graph.hasEdge({from: '/AAA', to: '/BBB'}, graph)).to.be.false
       expect(Graph.hasEdge({from: '/AAA', to: '/BBB'}, newGraph)).to.be.true
     })
