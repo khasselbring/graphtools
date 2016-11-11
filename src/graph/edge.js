@@ -109,8 +109,8 @@ function setInnerCompound (edge, graph) {
 
 function unIDPort (port, inner, graph) {
   var fromNode = node(port, graph)
-  if (Node.isReference(fromNode)) return port
   if (!Number.isNaN(parseInt(Port.portName(port)))) {
+    if (Node.ports(fromNode).length === 0 && Node.isReference(fromNode)) return port
     var portId = parseInt(Port.portName(port))
     var ports = Node[inner ? 'inputPorts' : 'outputPorts'](fromNode, true)
     if (portId >= ports.length) {

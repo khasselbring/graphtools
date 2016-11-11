@@ -508,6 +508,19 @@ describe('Basic graph functions', () => {
       expect(Graph.hasEdge({from: '/AA@outD', to: '/BB@inB'}, newGraph)).to.be.false
     })
 
+    it('Check whether an edge is in the graph with /componentId syntax for multiple components with port numbers', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'b', ref: 'BB', ports: [{port: 'inB', kind: 'input', type: 'a'}]}),
+        Graph.addNode({name: 'a', ref: 'AA', ports: [{port: 'outA', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'a2', ref: 'AA', ports: [{port: 'outA', kind: 'output', type: 'a'}]})
+      )()
+      var newGraph = Graph.addEdge({from: 'a2@outA', to: 'b@inB'}, graph)
+      // ref
+      expect(Graph.hasEdge({from: '/AA@0', to: '/BB@0'}, newGraph)).to.be.true
+      expect(Graph.hasEdge({from: '/AA@1', to: '/BB@0'}, newGraph)).to.be.false
+      expect(Graph.hasEdge({from: '/AA@0', to: '/BB@1'}, newGraph)).to.be.false
+    })
+
     it('Check whether an edge is in the graph with /ref or /componentId syntax in edges', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'b', ref: 'BB', ports: [{port: 'inB', kind: 'input', type: 'a'}]}),

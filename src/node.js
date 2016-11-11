@@ -137,7 +137,7 @@ export const equal = curry((node1, node2) => {
  * @returns {Port[]} A list of ports.
  */
 export function ports (node) {
-  return node.ports.map(merge({node: node.id})) || []
+  return (node.ports) ? node.ports.map(merge({node: node.id})) : []
 }
 
 /**
