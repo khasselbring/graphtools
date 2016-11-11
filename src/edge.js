@@ -58,10 +58,10 @@ function normalizeStructure (edge) {
  */
 export function normalize (edge) {
   var newEdge = normalizeStructure(edge)
-  if (newEdge.from.length === 0) {
+  if (typeof (newEdge.from) === 'object' && newEdge.from.node.length === 0) {
     newEdge.innerCompoundOutput = true
   }
-  if (newEdge.to.length === 0) {
+  if (typeof (newEdge.to) === 'object' && newEdge.to.node.length === 0) {
     newEdge.innerCompoundInput = true
   }
   return newEdge

@@ -521,6 +521,16 @@ describe('Basic graph functions', () => {
       expect(Graph.hasEdge({from: '/AA@0', to: '/BB@1'}, newGraph)).to.be.false
     })
 
+    it.only('Check whether an parent port notation is possible with the number style', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'b', ref: 'BB', ports: [{port: 'inB', kind: 'input', type: 'a'}]})
+      )()
+      graph.ports = [{port: 'a', kind: 'input', type: 'generic'}]
+      var newGraph = Graph.addEdge({from: '@0', to: 'b@inB'}, graph)
+      // ref
+      expect(Graph.hasEdge({from: '@0', to: '/BB@0'}, newGraph)).to.be.true
+    })
+
     it('Check whether an edge is in the graph with /ref or /componentId syntax in edges', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'b', ref: 'BB', ports: [{port: 'inB', kind: 'input', type: 'a'}]}),
