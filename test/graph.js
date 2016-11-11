@@ -483,9 +483,16 @@ describe('Basic graph functions', () => {
       // ref
       expect(Graph.hasEdge({from: '/AA@outA', to: '/BB@inB'}, graph)).to.be.false
       expect(Graph.hasEdge({from: '/AA@outA', to: '/BB@inB'}, newGraph)).to.be.true
+      expect(Graph.hasEdge({from: '/AA@outA', to: '/BB@inC'}, newGraph)).to.be.false
+      expect(Graph.hasEdge({from: '/AA@outE', to: '/BB@inB'}, newGraph)).to.be.false
       // componentId
       expect(Graph.hasEdge({from: '/AAA@outAA', to: '/BBB@inBB'}, graph)).to.be.false
       expect(Graph.hasEdge({from: '/AAA@outAA', to: '/BBB@inBB'}, newGraph)).to.be.true
+      expect(Graph.hasEdge({from: '/AAA@0', to: '/BBB@0'}, newGraph)).to.be.true
+      expect(Graph.hasEdge({from: '/AAA@outAA', to: '/BBB@inC'}, newGraph)).to.be.false
+      expect(Graph.hasEdge({from: '/AAA@5', to: '/BBB@0'}, newGraph)).to.be.false
+      expect(Graph.hasEdge({from: '/AAA@0', to: '/BBB@5'}, newGraph)).to.be.false
+      expect(Graph.hasEdge({from: '/AAA@outCCC', to: '/BBB@inBB'}, newGraph)).to.be.false
     })
 
     it('Check whether an edge is in the graph with /componentId syntax for multiple components', () => {
@@ -497,6 +504,8 @@ describe('Basic graph functions', () => {
       var newGraph = Graph.addEdge({from: 'a2@outA', to: 'b@inB'}, graph)
       // ref
       expect(Graph.hasEdge({from: '/AA@outA', to: '/BB@inB'}, newGraph)).to.be.true
+      expect(Graph.hasEdge({from: '/AA@outA', to: '/BB@inC'}, newGraph)).to.be.false
+      expect(Graph.hasEdge({from: '/AA@outD', to: '/BB@inB'}, newGraph)).to.be.false
     })
 
     it('Check whether an edge is in the graph with /ref or /componentId syntax in edges', () => {

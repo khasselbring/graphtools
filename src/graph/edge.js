@@ -188,12 +188,18 @@ function identifies (edge, graph) {
   var fromLoc = location(edge.from, graph)
   var toLoc = location(edge.to, graph)
   return (cmpEdge) => locIdentifies(fromLoc, node(cmpEdge.from, graph)) &&
-    locIdentifies(toLoc, node(cmpEdge.to, graph))
+    (!fromLoc.port || fromLoc.port === cmpEdge.from.port) &&
+    locIdentifies(toLoc, node(cmpEdge.to, graph)) &&
+    (!toLoc.port || toLoc.port === cmpEdge.to.port)
 }
 
 function findEdge (edge, graph) {
-  var normEdge = normalize(edge, graph)
-  return find(identifies(normEdge, graph), edges(graph))
+  try { // TODO: improve error message when an error is thrown
+    var normEdge = normalize(edge, graph)
+    return find(identifies(normEdge, graph), edges(graph))
+  } catch (err) {
+    return null
+  }
 }
 
 /**
