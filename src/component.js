@@ -1,4 +1,18 @@
 /**
+ * A component is a template for nodes. They represent the structure of the component.
+ *
+ * A component consists of a `componentId` and is an atomic or a compound node. It must have
+ * a valid semver version and a list of ports (each component must have at least one port).
+ *
+ * ```json
+ * {
+ *   componentId: 'componentIdentifier',
+ *   version: "1.0.0",
+ *   atomic: true,
+ *   ports: [{port: 'in', kind: 'input', type: 'Number'},{port: 'out', kind: 'output', type: 'Number'}]
+ * }
+ * ```
+ *
  * Accessible via `require('@buggyorg/graphtools').Component`
  * @module Component */
 
