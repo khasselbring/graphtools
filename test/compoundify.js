@@ -1,8 +1,6 @@
 /* global describe, it */
 
 import chai from 'chai'
-import * as cmpdfy from '../src/compoundify.js'
-import grlib from 'graphlib'
 import fs from 'fs'
 // import _ from 'lodash'
 

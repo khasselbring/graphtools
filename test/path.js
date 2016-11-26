@@ -2,7 +2,6 @@
 
 import chai from 'chai'
 import * as path from '../src/path.js'
-import grlib from 'graphlib'
 import fs from 'fs'
 // import _ from 'lodash'
 
