@@ -598,6 +598,16 @@ describe('Basic graph functions', () => {
       expect(Graph.node(Graph.successors('c', graph)[0], graph).name).to.equal('a')
     })
 
+    it('Can connect from the root compound to an inner node', () => {
+      const cmpd = Graph.compound({ports: [{port: 'in', kind: 'input', type: 'a'}]})
+      const graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
+        Graph.addEdge({from: '@in', to: 'a@in'})
+      )(cmpd)
+      expect(Graph.successors(cmpd.id, graph)).to.have.length(1)
+      expect(Graph.node(Graph.successors(cmpd.id, graph)[0], graph).name).to.equal('a')
+    })
+
     it('Fails if the connecting ports do not exist', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),

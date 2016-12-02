@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Program",
+      "name": "Mocha",
       "type": "node2",
       "request": "launch",
       "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
