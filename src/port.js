@@ -122,12 +122,32 @@ export function isPort (any) {
 }
 
 /**
- * Returns whether the goven port is valid or not.
+ * Returns whether the given port is valid or not.
  * @param port The object to test.
  * @returns {boolean} True if the value is a valid port, false otherwise.
  */
 export function isValid (port) {
   return typeof (port) === 'object' && port.port && (port.kind === INPUT || port.kind === OUTPUT) && port.type
+}
+
+/**
+ * Asserts that the given port is valid.
+ * @param port The object to test.
+ * @throws {Error} Error if the object is not a valid port.
+ */
+export function assertValid (port) {
+  if (typeof (port) !== 'object') {
+    throw new Error('Port is not an object, but is ' + port)
+  }
+  if (!port.port) {
+    throw new Error('Port does not have a `port` prop')
+  }
+  if (!port.type) {
+    throw new Error('Port does not have a `type` prop')
+  }
+  if (port.kind !== INPUT || port.kind !== OUTPUT) {
+    throw new Error('Port `kind` prop should be "input" or "output", but was ' + port.kind)
+  }
 }
 
 /**
