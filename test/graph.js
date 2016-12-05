@@ -30,7 +30,7 @@ describe('Basic graph functions', () => {
     newGraph.arr.push(1)
     expect(graph.arr).to.have.length(0)
     expect(newGraph.arr).to.have.length(1)
-    expect.fail('stange test...')
+    expect.fail('strange test...')
   })
 
   it('imports a graph from json', () => {
