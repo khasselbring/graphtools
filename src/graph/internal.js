@@ -85,8 +85,15 @@ function replacePortIDs (port, id, replaceId) {
 }
 
 export function replaceEdgeIDs (edges, id, replaceId) {
-  return edges.map((edge) => set('to', replacePortIDs(edge.to, id, replaceId),
-    set('from', replacePortIDs(edge.from, id, replaceId), edge)))
+  return edges.map((edge) => {
+    if (typeof (edge.to) === 'object') {
+      return set('to', replacePortIDs(edge.to, id, replaceId),
+        set('from', replacePortIDs(edge.from, id, replaceId), edge))
+    } else {
+      return set('to', (edge.to === replaceId) ? id : edge.to,
+        set('from', (edge.from === replaceId) ? id : edge.from, edge))
+    }
+  })
 }
 
 /**

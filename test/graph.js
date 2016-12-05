@@ -718,6 +718,18 @@ describe('Basic graph functions', () => {
       expect(Graph.edges(graph)).to.have.length(1)
       expect(Graph.hasEdge({from: '»c»a', to: 'c', layer: 'recursion'}, graph)).to.be.true
     })
+
+    it('is possible to add a non dataflow edge inside compounds', () => {
+      var cmpd = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input'}]}),
+        Graph.addEdge({from: 'a', to: '', layer: 'recursion'})
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output'}]}))
+      var graph = Graph.flow(
+        Graph.addNode(cmpd)
+      )()
+      expect(Graph.edges(graph)).to.have.length(1)
+      expect(Graph.hasEdge({from: '»c»a', to: 'c', layer: 'recursion'}, graph)).to.be.true
+    })
   })
 
   describe('Meta information', () => {
