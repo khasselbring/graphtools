@@ -140,6 +140,16 @@ export function ports (node) {
   return (node.ports) ? node.ports.map(merge({node: node.id})) : []
 }
 
+export function setPort (node, port, update) {
+  return merge(node, {ports: node.ports.map((p, id) => {
+    if (typeof (port) === 'number' && id === port) {
+      return merge(p, update)
+    } else if (typeof (port) === 'string' && Port.portName(p) === port) {
+      return merge(p, update)
+    } return p
+  })})
+}
+
 /**
  * Gets all output ports of the node.
  * @param {Node} node The node.

@@ -326,6 +326,22 @@ export const replaceNode = curry((path, newNode, graph) => {
 
 /**
  * @function
+ * @name setPortName
+ * @description Updates a port of a node.
+ * @param {Location} loc A location specifying the node to update.
+ * @param {port} port The port name or its index.
+ * @param {Port} portUpdate The new port object or parts of the new object (it will merge with the existing values).
+ * @param {PortGraph} graph The graph
+ * @returns {PortGraph} A new graph in which the port has been updated.
+ * @throws {Error} If the location does not specify a node in the graph.
+ */
+export const setNodePort = curry((loc, port, portUpdate, graph) => {
+  var nodeObj = node(loc, graph)
+  return replaceNode(loc, Node.setPort(nodeObj, port, portUpdate), graph)
+})
+
+/**
+ * @function
  * @name parent
  * @description Gets the parent of a node.
  * @param {Location} loc A location identifying the node whose parent is wanted.

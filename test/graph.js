@@ -142,6 +142,16 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode('a', graph)).to.be.true
       expect(Graph.hasNode({name: 'b'}, graph)).to.be.true
     })
+
+    it('can update a port of a node', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}, {port: 'p2', kind: 'output', type: 'a'}]}),
+      )()
+      var graph1 = Graph.setNodePort('a', 'p', {type: 'c'}, graph)
+      var graph2 = Graph.setNodePort('a', 1, {type: 'd'}, graph)
+      expect(Graph.node('a', graph1).ports[0].type).to.equal('c')
+      expect(Graph.node('a', graph2).ports[1].type).to.equal('d')
+    })
   })
 
   describe('Compound Node functions', () => {
