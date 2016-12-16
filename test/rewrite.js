@@ -4,6 +4,7 @@ import chai from 'chai'
 import * as Graph from '../src/graph'
 import {includePredecessor, excludeNode, unCompound} from '../src/rewrite/compound'
 import * as Node from '../src/node'
+import _ from 'lodash'
 
 var expect = chai.expect
 
@@ -142,5 +143,29 @@ describe('Rewrite basic API', () => {
       expect(Graph.nodes(rewGraph)).to.have.length(4)
       expect(Graph.predecessors('h', rewGraph)).to.have.length(1)
     })
+  })
+
+  describe('Can replace nodes in compounds without affecting their edges', () => {
+    var cmp = Graph.flow(
+      Graph.addNode({
+        name: 'Source',
+        ports: [
+          { port: 'out', kind: 'output', type: 'generic' }
+        ]
+      }),
+      Graph.addNode({
+        name: 'Sink',
+        ports: [
+          { port: 'in', kind: 'input', type: 'number' }
+        ]
+      }),
+      Graph.addEdge({ from: 'Source@out', to: 'Sink@in' })
+    )(Graph.compound({ }))
+    var graph = Graph.addNode(cmp, Graph.empty())
+    expect(Graph.edges(graph)).to.have.length(1)
+    var node = Graph.nodesDeepBy((n) => n.name === 'Source', graph)[0]
+    var newNode = _.cloneDeep(node)
+    var newGraph = Graph.replaceNode(node, newNode, graph)
+    expect(Graph.edges(newGraph)).to.have.length(1)
   })
 })
