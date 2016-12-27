@@ -112,4 +112,13 @@ describe('Change Sets', () => {
     expect(Graph.meta(newGraph)).to.have.property('metaID')
     expect(Graph.meta(newGraph)).to.have.property('name')
   })
+
+  it.only('can update a component in the graph', () => {
+    var graph = changeSet.applyChangeSets(Graph.empty(), [
+      changeSet.insertComponent({componentId: 'A'}),
+      changeSet.updateComponent('A', {isType: true})
+    ])
+    expect(graph.components[0]).to.have.property('isType')
+    expect(graph.components[0].isType).to.be.true
+  })
 })

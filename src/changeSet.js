@@ -49,6 +49,17 @@ export function insertComponent (value) {
   return {type: 'changeSet', operation: 'insert', query: 'components', value}
 }
 
+/**
+ * Creates a change set to update a component with a given value
+ * @param {string} compId The componentId of the component.
+ * @param {Object} mergeValue An object that contains parts of a component that should be set.
+ * E.g. `{isType: true}` will update the field `isType` in the component and sets it to `true`.
+ * @returns {ChangeSet} A change set containing the operation.
+ */
+export function updateComponent (compId, mergeValue) {
+  return {type: 'changeSet', operation: 'mergeComponent', query: compId, value: mergeValue}
+}
+
 export function removeComponent (id) {
   return {type: 'changeSet', operation: 'remove', query: 'components', filter: (n) => Component.equal(n, id)}
 }
@@ -171,6 +182,11 @@ const applyMergeByPath = (graph, path, value) => {
   }
 }
 
+const applyMergeByComponent = (graph, cId, value) => {
+  var idx = _.findIndex(graph.components, (c) => Component.id(c) === cId)
+  return _.merge(graph.components[idx], value)
+}
+
 /**
  * Apply a changeSet on the given graph.
  * @param {Object} graph The graph in JSON format that should be changed.
@@ -209,6 +225,11 @@ export function applyChangeSetInplace (graph, changeSet) {
   }
   if (changeSet.operation === 'mergePath') {
     applyMergeByPath(graph, changeSet.query, changeSet.value)
+    return graph
+  }
+  if (changeSet.operation === 'mergeComponent') {
+    applyMergeByComponent(graph, changeSet.query, changeSet.value)
+    return graph
   }
   var refs = getReferences(graph, changeSet)
   switch (changeSet.operation) {

@@ -130,6 +130,21 @@ export function isValid (comp) {
     ports(comp).length !== 0 && typeof (comp.version) === 'string' && semver.valid(comp.version)
 }
 
+export function assertValid (comp) {
+  if (typeof (comp) !== 'object') {
+    throw new Error('Component is not an object, but it is: ' + comp)
+  }
+  if (typeof (comp.componentId) !== 'string' || comp.componentId.length === 0) {
+    throw new Error('Component must have a valid id (string with at least one character), but it is: ' + comp.componentId)
+  }
+  if (ports(comp).length === 0) {
+    throw new Error('Component "' + id(comp) + '" must have at least one port.')
+  }
+  if (typeof (comp.version) !== 'string' || !semver.valid(comp.version)) {
+    throw new Error('Component "' + id(comp) + '" must have a valid version, but it is: ' + comp.version)
+  }
+}
+
 /**
  * Create a node from a component.
  * @param {Reference} reference The reference to the component.

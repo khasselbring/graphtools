@@ -1,5 +1,6 @@
 import find from 'lodash/fp/find'
 import curry from 'lodash/fp/curry'
+import omit from 'lodash/fp/omit'
 import * as Component from '../component'
 import * as changeSet from '../changeSet'
 
@@ -55,17 +56,19 @@ export const hasComponent = curry((comp, graph) => {
 function checkComponent (graph, comp) {
   if (!comp) {
     throw new Error('Cannot add undefined component to graph.')
-  } else if (!Component.isValid(comp)) {
-    throw new Error('Cannot add invalid component to graph. Are you missing the component-id, the version or a port?\nComponent: ' + JSON.stringify(comp))
   }
+  /* else if (!Component.isValid(comp)) {
+    throw new Error('Cannot add invalid component to graph. Are you missing the component-id, the version or a port?\nComponent: ' + JSON.stringify(comp))
+  } */
+  Component.assertValid(comp)
 }
 
 /**
  * @function
  * @name addComponent
  * @description Add a component to the graph. [Performance O(|V| + |E|)]
- * @param {PortGraph} graph The graph.
  * @param {Component} comp The component object that should be added.
+ * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph that includes the component.
  */
 export const addComponent = curry((comp, graph) => {
@@ -80,10 +83,26 @@ export const addComponent = curry((comp, graph) => {
  * @function
  * @name removeComponent
  * @description Removes a component from the graph. [Performance O(|V| + |E|)]
- * @param {PortGraph} graph The graph.
  * @param {Component|string} comp The component that shall be removed, either the component object or the component id.
+ * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph without the given component.
  */
 export const removeComponent = curry((comp, graph) => {
   return changeSet.applyChangeSet(graph, changeSet.removeComponent(Component.id(comp)))
+})
+
+/**
+ * @function
+ * @name updateComponent
+ * @description Update an existing component in the graph.
+ * @param {Component|string} comp The component that will be update, either the component object or the component id.
+ * @param {Object} merge Updated values of the component. It is not possible to change the component id with this method.
+ * @param {PortGraph} graph The graph
+ */
+export const updateComponent = curry((comp, merge, graph) => {
+  if (!hasComponent(comp, graph)) {
+    throw new Error('Cannot update non existing component: "' + Component.id(comp) + '"')
+  }
+  return changeSet.applyChangeSet(graph,
+    changeSet.updateComponent(Component.id(comp), omit('componentId', merge)))
 })
