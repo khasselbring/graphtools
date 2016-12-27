@@ -145,7 +145,7 @@ describe('Rewrite basic API', () => {
     })
   })
 
-  it.only('Can replace nodes in compounds without affecting their edges', () => {
+  it('Can replace nodes in compounds without affecting their edges', () => {
     var cmp = Graph.flow(
       Graph.addNode({
         name: 'Source',
