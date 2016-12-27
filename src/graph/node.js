@@ -278,7 +278,7 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cb) => {
   }
   var parentGraph = node(basePath, graph)
   // remove node in its compound and replace the graphs on the path
-  return replaceNode(basePath, removeNode(pathRest(path), parentGraph, ...cb), graph)
+  return replaceNode(basePath, removeNodeInternal(pathRest(path), deleteEdges parentGraph, ...cb), graph)
 })
 
 /**

@@ -145,7 +145,7 @@ describe('Rewrite basic API', () => {
     })
   })
 
-  it('Can replace nodes in compounds without affecting their edges', () => {
+  it.only('Can replace nodes in compounds without affecting their edges', () => {
     var cmp = Graph.flow(
       Graph.addNode({
         name: 'Source',
@@ -165,6 +165,7 @@ describe('Rewrite basic API', () => {
     expect(Graph.edges(graph)).to.have.length(1)
     var node = Graph.nodesDeepBy((n) => n.name === 'Source', graph)[0]
     var newNode = _.cloneDeep(node)
+    debugger
     var newGraph = Graph.replaceNode(node, newNode, graph)
     expect(Graph.edges(newGraph)).to.have.length(1)
   })

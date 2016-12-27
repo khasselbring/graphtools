@@ -5,7 +5,7 @@ import * as Graph from '../src/graph'
 
 var expect = chai.expect
 
-describe.only('Components', () => {
+describe('Components', () => {
   describe('Manipulating components in graphs', () => {
     it('Should be possible to add a component', () => {
       var graph = Graph.addComponent({componentId: 'A', ports: [{port: 'X', kind: 'output', type: 'X'}], version: '0.0.0'}, Graph.empty())
