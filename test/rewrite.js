@@ -165,7 +165,6 @@ describe('Rewrite basic API', () => {
     expect(Graph.edges(graph)).to.have.length(1)
     var node = Graph.nodesDeepBy((n) => n.name === 'Source', graph)[0]
     var newNode = _.cloneDeep(node)
-    debugger
     var newGraph = Graph.replaceNode(node, newNode, graph)
     expect(Graph.edges(newGraph)).to.have.length(1)
   })
