@@ -6,6 +6,7 @@ import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
 import _ from 'lodash'
 import * as Port from './port'
+import * as Node from './node'
 
 function normalizeStructure (edge) {
   if (!_.has(edge, 'from') || !_.has(edge, 'to')) {
@@ -13,10 +14,17 @@ function normalizeStructure (edge) {
   }
   var layer = edge.layer || 'dataflow'
   if (layer !== 'dataflow') {
-    return edge
+    var newEdge = _.clone(edge)
+    if (Node.isValid(edge.from)) {
+      newEdge.from = Node.id(edge.from)
+    }
+    if (Node.isValid(edge.to)) {
+      newEdge.to = Node.id(edge.to)
+    }
+    return newEdge
   }
-  if ((typeof (edge.from) === 'string' && edge.from[0] === '/')
-    || (typeof(edge.to) === 'string' && edge.to[0] === '/')) {
+  if ((typeof (edge.from) === 'string' && edge.from[0] === '/') ||
+    (typeof (edge.to) === 'string' && edge.to[0] === '/')) {
     return merge(edge, {query: true,
         from: (Port.isPort(edge.from)) ? Port.normalize(edge.from) : edge.from,
         to: (Port.isPort(edge.to)) ? Port.normalize(edge.to) : edge.to

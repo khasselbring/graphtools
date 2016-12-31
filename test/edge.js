@@ -25,4 +25,11 @@ describe('Edge API', () => {
     expect(Edge.equal(edge1, edge4)).to.be.false
     expect(Edge.equal(edge1, edge5)).to.be.false
   })
+
+  it('can normalize a non dataflow edge', () => {
+    const newEdge = Edge.normalize({from: {id: 'A', ports: [{port: 'a', kind: 'input', type: 'a'}]}, to: 'B', layer: 'other'})
+    expect(newEdge.from).to.equal('A')
+    const newEdge2 = Edge.normalize({from: 'A', to: {id: 'B', ports: [{port: 'a', kind: 'input', type: 'a'}]}, layer: 'other'})
+    expect(newEdge2.to).to.equal('B')
+  })
 })
