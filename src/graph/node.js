@@ -316,12 +316,13 @@ function nodeParentPath (path, graph) {
  * @returns {PortGraph} A new graph in which the old node was replaces by the new one.
  */
 export const replaceNode = curry((path, newNode, graph) => {
+  var preNode = node(path, graph)
   return flow(
     removeNodeInternal(path, false),
     addNodeByPath(nodeParentPath(path, graph), newNode),
     (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
     rePath,
-    realizeEdgesForNode(path)
+    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(path) : (graph) => graph
   )(graph)
 })
 

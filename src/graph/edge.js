@@ -6,7 +6,7 @@ import map from 'lodash/fp/map'
 import flatten from 'lodash/fp/flatten'
 import compact from 'lodash/fp/compact'
 import groupBy from 'lodash/fp/groupBy'
-import cloneDeep from 'lodash/fp/cloneDeep'
+import toPairs from 'lodash/fp/toPairs'
 import * as Port from '../port'
 import * as Node from '../node'
 import * as Edge from '../edge'
@@ -249,7 +249,7 @@ const realizePort = curry((node, type, port) => {
   if (Node.equal(Port.node(port), node)) {
     const pName = Port.portName(port)
     if (pName === parseInt(pName).toString()) {
-      return merge(Node[type + 'port'](parseInt(pName)))
+      return Node[type + 'Port'](parseInt(pName), node)
     }
   }
 })
@@ -263,12 +263,8 @@ function inputType (edge, port) {
 
 function realizeEdge (edge, node) {
   return {
-    from: {
-      port: realizePort(node, inputType(edge, 'from'), edge.from)
-    },
-    to: {
-      port: realizePort(node, inputType(edge, 'to'), edge.to)
-    }
+    from: realizePort(node, inputType(edge, 'from'), edge.from),
+    to: realizePort(node, inputType(edge, 'to'), edge.to)
   }
 }
 
@@ -299,7 +295,8 @@ export const realizeEdgesForNode = curry((loc, graph) => {
   const nodeElem = node(loc, graph)
   if (Node.isReference(nodeElem)) return graph
   const edges = incidents(loc, graph)
-  const cs = edges.map((e) => [e.parent, changeSet.updateEdge(e, realizeEdge(e, node))])
-  return graph
-  // return groupBy((a) => a[0], cs).reduce((gr, cs) => changeSet.applyChangeSetInplace(gr, cs[1]), cloneDeep(graph))
+  const cs = edges.map((e) => [e.parent, changeSet.updateEdge(e, realizeEdge(e, nodeElem))])
+  return toPairs(groupBy((a) => a[0], cs))
+    .map((v) => [v[0], v[1].map((i) => i[1])])
+    .reduce((gr, c) => replaceNode(c[0], changeSet.applyChangeSets(node(c[0], gr), c[1]), gr), graph)
 })

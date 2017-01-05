@@ -870,5 +870,28 @@ describe('Basic graph functions', () => {
       expect(out2).to.be.ok
       expect(Graph.edges(out2)).to.have.length(1)
     })
+
+    it('Resolves @Number notations when replacing references', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ref: 'a'}),
+        Graph.addNode({name: 'b', ref: 'b'}),
+        Graph.addEdge({from: 'a@0', to: 'b@0'})
+      )()
+      var newGraph = Graph.replaceNode('a', {componentId: 'a', name: 'a', ports: [{port: 'aOut', kind: 'output', type: 'generic'}]}, graph)
+      expect(Graph.edges(newGraph)[0].from.port).to.equal('aOut')
+    })
+
+    it('Resolves @Number from and to compound nodes', () => {
+      var cmpd = Graph.flow(
+        Graph.addNode({name: 'a', ref: 'a'}),
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'input', type: 'a'}]}))
+      var graph = Graph.flow(
+        Graph.addNode(cmpd),
+        Graph.addEdge({from: 'c@out', to: '»c»a@0'})
+      )()
+
+      var newGraph = Graph.replaceNode('»c»a', {componentId: 'a', name: 'a', ports: [{port: 'aIn', kind: 'input', type: 'generic'}]}, graph)
+      expect(Graph.edges(newGraph)[0].to.port).to.equal('aIn')
+    })
   })
 })
