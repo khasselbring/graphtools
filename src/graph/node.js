@@ -16,7 +16,7 @@ import {flow} from './flow'
 import {nodeBy, mergeNodes, rePath, replaceEdgeIDs} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
-import {removeEdge} from './edge'
+import {removeEdge, realizeEdgesForNode} from './edge'
 
 /**
  * @function
@@ -320,7 +320,8 @@ export const replaceNode = curry((path, newNode, graph) => {
     removeNodeInternal(path, false),
     addNodeByPath(nodeParentPath(path, graph), newNode),
     (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
-    rePath
+    rePath,
+    realizeEdgesForNode(path)
   )(graph)
 })
 

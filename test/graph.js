@@ -674,6 +674,20 @@ describe('Basic graph functions', () => {
       expect(Graph.edges(Graph.removeEdge({from: 'a@out', to: 'b@in'}, graph)).length).to.equal(0)
     })
 
+    it('Can remove an edge inside a compound', () => {
+      var cmpd = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
+      )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'output', type: 'a'}]}))
+      var graph = Graph.flow(
+        Graph.addNode(cmpd),
+        Graph.addEdge({from: '»c»a@out', to: '»c»b@in'})
+      )()
+      var edge = Graph.inIncident('»c»b', graph)
+      expect(Graph.edges(Graph.removeEdge(edge, graph)).length).to.equal(0)
+      expect(Graph.edges(Graph.removeEdge({from: '»c»a@out', to: '»c»b@in'}, graph)).length).to.equal(0)
+    })
+
     it.skip('Supports special syntax', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),

@@ -5,6 +5,8 @@ import merge from 'lodash/fp/merge'
 import map from 'lodash/fp/map'
 import flatten from 'lodash/fp/flatten'
 import compact from 'lodash/fp/compact'
+import groupBy from 'lodash/fp/groupBy'
+import cloneDeep from 'lodash/fp/cloneDeep'
 import * as Port from '../port'
 import * as Node from '../node'
 import * as Edge from '../edge'
@@ -12,14 +14,18 @@ import {equal, isRoot} from '../compoundPath'
 import {node, hasNode, nodesDeep, parent, replaceNode} from './node'
 import * as changeSet from '../changeSet'
 import {location, identifies as locIdentifies} from '../location'
+import {incidents} from './connections'
 
 /**
- * Returns a list of edges in the graph.
+ * Returns a list of edges in the graph. Each edge also has an extra field identifying the parent
+ * node to which the edge belongs in the hierarchy.
+ * @example <caption>Getting the edges in a graph</caption>
+ * edges(graph) // -> [{from: ..., to: ..., layer: ..., parent: '#...'}, ...]
  * @param {PortGraph} graph The graph.
  * @returns {Edges[]} A list of edges.
  */
 export function edges (graph) {
-  return compact(flatten(map('edges', nodesDeep(graph).concat([graph]))))
+  return compact(flatten(map((parent) => (parent.edges || []).map((e) => merge(e, {parent: Node.id(parent)})), nodesDeep(graph).concat([graph]))))
 }
 
 export const checkEdge = curry((graph, edge) => {
@@ -180,7 +186,15 @@ export const removeEdge = curry((edge, graph) => {
   if (!hasEdge(normEdge, graph)) {
     throw new Error('Cannot delete edge that is not in the graph.')
   }
-  return changeSet.applyChangeSet(graph, changeSet.removeEdge(normEdge))
+  var parent = edgeParent(edge, graph)
+  const cs = changeSet.removeEdge(normEdge)
+  if (isRoot(parent) || equal(parent, graph.path)) {
+    return changeSet.applyChangeSet(graph, cs)
+  } else {
+    var comp = node(parent, graph)
+    var newComp = changeSet.applyChangeSet(comp, cs)
+    return replaceNode(parent, newComp, graph)
+  }
 })
 
 function identifies (edge, graph) {
@@ -229,4 +243,63 @@ export const edge = curry((edge, graph) => {
     throw new Error('Edge is not defined in the graph: ' + JSON.stringify(edge))
   }
   return retEdge
+})
+
+const realizePort = curry((node, type, port) => {
+  if (Node.equal(Port.node(port), node)) {
+    const pName = Port.portName(port)
+    if (pName === parseInt(pName).toString()) {
+      return merge(Node[type + 'port'](parseInt(pName)))
+    }
+  }
+})
+
+function inputType (edge, port) {
+  if (port === 'from' && edge.innerCompoundInput) return 'output'
+  if (port === 'from' && !edge.innerCompoundInput) return 'input'
+  if (port === 'to' && edge.innerCompoundOutput) return 'input'
+  if (port === 'to' && edge.innerCompoundOutput) return 'output'
+}
+
+function realizeEdge (edge, node) {
+  return {
+    from: {
+      port: realizePort(node, inputType(edge, 'from'), edge.from)
+    },
+    to: {
+      port: realizePort(node, inputType(edge, 'to'), edge.to)
+    }
+  }
+}
+
+/**
+ * @function
+ * @name realizeEdgesForNode
+ * @description This goes through all edges that are connected to the given node and
+ * realizes them, if a node reference was replaced by an actual node. If it was replaced by another
+ * reference nothing will happen.
+ * @example <caption>Where it is used, when modifying graphs.</caption>
+ * var graph = Graph.flow(
+ *   Graph.addNode({ref: 'a', name: 'a', ports: []}),
+ *   Graph.addNode({ref: 'b', name: 'b', ports: []}),
+ *   Graph.addEdge({from: 'a@0', to: 'b@0'}),
+ *   // the following command will call realizeEdgesForNode
+ *   // it will replace the 0-th port in the edge with the 'outA' port.
+ *   Graph.replaceNode('a', {componentId: 'a', ports: [{port: 'outA', kind: 'input', type: 'generic'}]})
+ *   // the following command will call realizeEdgesForNode
+ *   // it will replace the 0-th port in the edge with the 'outA' port.
+ *   Graph.replaceNode('b', {componentId: 'b', ports: [{port: 'inB', kind: 'input', type: 'generic'}]})
+ * )()
+ * // after this the graph will have an edge {from: 'a@outA', to: 'b@inB'} and not {from: 'a@0', to: 'b@0'} anymore.
+ * @param {Location} loc A location identifier for the node whose edges should be updated.
+ * @param {Portgraph} graph The graph to perform the operation on
+ * @returns {Portgraph} A new graph in which the edges for the given node are realized (if possible).
+ */
+export const realizeEdgesForNode = curry((loc, graph) => {
+  const nodeElem = node(loc, graph)
+  if (Node.isReference(nodeElem)) return graph
+  const edges = incidents(loc, graph)
+  const cs = edges.map((e) => [e.parent, changeSet.updateEdge(e, realizeEdge(e, node))])
+  return graph
+  // return groupBy((a) => a[0], cs).reduce((gr, cs) => changeSet.applyChangeSetInplace(gr, cs[1]), cloneDeep(graph))
 })

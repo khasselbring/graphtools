@@ -86,6 +86,15 @@ export function insertEdge (newEdge) {
 }
 
 /**
+ * Creates a change set that inserts a new edge into the edge list
+ * @param {Object} newEdge The edge that should be inserted.
+ * @returns {ChangeSet} A change set containing the insertion operation.
+ */
+export function updateEdge (edge, mergeEdge) {
+  return {type: 'changeSet', operation: 'mergeEdge', query: edge, value: mergeEdge}
+}
+
+/**
  * Creates a change set that removes the edge `edge`.
  * @param {Object} edge The edge to remove.
  * @returns {ChangeSet} The change set containing the deletion operation.
@@ -187,6 +196,11 @@ const applyMergeByComponent = (graph, cId, value) => {
   return _.merge(graph.components[idx], value)
 }
 
+const applyMergeByEdge = (graph, edge, value) => {
+  var idx = _.findIndex(graph.edges, (e) => Edge.equal(edge, e))
+  return _.merge(graph.edges[idx], value)
+}
+
 /**
  * Apply a changeSet on the given graph.
  * @param {Object} graph The graph in JSON format that should be changed.
@@ -229,6 +243,10 @@ export function applyChangeSetInplace (graph, changeSet) {
   }
   if (changeSet.operation === 'mergeComponent') {
     applyMergeByComponent(graph, changeSet.query, changeSet.value)
+    return graph
+  }
+  if (changeSet.operation === 'mergeEdge') {
+    applyMergeByEdge(graph, changeSet.query, changeSet.value)
     return graph
   }
   var refs = getReferences(graph, changeSet)

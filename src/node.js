@@ -179,9 +179,9 @@ export function inputPorts (node, ignoreCompounds = false) {
 /**
  * @function
  * @name port
- * @description Returns the port data for a given port.
- * @param {Node} node The node which has the port.
+ * @description Returns the port data for a given node and port.
  * @param {String|Port} name The name of the port or a port object.
+ * @param {Node} node The node which has the port.
  * @returns {Port} The port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
@@ -190,6 +190,48 @@ export const port = curry((name, node) => {
     return port(Port.portName(name), node)
   }
   var curPort = find((p) => Port.portName(p) === name, node.ports)
+  if (!curPort) {
+    throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
+  }
+  return curPort
+})
+
+/**
+ * @function
+ * @name inputPort
+ * @description Returns the input port data for a given node and port name / index.
+ * @param {String|Port|Number} name The name of the input port, a port object or the index.
+ * @param {Node} node The node which has the port.
+ * @returns {Port} The input port data.
+ * @throws {Error} If no port with the given name exists in this node an error is thrown.
+ */
+export const inputPort = curry((name, node) => {
+  if (Port.isPort(name)) {
+    return inputPort(Port.portName(name), node)
+  }
+  if (typeof (name) === 'number') return inputPorts(node)[name]
+  var curPort = find((p) => Port.portName(p) === name, inputPorts(node))
+  if (!curPort) {
+    throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
+  }
+  return curPort
+})
+
+/**
+ * @function
+ * @name outputPort
+ * @description Returns the output port data for a given node and port name / index.
+ * @param {String|Port|Number} name The name of the output port, a port object or the index.
+ * @param {Node} node The node which has the port.
+ * @returns {Port} The output port data.
+ * @throws {Error} If no port with the given name exists in this node an error is thrown.
+ */
+export const outputPort = curry((name, node) => {
+  if (Port.isPort(name)) {
+    return outputPort(Port.portName(name), node)
+  }
+  if (typeof (name) === 'number') return outputPorts(node)[name]
+  var curPort = find((p) => Port.portName(p) === name, outputPorts(node))
   if (!curPort) {
     throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
   }
