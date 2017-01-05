@@ -317,6 +317,7 @@ function nodeParentPath (path, graph) {
  */
 export const replaceNode = curry((path, newNode, graph) => {
   var preNode = node(path, graph)
+  if (equal(preNode.path, graph.path)) return newNode
   return flow(
     removeNodeInternal(path, false),
     addNodeByPath(nodeParentPath(path, graph), newNode),

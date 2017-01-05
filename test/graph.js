@@ -877,9 +877,9 @@ describe('Basic graph functions', () => {
         Graph.addNode({name: 'b', ref: 'b'}),
         Graph.addEdge({from: 'a@0', to: 'b@0'})
       )()
-      var newGraph = Graph.replaceNode('a', {componentId: 'a', name: 'a', ports: [{port: 'aOut', kind: 'output', type: 'generic'}]}, graph)
+      var newGraph = Graph.replaceNode('a', {componentId: 'a', atomic: true, name: 'a', ports: [{port: 'aOut', kind: 'output', type: 'generic'}]}, graph)
       expect(Graph.edges(newGraph)[0].from.port).to.equal('aOut')
-      var newGraphIn = Graph.replaceNode('b', {componentId: 'b', name: 'b', ports: [{port: 'bIn', kind: 'input', type: 'generic'}]}, graph)
+      var newGraphIn = Graph.replaceNode('b', {componentId: 'b', atomic: true, name: 'b', ports: [{port: 'bIn', kind: 'input', type: 'generic'}]}, graph)
       expect(Graph.edges(newGraphIn)[0].to.port).to.equal('bIn')
     })
 
@@ -892,7 +892,7 @@ describe('Basic graph functions', () => {
         Graph.addEdge({from: 'c@out', to: '»c»a@0'})
       )()
 
-      var newGraph = Graph.replaceNode('»c»a', {componentId: 'a', name: 'a', ports: [{port: 'aIn', kind: 'input', type: 'generic'}]}, graph)
+      var newGraph = Graph.replaceNode('»c»a', {componentId: 'a', atomic: true, name: 'a', ports: [{port: 'aIn', kind: 'input', type: 'generic'}]}, graph)
       expect(Graph.edges(newGraph)[0].to.port).to.equal('aIn')
     })
   })

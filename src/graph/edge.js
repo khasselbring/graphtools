@@ -255,10 +255,10 @@ const realizePort = curry((node, type, port) => {
 })
 
 function inputType (edge, port) {
-  if (port === 'from' && edge.innerCompoundInput) return 'output'
-  if (port === 'from' && !edge.innerCompoundInput) return 'input'
-  if (port === 'to' && edge.innerCompoundOutput) return 'input'
-  if (port === 'to' && !edge.innerCompoundOutput) return 'output'
+  if (port === 'from' && !edge.innerCompoundOutput) return 'output'
+  if (port === 'from' && edge.innerCompoundOutput) return 'input'
+  if (port === 'to' && !edge.innerCompoundInput) return 'input'
+  if (port === 'to' && edge.innerCompoundInput) return 'output'
 }
 
 function realizeEdge (edge, node) {
