@@ -879,6 +879,8 @@ describe('Basic graph functions', () => {
       )()
       var newGraph = Graph.replaceNode('a', {componentId: 'a', name: 'a', ports: [{port: 'aOut', kind: 'output', type: 'generic'}]}, graph)
       expect(Graph.edges(newGraph)[0].from.port).to.equal('aOut')
+      var newGraphIn = Graph.replaceNode('b', {componentId: 'b', name: 'b', ports: [{port: 'bIn', kind: 'input', type: 'generic'}]}, graph)
+      expect(Graph.edges(newGraphIn)[0].to.port).to.equal('bIn')
     })
 
     it('Resolves @Number from and to compound nodes', () => {

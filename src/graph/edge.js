@@ -258,7 +258,7 @@ function inputType (edge, port) {
   if (port === 'from' && edge.innerCompoundInput) return 'output'
   if (port === 'from' && !edge.innerCompoundInput) return 'input'
   if (port === 'to' && edge.innerCompoundOutput) return 'input'
-  if (port === 'to' && edge.innerCompoundOutput) return 'output'
+  if (port === 'to' && !edge.innerCompoundOutput) return 'output'
 }
 
 function realizeEdge (edge, node) {
