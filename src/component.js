@@ -17,10 +17,14 @@
  * @module Component */
 
 import curry from 'lodash/fp/curry'
+import omit from 'lodash/fp/omit'
+import zip from 'lodash/fp/zip'
+import fromPairs from 'lodash/fp/fromPairs'
+import merge from 'lodash/fp/merge'
 import _ from 'lodash'
 import * as Port from './port'
 import {children, isCompound} from './compound'
-import {create} from './node'
+import {create, id as nodeID} from './node'
 import semver from 'semver'
 
 const OUTPUT = 'output'
@@ -145,6 +149,17 @@ export function assertValid (comp) {
   }
 }
 
+const mapEdgeIDs = curry((map, edge) => {
+  return merge(edge, {
+    from: {
+      node: (map[edge.from.node]) ? map[edge.from.node] : edge.from.node
+    },
+    to: {
+      node: (map[edge.to.node]) ? map[edge.to.node] : edge.to.node
+    }
+  })
+})
+
 /**
  * Create a node from a component.
  * @param {Reference} reference The reference to the component.
@@ -153,7 +168,12 @@ export function assertValid (comp) {
  */
 export function createNode (reference, comp) {
   if (isCompound(comp)) {
-    return _.merge({}, reference, comp, {nodes: children(comp).map(create)})
+    const newNodes = children(comp).map(omit('id')).map(create)
+    const idMapping = fromPairs(zip(children(comp).map(nodeID), newNodes.map(nodeID)))
+    return _.merge({}, reference, comp, {
+      nodes: newNodes,
+      edges: (comp.edges || []).map(mapEdgeIDs(idMapping))
+    })
   }
   return _.merge({}, reference, comp)
 }
