@@ -51,26 +51,26 @@ describe('Change Sets', () => {
 
   it('can remove an edge', () => {
     var graph = changeSet.applyChangeSets(Graph.empty(), [
-      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
-      changeSet.insertNode({id: 'b', ports: [{port: 'a', kind: 'input', type: 'number'}]}),
-      changeSet.insertEdge({ from: 'a', to: 'b', layer: 'c' })
+      changeSet.insertNode({id: '#a', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
+      changeSet.insertNode({id: '#b', ports: [{port: 'a', kind: 'input', type: 'number'}]}),
+      changeSet.insertEdge({ from: '#a', to: '#b', layer: 'c' })
     ])
-    var cS = changeSet.removeEdge({ from: 'a', to: 'b', layer: 'c' })
+    var cS = changeSet.removeEdge({ from: '#a', to: '#b', layer: 'c' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.edges(newGraph)).to.have.length(0)
 
     graph = changeSet.applyChangeSets(Graph.empty(), [
-      changeSet.insertNode({id: 'a', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
-      changeSet.insertNode({id: 'b', ports: [{port: 'a', kind: 'input', type: 'number'}]}),
-      changeSet.insertNode({id: 'c', ports: [{port: 'a', kind: 'output', type: 'number'}]}),
-      changeSet.insertNode({id: 'd', ports: [{port: 'a', kind: 'input', type: 'number'}]}),
-      changeSet.insertEdge({ from: {node: 'a', port: 'a'}, to: {node: 'b', port: 'a'}, layer: 'dataflow' }),
-      changeSet.insertEdge({ from: {node: 'c', port: 'a'}, to: {node: 'd', port: 'a'}, layer: 'dataflow' })
+      changeSet.insertNode({id: '#a', ports: [{port: 'a', kind: 'output', type: 'number'}], path: ['#a']}),
+      changeSet.insertNode({id: '#b', ports: [{port: 'a', kind: 'input', type: 'number'}], path: ['#b']}),
+      changeSet.insertNode({id: '#c', ports: [{port: 'a', kind: 'output', type: 'number'}], path: ['#c']}),
+      changeSet.insertNode({id: '#d', ports: [{port: 'a', kind: 'input', type: 'number'}], path: ['#d']}),
+      changeSet.insertEdge({ from: {node: '#a', port: 'a'}, to: {node: '#b', port: 'a'}, layer: 'dataflow' }),
+      changeSet.insertEdge({ from: {node: '#c', port: 'a'}, to: {node: '#d', port: 'a'}, layer: 'dataflow' })
     ])
-    cS = changeSet.removeEdge({ from: {node: 'c', port: 'a'}, to: {node: 'd', port: 'a'}, layer: 'dataflow' })
+    cS = changeSet.removeEdge({ from: {node: '#c', port: 'a'}, to: {node: '#d', port: 'a'}, layer: 'dataflow' })
     newGraph = changeSet.applyChangeSet(graph, cS)
     expect(Graph.edges(newGraph)).to.have.length(1)
-    expect(Graph.edges(newGraph)[0].from.node).to.eql('a')
+    expect(Graph.edges(newGraph)[0].from.node).to.eql('#a')
   })
 
   it('can set meta information', () => {

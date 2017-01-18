@@ -26,6 +26,7 @@ import {incidents} from './connections'
  */
 export function edges (graph) {
   return compact(flatten(map((parent) => (parent.edges || []).map((e) => merge(e, {parent: Node.id(parent)})), nodesDeep(graph).concat([graph]))))
+    .map((edge) => (edge.layer === 'dataflow') ? Edge.setType(Port.type(node(edge.from, graph)), edge) : edge)
 }
 
 export const checkEdge = curry((graph, edge) => {

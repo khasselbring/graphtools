@@ -100,3 +100,31 @@ export const equal = curry((edge1, edge2) => {
 export function setPath (edge, path) {
   return edge
 }
+
+/**
+ * Gets the type of an edge. Note that not every edge must have a type and that the type is not stored inside the json document.
+ * If you use the graph functions to iterate over edges you always get the type (if available) with the edge.
+ * @example <caption>Get an edge via a graph method and then get its edge.</caption>
+ * var edge = Graph.incident(port, graph)
+ * var type = Edge.type(edge)
+ * @example <caption>It will yield undefined if you simply access an edge in the json document, do not do that.</caption>
+ * var edge = graph.edges[0]
+ * //this will return undefined
+ * var type = Edge.type(edge) // = undefined
+ * @param {Edge} edge The edge to use.
+ * @returns {Type|undefined} Either a real type, a typename or `undefined`. Some edges do not have type information. Usually non-dataflow edges like
+ * recursion indicators. Those will yield `undefined`.
+ */
+export function type (edge) {
+  return edge.type
+}
+
+/**
+ * Explicitly sets the type of the edge. The type of an edge is determined by the connecting ports.
+ * @param {Type} type The type of the edge.
+ * @param {Edge} edge The edge that should get the type.
+ * @returns {Edge} A new edge that has a field for the type.
+ */
+export function setType (type, edge) {
+  return merge({type}, edge)
+}

@@ -155,7 +155,7 @@ export function setPort (node, port, update) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of output ports.
  */
-export function outputPorts (node, ignoreCompounds = false) {
+export function outputPorts (node, ignoreCompounds = true) {
   if (!ignoreCompounds && !node.atomic) {
     return ports(node)
   } else {
@@ -168,7 +168,7 @@ export function outputPorts (node, ignoreCompounds = false) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of input ports.
  */
-export function inputPorts (node, ignoreCompounds = false) {
+export function inputPorts (node, ignoreCompounds = true) {
   if (!ignoreCompounds && !node.atomic) {
     return ports(node)
   } else {
