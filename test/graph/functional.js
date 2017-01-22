@@ -30,5 +30,19 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode('»lambda»cmp', graph)).to.be.true
       expect(Graph.hasNode('»lambda»cmp»inner', graph)).to.be.true
     })
+
+    it('Replaces nodes inside lambdas correctly', () => {
+      var l = Lambda.createLambda({name: 'ref', ref: 'X'}, {name: 'lambda'})
+      var graph = Graph.flow(
+        Graph.addNode(l),
+        Graph.replaceNode('»lambda»ref', Node.create({name: 'ref', ports: [{port: 'a', kind: 'output', type: 'a'}]}))
+      )()
+      expect(Graph.hasNode('»lambda»ref', graph)).to.be.true
+      var ref = Graph.node('»lambda»ref', graph)
+      expect(ref).to.have.property('ports')
+      expect(ref.ports).to.have.length(1)
+      expect(ref.ports[0].port).to.equal('a')
+      expect(Graph.hasNode(ref.path, graph)).to.be.true
+    })
   })
 })

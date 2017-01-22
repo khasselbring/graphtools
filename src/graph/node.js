@@ -150,11 +150,26 @@ function checkNode (graph, node) {
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
 export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
-  if (isRoot(parentPath)) {
+  if (hasNode(parentPath, graph) && Lambda.isValid(node(parentPath, graph))) {
+    var parentGraph = node(parentPath, graph)
+    var impl = setPath(nodeData, parentPath)
+    if (cb.length > 0) {
+      cb[0](impl)
+    }
+    return Lambda.setImplementation(impl, parentGraph)
+  } else if (isRoot(parentPath)) {
     return addNode(nodeData, graph, ...cb)
   } else {
     var parentGraph = node(parentPath, graph)
-    return replaceNode(parentPath, addNode(nodeData, parentGraph, ...cb), graph)
+    if (Lambda.isValid(parentGraph)) {
+      var impl = setPath(nodeData, parentPath)
+      if (cb.length > 0) {
+        cb[0](impl)
+      }
+      return replaceNode(parentPath, Lambda.setImplementation(impl, parentGraph), graph)
+    } else {
+      return replaceNode(parentPath, addNode(nodeData, parentGraph, ...cb), graph)
+    }
   }
 })
 
@@ -301,11 +316,11 @@ const unID = (node) => {
 }
 
 function nodeParentPath (path, graph) {
-  if (isCompoundPath(path)) {
+  /* if (isCompoundPath(path)) {
     return pathParent(path)
-  } else {
+  } else { */
     return pathParent(node(path, graph).path)
-  }
+  // }
 }
 
 /**
