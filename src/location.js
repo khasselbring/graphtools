@@ -8,7 +8,7 @@
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
-import {nodeByPath, idToPath} from './graph/internal'
+import {nodeByPath, idToPath, nodes} from './graph/internal'
 import {isPort} from './port'
 import {isValid as isNode, equal, id, isID, isReference} from './node'
 import {rest, prefix} from './compoundPath'
@@ -85,7 +85,7 @@ function fromString (str, allowsPorts = true) {
 
 function idify (path, graph) {
   if (path.length === 0) return path
-  var node = graph.nodes.filter(equal(path[0]))[0]
+  var node = nodes(graph).filter(equal(path[0]))[0]
   if (!node) {
     if (equal(path[0], graph)) {
       return [id(graph)].concat(idify(rest(path), graph))

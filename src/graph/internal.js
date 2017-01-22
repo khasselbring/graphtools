@@ -14,6 +14,7 @@ import * as Node from '../node'
 import {equal as pathEqual, isRoot, relativeTo, join} from '../compoundPath'
 import {isCompound} from '../compound'
 import * as changeSet from '../changeSet'
+import * as Lambda from '../functional/lambda'
 
 /**
  * @function
@@ -24,7 +25,7 @@ import * as changeSet from '../changeSet'
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodes = (graph) => {
-  return graph.nodes
+  return (Lambda.isValid(graph)) ? [Lambda.implementation(graph)] : graph.nodes || []
 }
 
 function nodesDeepRec (graph, parents) {
@@ -39,7 +40,7 @@ function nodesDeepRec (graph, parents) {
  */
 export function nodesDeep (graph) {
   return nodes(graph)
-    .concat(nodesDeepRec(graph, nodes(graph).filter(Node.hasChildren))).concat([graph])
+    .concat(nodesDeepRec(graph, nodes(graph))).concat([graph])
 }
 
 /**
@@ -132,7 +133,7 @@ const rePathRec = (basePath, graph) => {
   nodes(graph).forEach((n) => {
     var newPath = join(basePath, Node.id(n))
     n.path = newPath
-    if (isCompound(n)) {
+    if (isCompound(n) || Lambda.isValid(n)) {
       rePathRec(newPath, n)
     }
   })

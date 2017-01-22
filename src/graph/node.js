@@ -17,6 +17,7 @@ import {nodeBy, mergeNodes, rePath, replaceEdgeIDs} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
+import * as Lambda from '../functional/lambda'
 
 /**
  * @function
@@ -26,7 +27,7 @@ import {removeEdge, realizeEdgesForNode} from './edge'
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodes = (graph) => {
-  return graph.nodes || []
+  return (Lambda.isValid(graph)) ? [Lambda.implementation(graph)] : (graph.nodes || [])
 }
 
 /**
@@ -53,7 +54,7 @@ function nodesDeepRec (graph, parents) {
  */
 export function nodesDeep (graph) {
   return nodes(graph)
-    .concat(nodesDeepRec(graph, nodesBy(isCompound, graph)))
+    .concat(nodesDeepRec(graph, nodesBy((n) => isCompound(n) || Lambda.isValid(n), graph)))
 }
 
 /**
@@ -174,6 +175,8 @@ function setPath (node, path) {
   var nodePath = join(path, Node.id(node))
   if (isCompound(node)) {
     return compoundSetPath(node, nodePath, setPath)
+  } else if (Lambda.isValid(node)) {
+    return merge(Lambda.setImplementation(setPath(Lambda.implementation(node), nodePath), node), {path: nodePath})
   }
   return merge(node, {path: nodePath})
 }
