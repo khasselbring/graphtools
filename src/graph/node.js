@@ -241,6 +241,11 @@ export const addNode = curry((node, graph, ...cb) => {
  * @function
  * @name set
  * @description Sets properties for node.
+ * @example
+ * var graph = ...
+ * var newGraph = Graph.set({property: value}, '#nodeIDOrLocation', graph)
+ * // you can get the value via get in the newGraph
+ * var propertyValue = Graph.get('property', '#nodeIDOrLocation', graph)
  * @param {Object} value The properties to set, e.g. `{recursion: true, recursiveRoot: true}`
  * @param {Location} loc The location identifying the node in which the property should be changed.
  * @param {PortGraph} graph The graph
@@ -272,6 +277,11 @@ export const addNodeTuple = curry((node, graph, ...cb) => {
  * @function
  * @name get
  * @description Get a property of a node.
+ * @example
+ * * var graph = ...
+ * var newGraph = Graph.set({property: value}, '#nodeIDOrLocation', graph)
+ * // you can get the value via get in the newGraph
+ * var propertyValue = Graph.get('property', '#nodeIDOrLocation', graph)
  * @param {String} key The key of the property like 'recursion'
  * @param {Location} loc The location identifying the node for which the property is queried.
  * @param {PortGraph} graph The graph.
