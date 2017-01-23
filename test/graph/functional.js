@@ -44,5 +44,14 @@ describe('Basic graph functions', () => {
       expect(ref.ports[0].port).to.equal('a')
       expect(Graph.hasNode(ref.path, graph)).to.be.true
     })
+
+    it('Removes reference if the lambda implementation is replaces by component', () => {
+      var l = Lambda.createLambda({name: 'ref', ref: 'X'}, {name: 'lambda'})
+      var graph = Graph.flow(
+        Graph.addNode(l),
+        Graph.replaceNode('»lambda»ref', Node.create({name: 'ref', componentId: 'ref', ports: [{port: 'a', kind: 'output', type: 'a'}]}))
+      )()
+      expect(Graph.node('»lambda»ref', graph).ref).to.not.be.ok
+    })
   })
 })

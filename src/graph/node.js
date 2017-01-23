@@ -7,7 +7,7 @@ import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
 import setObj from 'lodash/fp/set'
 import {isCompound, setPath as compoundSetPath} from '../compound'
-import {isRoot, join, rest as pathRest, base as pathBase, parent as pathParent, isCompoundPath, relativeTo, equal} from '../compoundPath'
+import {isRoot, join, rest as pathRest, base as pathBase, parent as pathParent, relativeTo, equal} from '../compoundPath'
 import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
@@ -150,9 +150,9 @@ function checkNode (graph, node) {
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
 export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
-  if (hasNode(parentPath, graph) && Lambda.isValid(node(parentPath, graph))) {
-    var parentGraph = node(parentPath, graph)
-    var impl = setPath(nodeData, parentPath)
+  if (isRoot(parentPath) && hasNode(parentPath, graph) && Lambda.isValid(node(parentPath, graph))) {
+    let parentGraph = node(parentPath, graph)
+    let impl = setPath(nodeData, parentPath)
     if (cb.length > 0) {
       cb[0](impl)
     }
@@ -160,9 +160,9 @@ export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
   } else if (isRoot(parentPath)) {
     return addNode(nodeData, graph, ...cb)
   } else {
-    var parentGraph = node(parentPath, graph)
+    let parentGraph = node(parentPath, graph)
     if (Lambda.isValid(parentGraph)) {
-      var impl = setPath(nodeData, parentPath)
+      let impl = setPath(nodeData, parentPath)
       if (cb.length > 0) {
         cb[0](impl)
       }
@@ -329,7 +329,7 @@ function nodeParentPath (path, graph) {
   /* if (isCompoundPath(path)) {
     return pathParent(path)
   } else { */
-    return pathParent(node(path, graph).path)
+  return pathParent(node(path, graph).path)
   // }
 }
 
@@ -337,7 +337,6 @@ function nodeParentPath (path, graph) {
  * @function
  * @name replaceNode
  * @description Replace a node in the graph with another one. It tries to keep all edges.
- * TODO: currently it will silently ignore the fact that edges are not valid anymore after replacing!
  * @param {Location} loc A location specifying the node to replace
  * @param {Node} newNode The new node that replaces the old one.
  * @param {PortGraph} graph The graph

@@ -11,7 +11,7 @@ import * as changeSet from '../changeSet'
  * @retuns {Components[]} A list of components that are defined in the graph.
  */
 export function components (graph) {
-  return graph.components
+  return graph.components || []
 }
 
 /**

@@ -110,9 +110,10 @@ export function replaceEdgeIDs (edges, id, replaceId) {
  */
 export const mergeNodes = curry((oldNode, newNode, graph, ...cb) => {
   var path = idToPath(newNode.id, graph)
+  var refChange = Node.isReference(oldNode) && !Node.isReference(newNode)
   var mergeGraph = changeSet.applyChangeSet(graph,
     changeSet.updateNode(relativeTo(path, graph.path), merge(
-      pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id)})))
+      pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id), ref: (refChange) ? null : undefined})))
   if (cb.length > 0) {
     cb[0](nodeByPath(path, graph))
   }

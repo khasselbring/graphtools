@@ -182,11 +182,20 @@ const applyMergeByPath = (graph, path, value) => {
   var idx = _.findIndex(graph.nodes, Node.equal(path[0]))
   if (path.length === 1) {
     if (idx > -1) {
-      return _.merge(graph.nodes[idx], value)
+      _.merge(graph.nodes[idx], value)
+      return
+    } else if (graph.componentId === 'functional/lambda') {
+      // throw new Error('Handling lambdas in merge by path not yet supported')
+      // it is possible that the following line does, what we want, but its completely untested..
+      // it also might be possible, that this case will never occur.
+      _.merge(graph.λ, value)
+      return
     }
   } else {
-    if (idx > -1 && isCompound(graph.nodes[idx])) {
+    if (idx > -1 && (isCompound(graph.nodes[idx]) || graph.nodes[idx].componentId === 'functional/lambda')) {
       applyMergeByPath(graph.nodes[idx], path.slice(1), value)
+    } else if (graph.componentId === 'functional/lambda') {
+      applyMergeByPath(graph.λ, path.slice(1), value)
     }
   }
 }
