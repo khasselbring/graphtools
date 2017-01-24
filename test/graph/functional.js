@@ -54,5 +54,21 @@ describe('Basic graph functions', () => {
       )()
       expect(Graph.node('»lambda»ref', graph).ref).to.not.be.ok
     })
+
+    it('Should be impossible to add a node to a lambda node', () => {
+      var l = Lambda.createLambda({name: 'ref', ref: 'X'}, {name: 'lambda'})
+      var graph = Graph.flow(
+        Graph.addNode(l),
+      )()
+      expect(() => Graph.addNodeIn('»lambda', {name: 'ref2', ref: 'Y'}, graph)).to.throw(Error)
+    })
+
+    it('Should be impossible to remove the implementation of a node lambda node', () => {
+      var l = Lambda.createLambda({name: 'ref', ref: 'X'}, {name: 'lambda'})
+      var graph = Graph.flow(
+        Graph.addNode(l),
+      )()
+      expect(() => Graph.removeNode('»lambda»ref', graph)).to.throw(Error)
+    })
   })
 })
