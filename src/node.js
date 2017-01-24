@@ -307,7 +307,7 @@ export const get = curry((key, node) => (node.settings) ? node.settings[key] : n
  * @returns {boolean} True if the node is an atomic node, false otherwise.
  */
 export function isAtomic (node) {
-  return !isReference(node)
+  return !isReference(node) && node.atomic
 }
 
 /**

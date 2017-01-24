@@ -61,7 +61,7 @@ describe('Basic graph functions', () => {
         Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
       var graph = Graph.flow(
         Graph.addNode(impl),
-        Graph.addNodeByPath('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+        Graph.addNodeIn('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
       )()
       expect(Graph.hasNode(['b', 'a'], graph)).to.be.true
       expect(Graph.hasNode(['b', 'c'], graph)).to.be.true

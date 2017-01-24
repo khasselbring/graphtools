@@ -148,12 +148,12 @@ function checkNode (graph, node) {
  * @param {PortGraph} graph The graph that is the root for the nodePath
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
-export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
+const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
   if (isRoot(parentPath)) {
-    return addNode(nodeData, graph, ...cb)
+    return addNodeInternal(nodeData, graph, ...cb)
   } else {
     let parentGraph = node(parentPath, graph)
-    return replaceNode(parentPath, addNode(nodeData, parentGraph, ...cb), graph)
+    return replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, ...cb), graph)
   }
 })
 
@@ -167,6 +167,9 @@ export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
  * @returns {PortGraph} A new graph that contains the node as child of `parentLoc`.
  */
 export const addNodeIn = curry((parentLoc, nodeData, graph, ...cb) => {
+  if (Node.isAtomic(node(parentLoc, graph))) {
+    throw new Error('Cannot add Node to atomic node at: ' + graph.path)
+  }
   return addNodeByPath(Node.path(node(parentLoc, graph)), nodeData, graph, ...cb)
 })
 
@@ -205,6 +208,13 @@ function replaceId (oldId, newId, edge) {
  * @returns {PortGraph} A new graph that includes the node.
  */
 export const addNode = curry((node, graph, ...cb) => {
+  if (Node.isAtomic(graph)) {
+    throw new Error('Cannot add Node to atomic node at: ' + graph.path)
+  }
+  return addNodeInternal(node, graph, ...cb)
+})
+
+function addNodeInternal (node, graph, ...cb) {
   var newNode = setPath(Node.create(unID(node)), Node.path(graph))
   if (hasNode(unID(newNode), graph) && !Node.equal(unID(newNode), graph)) {
     throw new Error('Cannot add already existing node: ' + Node.name(node))
@@ -217,7 +227,7 @@ export const addNode = curry((node, graph, ...cb) => {
     cb[0](newNode)
   }
   return changeSet.applyChangeSet(graph, changeSet.insertNode(newNode))
-})
+}
 
 /**
  * @function
@@ -300,6 +310,9 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cb) => {
  * @returns {PortGraph} A new graph without the given node.
  */
 export const removeNode = curry((loc, graph, ...cb) => {
+  if (parent(loc, graph) && Node.isAtomic(parent(loc, graph))) {
+    throw new Error('Cannot remove child nodes of an atomic node. Tried deleting : ' + loc)
+  }
   return removeNodeInternal(loc, true, graph, ...cb)
 })
 

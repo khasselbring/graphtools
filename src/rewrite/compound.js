@@ -97,7 +97,7 @@ export const excludeNode = curry((node, graph) => {
     // disconnect all edges whose ports get removed
     flow(portPreds.map((edges) => Graph.removeEdge(edges[0]))),
     Graph.replaceNode(parent, newCompound),
-    Graph.addNodeByPath(Node.path(Graph.parent(parent, graph)), nodeObj),
+    Graph.addNodeIn(Graph.parent(parent, graph), nodeObj),
     (graph, objs) => mergeNodes({id: nodeObj.id}, objs()[2], graph),
     portPreds.map((edges) => Graph.addEdge({from: edges[0].from, to: nodeObj.id + '@' + edges[1].to.port})),
     Node.outputPorts(nodeObj, true).map((port) => Graph.addEdge({from: nodeObj.id + '@' + port.port, to: parent.id + '@' + port.port}))
