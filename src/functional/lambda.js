@@ -23,7 +23,7 @@ export function type (node) {
 
 export function implementation (node) {
   if (isValid(node)) {
-    return node.λ
+    return node.nodes[0]
   }
 }
 
@@ -32,8 +32,9 @@ const unID = (node) => {
 }
 
 export function createLambda (implementation, node) {
-  const nodeTmp = merge({componentId: 'functional/lambda', λ: Node.create(unID(implementation))}, node || {})
+  const nodeTmp = merge({componentId: 'functional/lambda', nodes: [Node.create(unID(implementation))]}, omit('nodes', node || {}))
   return merge(nodeTmp, {
+    atomic: true,
     ports: [{port: 'fn', kind: 'output', type: type(nodeTmp)}]
   })
 }
@@ -47,7 +48,7 @@ export function createLambda (implementation, node) {
  */
 export function setImplementation (implementation, lambda) {
   assertValid(lambda)
-  return merge(lambda, {λ: implementation})
+  return merge(lambda, {nodes: [implementation]})
 }
 
 export function λ (node) {
@@ -65,7 +66,8 @@ export function returnValues (node) {
 }
 
 export function isValid (node) {
-  return !!(node.componentId === 'functional/lambda' && node.λ)
+  return !!(node.componentId === 'functional/lambda' && node.nodes.length === 1 &&
+    (!node.edges || node.edges.length === 0))
 }
 
 export function assertValid (node) {
@@ -75,7 +77,16 @@ export function assertValid (node) {
   if (node.componentId !== 'functional/lambda') {
     throw new Error('Lambda node must have the componentId "functionalLambda". Got "' + node.componentId + '" for node at ' + node.path)
   }
-  if (!node.λ) {
-    throw new Error('Lambda node must have an implementation stored at "λ". Node at "' + node.path + '" is missing the implementation.')
+  if (node.λ) {
+    throw new Error('Lambda node must not have an implementation stored at "λ". This was changed to the nodes. Node at "' + node.path + '" is having a broken lambda implementation.')
+  }
+  if (!node.nodes) {
+    throw new Error('Lambda nodes are required to have one child node (the lambda implementation) but found none. Inspecting Node at : "' + node.path + '"')
+  }
+  if (node.nodes.length !== 1) {
+    throw new Error('Lambda nodes are required to have one child node (the lambda implementation) but found ' + node.nodes.length + '. Inspecting Node at : "' + node.path + '"')
+  }
+  if (node.edges && node.edges.length !== 0) {
+    throw new Error('Lambda nodes must not have any edges between their implementation and the lambda node. Inspecting Node at : "' + node.path + '"')
   }
 }

@@ -11,6 +11,7 @@ var expect = chai.expect
 describe('Basic graph functions', () => {
   describe('Lambda functions', () => {
     it('Can use lambda functions in a graph', () => {
+      debugger
       var l = Lambda.createLambda({name: 'a', ref: 'X'}, {name: 'lambda'})
       var graph = Graph.flow(
         Graph.addNode(l)

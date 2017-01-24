@@ -17,7 +17,6 @@ import {nodeBy, mergeNodes, rePath, replaceEdgeIDs} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
-import * as Lambda from '../functional/lambda'
 
 /**
  * @function
@@ -27,7 +26,7 @@ import * as Lambda from '../functional/lambda'
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodes = (graph) => {
-  return (Lambda.isValid(graph)) ? [Lambda.implementation(graph)] : (graph.nodes || [])
+  return graph.nodes || []
 }
 
 /**
@@ -54,7 +53,7 @@ function nodesDeepRec (graph, parents) {
  */
 export function nodesDeep (graph) {
   return nodes(graph)
-    .concat(nodesDeepRec(graph, nodesBy((n) => isCompound(n) || Lambda.isValid(n), graph)))
+    .concat(nodesDeepRec(graph, nodesBy((n) => Node.hasChildren(n), graph)))
 }
 
 /**
@@ -150,26 +149,11 @@ function checkNode (graph, node) {
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
 export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
-  if (isRoot(parentPath) && hasNode(parentPath, graph) && Lambda.isValid(node(parentPath, graph))) {
-    let parentGraph = node(parentPath, graph)
-    let impl = setPath(nodeData, parentPath)
-    if (cb.length > 0) {
-      cb[0](impl)
-    }
-    return Lambda.setImplementation(impl, parentGraph)
-  } else if (isRoot(parentPath)) {
+  if (isRoot(parentPath)) {
     return addNode(nodeData, graph, ...cb)
   } else {
     let parentGraph = node(parentPath, graph)
-    if (Lambda.isValid(parentGraph)) {
-      let impl = setPath(nodeData, parentPath)
-      if (cb.length > 0) {
-        cb[0](impl)
-      }
-      return replaceNode(parentPath, Lambda.setImplementation(impl, parentGraph), graph)
-    } else {
-      return replaceNode(parentPath, addNode(nodeData, parentGraph, ...cb), graph)
-    }
+    return replaceNode(parentPath, addNode(nodeData, parentGraph, ...cb), graph)
   }
 })
 
@@ -188,10 +172,8 @@ export const addNodeIn = curry((parentLoc, nodeData, graph, ...cb) => {
 
 function setPath (node, path) {
   var nodePath = join(path, Node.id(node))
-  if (isCompound(node)) {
+  if (Node.hasChildren(node)) {
     return compoundSetPath(node, nodePath, setPath)
-  } else if (Lambda.isValid(node)) {
-    return merge(Lambda.setImplementation(setPath(Lambda.implementation(node), nodePath), node), {path: nodePath})
   }
   return merge(node, {path: nodePath})
 }

@@ -57,7 +57,7 @@ export function setPath (node, path, nodeSetPath) {
     {path},
     // I think `nodeSetPath` is only used due to the fear of importing ./node.js here and ./compound.js in ./node.js (cyclic reference...)
     {nodes: node.nodes.map((n) => nodeSetPath(n, path))},
-    {edges: node.edges.map((e) => Edge.setPath(e, path))}
+    {edges: (node.edges || []).map((e) => Edge.setPath(e, path))}
   )
 }
 

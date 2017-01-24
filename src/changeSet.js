@@ -15,6 +15,7 @@ import * as Node from './node'
 import * as Edge from './edge'
 import * as Component from './component'
 import {isCompound} from './compound'
+import {hasChildren} from './node'
 
 /**
  * Creates a change set to update a node with a given value
@@ -183,19 +184,12 @@ const applyMergeByPath = (graph, path, value) => {
   if (path.length === 1) {
     if (idx > -1) {
       _.merge(graph.nodes[idx], value)
-      return
-    } else if (graph.componentId === 'functional/lambda') {
-      // throw new Error('Handling lambdas in merge by path not yet supported')
-      // it is possible that the following line does, what we want, but its completely untested..
-      // it also might be possible, that this case will never occur.
-      _.merge(graph.λ, value)
-      return
+      return // in place method no return value
     }
   } else {
-    if (idx > -1 && (isCompound(graph.nodes[idx]) || graph.nodes[idx].componentId === 'functional/lambda')) {
+    if (idx > -1 && (hasChildren(graph.nodes[idx]))) {
       applyMergeByPath(graph.nodes[idx], path.slice(1), value)
-    } else if (graph.componentId === 'functional/lambda') {
-      applyMergeByPath(graph.λ, path.slice(1), value)
+      return // in place method no return value
     }
   }
 }

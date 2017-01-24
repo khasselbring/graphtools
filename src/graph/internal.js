@@ -12,9 +12,7 @@ import set from 'lodash/fp/set'
 import merge from 'lodash/fp/merge'
 import * as Node from '../node'
 import {equal as pathEqual, isRoot, relativeTo, join} from '../compoundPath'
-import {isCompound} from '../compound'
 import * as changeSet from '../changeSet'
-import * as Lambda from '../functional/lambda'
 
 /**
  * @function
@@ -25,7 +23,7 @@ import * as Lambda from '../functional/lambda'
  * @returns {Nodes[]} A list of nodes.
  */
 export const nodes = (graph) => {
-  return (Lambda.isValid(graph)) ? [Lambda.implementation(graph)] : graph.nodes || []
+  return graph.nodes || []
 }
 
 function nodesDeepRec (graph, parents) {
@@ -110,10 +108,9 @@ export function replaceEdgeIDs (edges, id, replaceId) {
  */
 export const mergeNodes = curry((oldNode, newNode, graph, ...cb) => {
   var path = idToPath(newNode.id, graph)
-  var refChange = Node.isReference(oldNode) && !Node.isReference(newNode)
   var mergeGraph = changeSet.applyChangeSet(graph,
     changeSet.updateNode(relativeTo(path, graph.path), merge(
-      pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id), ref: (refChange) ? null : undefined})))
+      pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id)})))
   if (cb.length > 0) {
     cb[0](nodeByPath(path, graph))
   }
@@ -134,7 +131,7 @@ const rePathRec = (basePath, graph) => {
   nodes(graph).forEach((n) => {
     var newPath = join(basePath, Node.id(n))
     n.path = newPath
-    if (isCompound(n) || Lambda.isValid(n)) {
+    if (Node.hasChildren(n)) {
       rePathRec(newPath, n)
     }
   })
