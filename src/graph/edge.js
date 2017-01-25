@@ -263,9 +263,13 @@ function inputType (edge, port) {
 }
 
 function realizeEdge (edge, node) {
-  return {
-    from: realizePort(node, inputType(edge, 'from'), edge.from),
-    to: realizePort(node, inputType(edge, 'to'), edge.to)
+  if (edge.layer === 'dataflow') {
+    return {
+      from: realizePort(node, inputType(edge, 'from'), edge.from),
+      to: realizePort(node, inputType(edge, 'to'), edge.to)
+    }
+  } else {
+    return edge
   }
 }
 

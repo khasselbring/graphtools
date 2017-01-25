@@ -19,7 +19,10 @@ import {node} from '../graph/node'
  */
 export const pointsTo = curry((target, graph, edge) => {
   var q = query(target, graph)
-  return q(edge.to)
+  if (typeof (edge.to) === 'string') {
+    return q(node(edge.to, graph))
+  }
+  return q(merge(edge.to, {additionalInfo: node(edge.to, graph)}))
 })
 
 /**
@@ -33,6 +36,9 @@ export const pointsTo = curry((target, graph, edge) => {
  */
 export const isFrom = curry((source, graph, edge) => {
   var q = query(source, graph)
+  if (typeof (edge.from) === 'string') {
+    return q(node(edge.from, graph))
+  }
   return q(merge(edge.from, {additionalInfo: node(edge.from, graph)}))
 })
 

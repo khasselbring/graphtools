@@ -1,16 +1,12 @@
 /* eslint-env mocha */
 
 import chai from 'chai'
-import * as changeSet from '../../src/changeSet'
 import * as Graph from '../../src/graph'
-import * as Node from '../../src/node'
 import {port} from '../../src/port'
 import _ from 'lodash'
 import semver from 'semver'
 
 var expect = chai.expect
-
-const toNames = (graph) => (id) => Node.name(Graph.node(id, graph))
 
 describe('Basic graph functions', () => {
   it('can create an empty graph', () => {

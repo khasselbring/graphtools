@@ -4,7 +4,6 @@ import chai from 'chai'
 import * as Graph from '../../src/graph'
 import * as Node from '../../src/node'
 import * as Lambda from '../../src/functional/lambda'
-import _ from 'lodash'
 
 var expect = chai.expect
 

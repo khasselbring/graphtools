@@ -11,7 +11,8 @@ import * as Compound from './compound'
 /*
 import debugLog from 'debug'
 
-const debug = debugLog('graphtools')*/
+const debug = debugLog('graphtools')
+*/
 
 const nonConnected = (graph) => {
   return Graph.nodes(graph).filter(

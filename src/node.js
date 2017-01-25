@@ -14,7 +14,7 @@ import {node as pathNode, isCompoundPath, equal as pathEqual, parent} from './co
 const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'node_' + cnt++ })() : cuid
 
 /**
- * Creates a normalized node object. It makes sure, that the node has all necessary information like an id 
+ * Creates a normalized node object. It makes sure, that the node has all necessary information like an id
  * and normalized ports.
  * @param {Node} node A protypical node object.
  * @returns {Node} A complete node object

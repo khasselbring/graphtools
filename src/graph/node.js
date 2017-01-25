@@ -6,7 +6,7 @@ import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
-import {flow} from './flow'
+import {namedFlow} from './flow'
 import {nodeBy, mergeNodes, rePath, addNodeInternal, unID} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
@@ -115,23 +115,23 @@ export const hasNode = curry((loc, graph) => {
   return !!nodeBy(query(loc, graph), graph)
 })
 
-export function checkNode (graph, node) {
-  if (hasNode(unID(node), graph) && !Node.equal(node, graph)) {
-    throw new Error('Cannot add already existing node: ' + Node.name(node))
+export function checkNode (graph, nodeToCheck) {
+  if (hasNode(unID(nodeToCheck), graph) && !equal(node(unID(nodeToCheck), graph).path, graph.path) && !Node.equal(nodeToCheck, graph)) {
+    throw new Error('Cannot add already existing node: ' + Node.name(nodeToCheck))
   }
-  if (allowsReferences(graph) && Node.isReference(node)) {
-    if (Node.hasName(node) && hasNode(Node.name(node), graph) && !Node.equal(unID(node), graph)) {
-      throw new Error('Cannot add a reference if the name is already used. Names must be unique in every compound. Tried to add reference: ' + JSON.stringify(node))
+  if (allowsReferences(graph) && Node.isReference(nodeToCheck)) {
+    if (Node.hasName(nodeToCheck) && hasNode(Node.name(nodeToCheck), graph) && !Node.equal(unID(nodeToCheck), graph)) {
+      throw new Error('Cannot add a reference if the name is already used. Names must be unique in every compound. Tried to add reference: ' + JSON.stringify(nodeToCheck))
     }
     return
   }
-  if (!node) {
+  if (!nodeToCheck) {
     throw new Error('Cannot add undefined node to graph.')
-  } else if (!Node.isValid(node)) {
-    throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(node))
+  } else if (!Node.isValid(nodeToCheck)) {
+    throw new Error('Cannot add invalid node to graph. Are you missing the id or a port?\nNode: ' + JSON.stringify(nodeToCheck))
   } else {
-    if (Node.hasName(node) && hasNode(Node.name(node), graph) && !Node.equal(unID(node), graph)) {
-      throw new Error('Cannot add a node if the name is already used. Names must be unique in every compound. Tried to add node: ' + JSON.stringify(node))
+    if (Node.hasName(nodeToCheck) && hasNode(Node.name(nodeToCheck), graph) && !Node.equal(unID(nodeToCheck), graph)) {
+      throw new Error('Cannot add a node if the name is already used. Names must be unique in every compound. Tried to add node: ' + JSON.stringify(nodeToCheck))
     }
   }
 }
@@ -232,9 +232,9 @@ export const set = curry((value, loc, graph) => {
  */
 export const addNodeTuple = curry((node, graph, ...cb) => {
   var id
-  var newGraph = flow(
-    addNode(node),
-    (graph, objs) => { id = Node.id(objs()[0]); return graph }
+  var newGraph = namedFlow(
+    'Adding Node to Graph', addNode(node),
+    'Getting New NodeID', (graph, objs) => { id = Node.id(objs()[0]); return graph }
   )(graph)
   return [newGraph, id]
 })
@@ -310,12 +310,12 @@ function nodeParentPath (path, graph) {
 export const replaceNode = curry((loc, newNode, graph) => {
   var preNode = node(loc, graph)
   if (equal(preNode.path, graph.path)) return newNode
-  return flow(
-    removeNodeInternal(loc, false),
-    addNodeByPath(nodeParentPath(loc, graph), newNode),
-    (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
-    rePath,
-    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
+  return namedFlow(
+    'Removing Node To Replace', removeNodeInternal(loc, false),
+    'Adding Replacement', addNodeByPath(nodeParentPath(loc, graph), newNode),
+    'Modifying New Node to match old Node', (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
+    'Updating Paths inside Replacement', rePath,
+    'Updating Nodes for realized References', (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
   )(graph)
 })
 

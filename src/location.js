@@ -81,8 +81,6 @@ function fromString (str, allowsPorts = true) {
   }
 }
 
-
-
 function idify (path, graph) {
   if (path.length === 0) return path
   var node = nodes(graph).filter(equal(path[0]))[0]
@@ -119,8 +117,13 @@ function fullLocation (loc, graph) {
   if (loc.type === 'query') return loc
   var path = locPath(loc, graph)
   var node = nodeByPath(path, graph) || {}
-  return {type: 'location', locType: loc.locType,
-    path, index: (loc.index) ? loc.index : node.id, name: (loc.name) ? loc.name : node.name, port: loc.port
+  return {
+    type: 'location',
+    locType: loc.locType,
+    path,
+    index: (loc.index) ? loc.index : node.id,
+    name: (loc.name) ? loc.name : node.name,
+    port: loc.port
   }
 }
 
