@@ -5,6 +5,7 @@
 import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
 import * as Node from '../node'
+import {replaceNode} from '../graph/node'
 
 /**
  * Returns the type of a lambda node.
@@ -13,11 +14,15 @@ import * as Node from '../node'
  */
 export function type (node) {
   if (node.componentId === 'functional/lambda') {
-    return {
-      type: 'function',
-      arguments: lambdaArguments(node),
-      returnValues: returnValues(node)
-    }
+    return lambdaType(λ(node))
+  }
+}
+
+function lambdaType (impl) {
+  return {
+    type: 'function',
+    arguments: implementationArguments(impl),
+    returnValues: implementationReturnValues(impl)
   }
 }
 
@@ -32,11 +37,16 @@ const unID = (node) => {
 }
 
 export function createLambda (implementation, node) {
-  const nodeTmp = merge({componentId: 'functional/lambda', nodes: [Node.create(unID(implementation))]}, omit('nodes', node || {}))
-  return merge(nodeTmp, {
+  var ref = Node.create({ref: 'λ'})
+  var lambda = Node.create(merge({
+    componentId: 'functional/lambda',
     atomic: true,
-    ports: [{port: 'fn', kind: 'output', type: type(nodeTmp)}]
-  })
+    nodes: [merge(ref, {path: [ref.id]})],
+    path: [],
+    edges: [],
+    ports: [{port: 'fn', kind: 'output', type: lambdaType(implementation)}]
+  }, omit('nodes', node || {})))
+  return replaceNode(λ(lambda), Node.create(unID(implementation)), lambda)
 }
 
 /**
@@ -56,12 +66,20 @@ export function λ (node) {
 }
 
 export function lambdaArguments (node) {
-  return Node.inputPorts(λ(node))
+  return implementationArguments(λ(node))
+}
+
+function implementationArguments (impl) {
+  return Node.inputPorts(impl)
     .map((p) => ({name: p.port, type: p.type}))
 }
 
 export function returnValues (node) {
-  return Node.outputPorts(λ(node))
+  return implementationReturnValues(λ(node))
+}
+
+function implementationReturnValues (impl) {
+  return Node.outputPorts(impl)
     .map((p) => ({name: p.port, type: p.type}))
 }
 

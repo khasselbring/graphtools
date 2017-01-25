@@ -61,6 +61,8 @@ export function setPath (node, path, nodeSetPath) {
   )
 }
 
+const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'comp_' + cnt++ })() : cuid
+
 /**
  * Create a new compound either with a template, or an empty one.
  * @params {Node} node An optional node template that contains the name and ports of the compound.
@@ -76,7 +78,7 @@ export function create (node) {
     path: [],
     ports: [],
     atomic: false,
-    id: '#' + cuid()
+    id: '#' + newID()
   }, node)
 }
 

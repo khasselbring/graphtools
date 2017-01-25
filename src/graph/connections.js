@@ -2,9 +2,11 @@
 import find from 'lodash/fp/find'
 import map from 'lodash/fp/map'
 import curry from 'lodash/fp/curry'
+import merge from 'lodash/fp/merge'
 import * as Edge from '../edge'
 import {edges} from './edge'
 import {query} from '../location'
+import {node} from '../graph/node'
 
 /**
  * @function
@@ -31,7 +33,7 @@ export const pointsTo = curry((target, graph, edge) => {
  */
 export const isFrom = curry((source, graph, edge) => {
   var q = query(source, graph)
-  return q(edge.from)
+  return q(merge(edge.from, {additionalInfo: node(edge.from, graph)}))
 })
 
 /**

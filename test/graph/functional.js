@@ -11,7 +11,6 @@ var expect = chai.expect
 describe('Basic graph functions', () => {
   describe('Lambda functions', () => {
     it('Can use lambda functions in a graph', () => {
-      debugger
       var l = Lambda.createLambda({name: 'a', ref: 'X'}, {name: 'lambda'})
       var graph = Graph.flow(
         Graph.addNode(l)
@@ -69,6 +68,19 @@ describe('Basic graph functions', () => {
         Graph.addNode(l),
       )()
       expect(() => Graph.removeNode('»lambda»ref', graph)).to.throw(Error)
+    })
+
+    it('Should update edges inside a lambda node', () => {
+      var impl = Graph.flow(
+        Graph.addNode({ref: 'X', name: 'inner'}),
+        Graph.addNode({ref: 'Y', name: 'inner2'}),
+        Graph.addEdge({from: 'inner@0', to: 'inner2@0'})
+      )(Graph.compound({name: 'cmp', ports: [{port: 'out', kind: 'output', type: 'generic'}]}))
+      var l = Lambda.createLambda(impl, {name: 'lambda'})
+      var graph = Graph.flow(
+        Graph.addNode(l)
+      )()
+      expect(Graph.successors('/X', graph)).to.have.length(1)
     })
   })
 })

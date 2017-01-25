@@ -9,9 +9,11 @@ import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
 import pick from 'lodash/fp/pick'
 import set from 'lodash/fp/set'
+import omit from 'lodash/fp/omit'
 import merge from 'lodash/fp/merge'
 import * as Node from '../node'
 import {equal as pathEqual, isRoot, relativeTo, join} from '../compoundPath'
+import {setPath as compoundSetPath} from '../compound'
 import * as changeSet from '../changeSet'
 
 /**
@@ -136,4 +138,28 @@ const rePathRec = (basePath, graph) => {
     }
   })
   return graph
+}
+
+function setPath (node, path) {
+  var nodePath = join(path, Node.id(node))
+  if (Node.hasChildren(node)) {
+    return compoundSetPath(node, nodePath, setPath)
+  }
+  return merge(node, {path: nodePath})
+}
+
+export const unID = (node) => {
+  return omit(['id', 'path'], node)
+}
+
+export function addNodeInternal (node, graph, checkNode, ...cb) {
+  var newNode = setPath(Node.create(unID(node)), Node.path(graph))
+  checkNode(graph, newNode)
+  if (Node.hasChildren(newNode)) {
+    newNode = set('edges', replaceEdgeIDs(newNode.edges, newNode.id, node.id), newNode)
+  }
+  if (cb.length > 0) {
+    cb[0](newNode)
+  }
+  return changeSet.applyChangeSet(graph, changeSet.insertNode(newNode))
 }

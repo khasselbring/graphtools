@@ -196,6 +196,9 @@ export const identifies = curry((loc, other) => {
     if (isReference(other)) {
       return other.ref === loc.query
     }
+    if (isPort(other)) {
+      return identifies(loc, other.additionalInfo)
+    }
     return other.componentId === loc.query
   } else if (loc.locType === 'port' && isPort(other)) {
     return isPort(other) && identifiesPort(loc, other)

@@ -1,19 +1,13 @@
 
 import curry from 'lodash/fp/curry'
 import flatten from 'lodash/fp/flatten'
-// import find from 'lodash/fp/find'
-// import flow from './flow'
-import merge from 'lodash/fp/merge'
-import omit from 'lodash/fp/omit'
-import setObj from 'lodash/fp/set'
-import {isCompound, setPath as compoundSetPath} from '../compound'
-import {isRoot, join, rest as pathRest, base as pathBase, parent as pathParent, relativeTo, equal} from '../compoundPath'
+import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relativeTo, equal} from '../compoundPath'
 import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
 import {flow} from './flow'
-import {nodeBy, mergeNodes, rePath, replaceEdgeIDs} from './internal'
+import {nodeBy, mergeNodes, rePath, addNodeInternal, unID} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
@@ -121,7 +115,10 @@ export const hasNode = curry((loc, graph) => {
   return !!nodeBy(query(loc, graph), graph)
 })
 
-function checkNode (graph, node) {
+export function checkNode (graph, node) {
+  if (hasNode(unID(node), graph) && !Node.equal(node, graph)) {
+    throw new Error('Cannot add already existing node: ' + Node.name(node))
+  }
   if (allowsReferences(graph) && Node.isReference(node)) {
     if (Node.hasName(node) && hasNode(Node.name(node), graph) && !Node.equal(unID(node), graph)) {
       throw new Error('Cannot add a reference if the name is already used. Names must be unique in every compound. Tried to add reference: ' + JSON.stringify(node))
@@ -148,12 +145,12 @@ function checkNode (graph, node) {
  * @param {PortGraph} graph The graph that is the root for the nodePath
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
-const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
+export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
   if (isRoot(parentPath)) {
-    return addNodeInternal(nodeData, graph, ...cb)
+    return addNodeInternal(nodeData, graph, checkNode, ...cb)
   } else {
     let parentGraph = node(parentPath, graph)
-    return replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, ...cb), graph)
+    return replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, checkNode, ...cb), graph)
   }
 })
 
@@ -173,14 +170,6 @@ export const addNodeIn = curry((parentLoc, nodeData, graph, ...cb) => {
   return addNodeByPath(Node.path(node(parentLoc, graph)), nodeData, graph, ...cb)
 })
 
-function setPath (node, path) {
-  var nodePath = join(path, Node.id(node))
-  if (Node.hasChildren(node)) {
-    return compoundSetPath(node, nodePath, setPath)
-  }
-  return merge(node, {path: nodePath})
-}
-
 /*
 function replaceIdInPort (oldId, newId, port, layer) {
   if (layer === 'dataflow') {
@@ -195,7 +184,7 @@ function replaceId (oldId, newId, edge) {
     from: replaceIdInPort(oldId, newId, edge.from, edge.layer),
     to: replaceIdInPort(oldId, newId, edge.to, edge.layer)
   })
-}*/
+} */
 
 /**
  * @function
@@ -211,23 +200,8 @@ export const addNode = curry((node, graph, ...cb) => {
   if (Node.isAtomic(graph)) {
     throw new Error('Cannot add Node to atomic node at: ' + graph.path)
   }
-  return addNodeInternal(node, graph, ...cb)
+  return addNodeInternal(node, graph, checkNode, ...cb)
 })
-
-function addNodeInternal (node, graph, ...cb) {
-  var newNode = setPath(Node.create(unID(node)), Node.path(graph))
-  if (hasNode(unID(newNode), graph) && !Node.equal(unID(newNode), graph)) {
-    throw new Error('Cannot add already existing node: ' + Node.name(node))
-  }
-  checkNode(graph, newNode)
-  if (isCompound(newNode)) {
-    newNode = setObj('edges', replaceEdgeIDs(newNode.edges, newNode.id, node.id), newNode)
-  }
-  if (cb.length > 0) {
-    cb[0](newNode)
-  }
-  return changeSet.applyChangeSet(graph, changeSet.insertNode(newNode))
-}
 
 /**
  * @function
@@ -316,10 +290,6 @@ export const removeNode = curry((loc, graph, ...cb) => {
   return removeNodeInternal(loc, true, graph, ...cb)
 })
 
-const unID = (node) => {
-  return omit(['id', 'path'], node)
-}
-
 function nodeParentPath (path, graph) {
   /* if (isCompoundPath(path)) {
     return pathParent(path)
@@ -337,15 +307,15 @@ function nodeParentPath (path, graph) {
  * @param {PortGraph} graph The graph
  * @returns {PortGraph} A new graph in which the old node was replaces by the new one.
  */
-export const replaceNode = curry((path, newNode, graph) => {
-  var preNode = node(path, graph)
+export const replaceNode = curry((loc, newNode, graph) => {
+  var preNode = node(loc, graph)
   if (equal(preNode.path, graph.path)) return newNode
   return flow(
-    removeNodeInternal(path, false),
-    addNodeByPath(nodeParentPath(path, graph), newNode),
+    removeNodeInternal(loc, false),
+    addNodeByPath(nodeParentPath(loc, graph), newNode),
     (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
     rePath,
-    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(path) : (graph) => graph
+    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
   )(graph)
 })
 

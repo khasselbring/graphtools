@@ -11,6 +11,8 @@ import * as Port from './port'
 import cuid from 'cuid'
 import {node as pathNode, isCompoundPath, equal as pathEqual, parent} from './compoundPath'
 
+const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'node_' + cnt++ })() : cuid
+
 /**
  * Creates a normalized node object. It makes sure, that the node has all necessary information like an id 
  * and normalized ports.
@@ -21,7 +23,7 @@ export function create (node) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = merge(node, {id: '#' + cuid(), settings: merge({}, node.settings), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, {id: '#' + newID(), settings: merge({}, node.settings), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
