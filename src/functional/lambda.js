@@ -4,6 +4,7 @@
 
 import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
+import pick from 'lodash/fp/pick'
 import * as Node from '../node'
 import {replaceNode} from '../graph/node'
 
@@ -36,6 +37,10 @@ const unID = (node) => {
   return omit(['id', 'path'], node)
 }
 
+const reID = (node, oldNode) => {
+  return merge(node, pick(['id', 'path'], oldNode))
+}
+
 export function createLambda (implementation, node) {
   var ref = Node.create({ref: 'λ'})
   var lambda = Node.create(merge({
@@ -46,7 +51,7 @@ export function createLambda (implementation, node) {
     edges: [],
     ports: [{port: 'fn', kind: 'output', type: lambdaType(implementation)}]
   }, omit('nodes', node || {})))
-  return replaceNode(λ(lambda), Node.create(unID(implementation)), lambda)
+  return replaceNode(λ(lambda), reID(Node.create(unID(implementation)), implementation), lambda)
 }
 
 /**
