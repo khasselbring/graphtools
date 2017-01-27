@@ -1,5 +1,5 @@
 
-import {nodes} from './node'
+import {nodesBy} from './node'
 import {isReference, isAtomic} from '../node'
 import {isCompound} from '../compound'
 
@@ -9,7 +9,7 @@ import {isCompound} from '../compound'
  * @returns {References[]} A list of all defined reference nodes in the graph.
  */
 export function references (graph) {
-  return nodes(graph, isReference)
+  return nodesBy(isReference, graph)
 }
 
 /**
@@ -18,7 +18,7 @@ export function references (graph) {
  * @returns {References[]} A list of all defined compound nodes in the graph.
  */
 export function compounds (graph) {
-  return nodes(graph, isCompound)
+  return nodesBy(isCompound, graph)
 }
 
 /**
@@ -27,5 +27,5 @@ export function compounds (graph) {
  * @returns {References[]} A list of all defined atomci nodes in the graph.
  */
 export function atomics (graph) {
-  return nodes(graph, isAtomic)
+  return nodesBy(isAtomic, graph)
 }
