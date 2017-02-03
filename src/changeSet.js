@@ -224,7 +224,7 @@ export function applyChangeSet (graph, changeSet) {
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
 export function applyChangeSets (graph, changeSets) {
-  var newGraph = _.clone(graph)
+  var newGraph = _.cloneDeep(graph)
   _.each(changeSets, (c) => applyChangeSetInplace(newGraph, c))
   return newGraph
 }

@@ -27,8 +27,8 @@ export function componentIds (graph) {
  * @function
  * @name component
  * @description Returns the component with the given component id. [Performance O(|V|)]
- * @param {PortGraph} graph The graph.
  * @param {Component|string} comp The component or its component id.
+ * @param {PortGraph} graph The graph.
  * @returns {Component} The component in the graph
  * @throws {Error} If the queried component does not exist in the graph.
  */

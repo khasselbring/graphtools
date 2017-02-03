@@ -275,9 +275,9 @@ export function isReference (node) {
 }
 
 /**
- * Checks whether the node is a component.
+ * Returns the componentId of the node.
  * @param {Node} node The node.
- * @returns {boolean} True if the node is a component, false otherwise.
+ * @returns {string} The componentId of the node.
  */
 export function component (node) {
   return isReference(node) ? node.ref : node.componentId
