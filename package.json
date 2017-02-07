@@ -23,8 +23,7 @@
     "lodash": "^4.6.1",
     "object-hash": "^1.1.2",
     "omit-deep-lodash": "^0.8.0",
-    "semver": "^5.3.0",
-    "terminal-graphs": "^1.0.6"
+    "semver": "^5.3.0"
   },
   "devDependencies": {
     "babel-cli": "^6.4.5",
