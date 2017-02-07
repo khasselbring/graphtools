@@ -7,6 +7,7 @@
 import * as Graph from './graph'
 import * as Node from './node'
 import * as Compound from './compound'
+import {debug} from './debug'
 
 /*
 import debugLog from 'debug'
@@ -35,6 +36,7 @@ export function topologicalSort (graph) {
   }
   var nonConn = nonConnected(graph)
   if (nonConn.length === 0) {
+    debug(graph)
     throw new Error('Found cycle in the graph. Impossible to calculate topological sorting.')
   }
   return nonConn.concat(
