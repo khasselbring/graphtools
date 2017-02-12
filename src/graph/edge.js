@@ -11,7 +11,7 @@ import * as Port from '../port'
 import * as Node from '../node'
 import * as Edge from '../edge'
 import {equal, isRoot} from '../compoundPath'
-import {node, hasNode, nodesDeep, parent, replaceNode} from './node'
+import {node, port, hasPort, hasNode, nodesDeep, parent, replaceNode} from './node'
 import * as changeSet from '../changeSet'
 import {location, identifies as locIdentifies} from '../location'
 import {incidents} from './connections'
@@ -26,7 +26,10 @@ import {incidents} from './connections'
  */
 export function edges (graph) {
   return compact(flatten(map((parent) => (parent.edges || []).map((e) => merge(e, {parent: Node.id(parent)})), nodesDeep(graph).concat([graph]))))
-    .map((edge) => (edge.layer === 'dataflow') ? Edge.setType(Port.type(node(edge.from, graph)), edge) : edge)
+    .map((edge) =>
+      (edge.layer === 'dataflow' && hasPort(edge.from, graph))
+        ? Edge.setType(Port.type(port(edge.from, graph)), edge)
+        : edge)
 }
 
 export const checkEdge = curry((graph, edge) => {

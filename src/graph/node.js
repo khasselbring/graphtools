@@ -103,6 +103,12 @@ export const port = curry((port, graph) => {
   return Node.port(normalizePort(port), nodeObj)
 })
 
+export const hasPort = curry((port, graph) => {
+  if (!hasNode(port, graph)) return false
+  var nodeObj = node(port, graph)
+  return Node.hasPort(normalizePort(port), nodeObj)
+})
+
 /**
  * @function
  * @name hasNode

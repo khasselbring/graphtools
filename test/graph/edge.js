@@ -357,5 +357,14 @@ describe('Basic graph functions', () => {
       expect(Graph.edges(graph)).to.have.length(1)
       expect(Graph.hasEdge({from: '»c»a', to: 'c', layer: 'recursion'}, graph)).to.be.true
     })
+
+    it('adds edge types', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
+        Graph.addEdge({from: 'a@out', to: 'b@in'})
+      )()
+      expect(Graph.edges(graph)[0]).to.have.property('type', 'a')
+    })
   })
 })
