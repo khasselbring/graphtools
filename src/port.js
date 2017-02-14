@@ -145,7 +145,7 @@ export function assertValid (port) {
   if (!port.type) {
     throw new Error('Port does not have a `type` prop')
   }
-  if (port.kind !== INPUT || port.kind !== OUTPUT) {
+  if (port.kind !== INPUT && port.kind !== OUTPUT) {
     throw new Error('Port `kind` prop should be "input" or "output", but was ' + port.kind)
   }
 }

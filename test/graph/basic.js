@@ -31,6 +31,7 @@ describe('Basic graph functions', () => {
 
   it('imports a graph from json', () => {
     var graphJSON = {
+      id: '#id',
       nodes: [{id: '#a', ports: [{port: 'b', kind: 'output', type: 'a'}]}, {id: '#b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],
       edges: [{from: {node: '#a', port: 'b'}, to: {node: '#b', port: 'b'}, layer: 'dataflow'}],
       components: [{componentId: 'c', version: '0.1.0', ports: [{port: 'b', kind: 'output', type: 'c'}]}]

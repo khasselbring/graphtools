@@ -73,8 +73,8 @@ describe('Basic graph functions', () => {
         Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
       var graph = Graph.addNode(impl, Graph.empty())
       var nodes = Graph.nodesDeep(graph)
-      expect(nodes).to.have.length(2)
-      expect(nodes.map((n) => Node.path(n).map(toNames(graph)))).to.have.deep.members([['b', 'a'], ['b']])
+      expect(nodes).to.have.length(3)
+      expect(nodes.map((n) => Node.path(n).map(toNames(graph)))).to.have.deep.members([['b', 'a'], ['b'], []])
     })
 
     it('can get a node by component id', () => {
@@ -190,7 +190,7 @@ describe('Basic graph functions', () => {
         Graph.addNode({ref: 'abc', name: '123'}, Graph.empty()))
       expect(Graph.hasNode('123', graph)).to.be.true
       expect(Graph.nodes(graph)).to.have.length(1)
-      expect(Graph.nodesDeep(graph)).to.have.length(3)
+      expect(Graph.nodesDeep(graph)).to.have.length(4)
       expect(Graph.hasNode('»123»a', graph)).to.be.true
       expect(Graph.hasNode('»123»b', graph)).to.be.true
       expect(Graph.node('»123»a', graph).id).to.eql(Graph.node(Graph.node('»123»a', graph).id, graph).id)
@@ -223,7 +223,7 @@ describe('Basic graph functions', () => {
         Graph.addNode({ref: 'abc', name: '123'}, Graph.empty()))
       expect(Graph.hasNode('123', graph)).to.be.true
       expect(Graph.nodes(graph)).to.have.length(1)
-      expect(Graph.nodesDeep(graph)).to.have.length(4)
+      expect(Graph.nodesDeep(graph)).to.have.length(5)
       expect(Graph.hasNode('»123»comp»a', graph)).to.be.true
       expect(Graph.hasNode('»123»comp»b', graph)).to.be.true
       expect(Graph.node('»123»comp»a', graph).id).to.eql(Graph.node(Graph.node('»123»comp»a', graph).id, graph).id)

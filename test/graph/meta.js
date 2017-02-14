@@ -32,8 +32,9 @@ describe('Basic graph functions', () => {
 
     it('import from JSON', () => {
       var graphJSON = {
-        nodes:[],
-        edges:[],
+        id: '#id',
+        nodes: [],
+        edges: [],
         metaInformation: {a: 'test'}
       }
       var graph = Graph.fromJSON(graphJSON)

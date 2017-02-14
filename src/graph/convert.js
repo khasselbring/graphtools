@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/fp/cloneDeep'
 import merge from 'lodash/fp/merge'
 import {nodesDeep} from './node'
 import {edges, checkEdge} from './edge'
-import {isValid} from '../node'
+import {assertValid} from '../node'
 import {rePath} from './internal'
 // import {empty} from './basic'
 // import {addNode, addNodeTuple} from './node'
@@ -20,11 +20,7 @@ import {rePath} from './internal'
 export function fromJSON (jsonGraph) {
   var graph = cloneDeep(jsonGraph)
   rePath(graph)
-  nodesDeep(graph).forEach((n) => {
-    if (!isValid(n)) {
-      throw new Error('Cannot import graph with invalid node: ', JSON.stringify(n))
-    }
-  })
+  nodesDeep(graph).forEach((n) => assertValid(n))
   edges(graph).forEach(checkEdge(graph))
   return merge({components: [], edges: [], nodes: []}, graph)
   // TODO: add checks back in again

@@ -322,3 +322,14 @@ export function isValid (node) {
     (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
     every(Port.isValid, ports(node)))
 }
+
+export function assertValid (node) {
+  if (typeof (node) !== 'object') {
+    throw new Error('Node object must be an object but got: ' + typeof (node))
+  } else if (!node.id) {
+    throw new Error('Node must have a valid ID in :(' + JSON.stringify(node) + ')')
+  } else if (!node.id.length) {
+    throw new Error('Node must have an ID with non zero length.')
+  }
+  ports(node).forEach(Port.assertValid)
+}

@@ -25,7 +25,7 @@ import {incidents} from './connections'
  * @returns {Edges[]} A list of edges.
  */
 export function edges (graph) {
-  return compact(flatten(map((parent) => (parent.edges || []).map((e) => merge(e, {parent: Node.id(parent)})), nodesDeep(graph).concat([graph]))))
+  return compact(flatten(map((parent) => (parent.edges || []).map((e) => merge(e, {parent: Node.id(parent)})), nodesDeep(graph))))
     .map((edge) =>
       (edge.layer === 'dataflow' && hasPort(edge.from, graph))
         ? Edge.setType(Port.type(port(edge.from, graph)), edge)

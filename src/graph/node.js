@@ -1,13 +1,12 @@
 
 import curry from 'lodash/fp/curry'
-import flatten from 'lodash/fp/flatten'
 import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relativeTo, equal} from '../compoundPath'
 import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {allowsReferences} from './basic'
 import {namedFlow} from './flow'
-import {nodeBy, mergeNodes, rePath, addNodeInternal, unID} from './internal'
+import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
@@ -35,20 +34,13 @@ export const nodesBy = curry((predicate, graph) => {
   return nodes(graph).filter(predicate)
 })
 
-function nodesDeepRec (graph, parents) {
-  return flatten(parents.map(nodesDeep))
-}
-
 /**
  * Get all nodes at all depths. It will go into every compound node / lambda node and return their nodes
  * and the nodes of their compound nodes, etc.
  * @param {PortGraph} graph The graph to work on
  * @returns {Node[]} A list of nodes.
  */
-export function nodesDeep (graph) {
-  return nodes(graph)
-    .concat(nodesDeepRec(graph, nodesBy((n) => Node.hasChildren(n), graph)))
-}
+export {nodesDeep}
 
 /**
  * @function

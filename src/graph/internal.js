@@ -29,7 +29,12 @@ export const nodes = (graph) => {
 }
 
 function nodesDeepRec (graph, parents) {
-  return flatten(parents.map(nodesDeep))
+  return flatten(parents.map(nodesDeepInternal))
+}
+
+function nodesDeepInternal (graph) {
+  return nodes(graph)
+    .concat(nodesDeepRec(graph, nodes(graph)))
 }
 
 /**
@@ -39,8 +44,7 @@ function nodesDeepRec (graph, parents) {
  * @returns {Node[]} A list of nodes.
  */
 export function nodesDeep (graph) {
-  return nodes(graph)
-    .concat(nodesDeepRec(graph, nodes(graph))).concat([graph])
+  return nodesDeepInternal(graph).concat([graph])
 }
 
 /**
