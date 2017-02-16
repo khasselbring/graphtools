@@ -8,20 +8,25 @@ import all from 'lodash/fp/all'
 import negate from 'lodash/fp/negate'
 import uniq from 'lodash/fp/uniq'
 import flatten from 'lodash/fp/flatten'
+import keyBy from 'lodash/fp/keyBy'
 import {flow} from '../graph/flow'
 import * as Compound from '../compound'
 import {predecessor, successors, inIncidents, inIncident, outIncidents} from '../graph/connections'
 import * as Graph from '../graph'
 import * as Node from '../node'
+import * as Path from '../compoundPath'
 import {mergeNodes} from '../graph/internal'
 import {topologicalSort} from '../algorithm'
 
 /**
+ * @function
+ * @name includePredecessor
+ * @description
  * Moves the predecessor of a port into the compound node. It changes the signature of the
  * compound node. It has to ensure that the inputs are correct. This only works if the predecessor has
  * only one successor (i.e. the compound node it will move into).
- * @params {Port} port A port identifier. This also specifies the node.
- * @params {PortGraph} graph The graph in which the change will happen.
+ * @param {Port} port A port identifier. This also specifies the node.
+ * @param {PortGraph} graph The graph in which the change will happen.
  * @returns {PortGraph} A new port graph that includes the predecessor of the port in the compound.
  * @throws {Error} If the predecessor has more than one successor.
  */
@@ -59,11 +64,14 @@ export const includePredecessor = curry((port, graph) => {
 })
 
 /**
+ * @function
+ * @name excludeNode
+ * @description
  * Moves a node from its compound to the parent compound node. Changes the compound node to
  * ensure it takes the correct number of inputs etc. This method only works if the node has no
  * predecessor in the compound node.
- * @params {Node} node A node identifier for the node that should be moved out of the compound node.
- * @params {PortGraph} graph The graph
+ * @param {Node} node A node identifier for the node that should be moved out of the compound node.
+ * @param {PortGraph} graph The graph
  * @returns {PortGraph} A new graph in which the node is moved out of its parent compound into the parent
  * of its parent.
  * @throws {Error} If the node has a predecessor in the compound and thus cannot be moved out of the
@@ -106,9 +114,12 @@ export const excludeNode = curry((node, graph) => {
 })
 
 /**
+ * @function
+ * @name unCompound
+ * @description
  * Takes a compound node and moves all nodes out of the compound node and removes then removes the empty compound.
- * @params {Compound} node The compound node
- * @params {PortGraph} graph The graph in which the compound node lies.
+ * @param {Compound} node The compound node
+ * @param {PortGraph} graph The graph in which the compound node lies.
  * @returns {PortGraph} The new graph where all nodes were moved out of the compound node.
  */
 export const unCompound = curry((node, graph) => {
@@ -123,4 +134,37 @@ export const unCompound = curry((node, graph) => {
     Graph.removeNode(node),
     cons.map((edge) => Graph.addEdge(edge))
   )(emptyComp)
+})
+
+function sameParents (nodes) {
+  const compParent = Path.parent(Node.path(nodes[0]))
+  return nodes.every((n) => Path.equal(Path.parent(Node.path(n)), compParent))
+}
+
+/**
+ * @function
+ * @name compoundify
+ * @description
+ * Takes a list of nodes and tries to combine them in one compound.
+ * @param {Array<Location>} nodes An array of node locations (ids, node objects.. etc.) that should be included in the compound
+ * @param {Portgraph} graph The graph
+ * @returns {Portgraph} A new graph in which the list of nodes is combined inside one compound.
+ * @throws {Error} If it is not possible to combine the nodes in one compound.
+*/
+export const compoundify = curry((nodes, graph) => {
+  if (nodes.length < 1) return graph
+  const markings = keyBy('id', nodes)
+  if (!sameParents(nodes)) {
+    throw new Error('Cannot compoundify nodes, the have different parents. (' + JSON.stringify(nodes) + ')')
+  }
+
+  // todo:
+  // 1. topological sorting
+  // 2. for all not marked inbetween nodes..
+  //    2.1. test if they have a successor that is marked
+  //    2.2. test if they have a predecessor that is marked
+  //    2.3. if a node hat both, we cannot create the compound, throw Error
+  // 3. add compound. move nodes inside, create ports...
+  //    3.1. finding all ports simply by finding all ports of marekd nodes
+  //         whose predecessors/successors are not marked.
 })
