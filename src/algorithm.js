@@ -36,7 +36,7 @@ export function topologicalSort (graph) {
   }
   var nonConn = nonConnected(graph)
   if (nonConn.length === 0) {
-    debug(graph)
+    debug(graph, true)
     throw new Error('Found cycle in the graph. Impossible to calculate topological sorting.')
   }
   return nonConn.concat(

@@ -128,3 +128,9 @@ export function type (edge) {
 export function setType (type, edge) {
   return merge({type}, edge)
 }
+
+export function isValid (edge) {
+  return typeof (edge) === 'object' &&
+    Port.isValid(Object.assign({type: '-'}, edge.from)) &&
+    Port.isValid(Object.assign({type: '-'}, edge.to))
+}

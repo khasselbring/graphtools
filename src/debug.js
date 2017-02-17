@@ -2,13 +2,13 @@
  * Utility methods to make it easier debugging graphs.
  */
 
-import fs from 'fs'
 import * as Format from './format'
+import Debug from 'debug'
 
-export function debug (graph) {
-  var stream3 = fs.createWriteStream(null, {fd: 3})
-  stream3.on('error', () => null)
-  if (!stream3.closed) {
-    stream3.write(Format.graphLayerToString(graph))
+export function debug (graph, layer = false) {
+  if (layer) {
+    Debug('debug-graph')(Format.graphLayerToString(graph))
+  } else {
+    Debug('debug-graph')(Format.graphToString(graph))
   }
 }

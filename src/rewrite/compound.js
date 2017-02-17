@@ -9,6 +9,7 @@ import negate from 'lodash/fp/negate'
 import uniq from 'lodash/fp/uniq'
 import flatten from 'lodash/fp/flatten'
 import keyBy from 'lodash/fp/keyBy'
+import reverse from 'lodash/fp/reverse'
 import {flow} from '../graph/flow'
 import * as Compound from '../compound'
 import {predecessor, successors, inIncidents, inIncident, outIncidents} from '../graph/connections'
@@ -17,6 +18,8 @@ import * as Node from '../node'
 import * as Path from '../compoundPath'
 import {mergeNodes} from '../graph/internal'
 import {topologicalSort} from '../algorithm'
+import {debug} from '../debug'
+import cuid from 'cuid'
 
 /**
  * @function
@@ -136,9 +139,95 @@ export const unCompound = curry((node, graph) => {
   )(emptyComp)
 })
 
+function sameParent (node1, node2) {
+  return Path.equal(Path.parent(Node.path(node1)), Path.parent(Node.path(node2)))
+}
+
 function sameParents (nodes) {
   const compParent = Path.parent(Node.path(nodes[0]))
   return nodes.every((n) => Path.equal(Path.parent(Node.path(n)), compParent))
+}
+
+/**
+ * Find alls critical nodes for compoundify. The critical nodes are those, that are in the
+ * topological between the first node of the subset and the last node of the subset and not part
+ * of the subset. Those nodes can have a successor and a predecessor in the subset and thus making
+ * it impossible to compoundify the subset. If we have the following topological sorting and subset
+ *
+ *   topo:    a  b  c  d
+ *   subset:  x  x     x
+ *
+ * The node `c` would be a critical node as it can have the predecessor b (or a) and successor d.
+ */
+function criticalNodes (nodes, topo, graph) {
+  const firstIdx = topo.findIndex((t) => nodes.some(Node.equal(t)))
+  const lastIdx = topo.length - reverse(topo).findIndex((t) => nodes.some(Node.equal(t))) - 1
+  const markings = keyBy('id', nodes)
+  return topo.slice(firstIdx, lastIdx + 1).filter((elem) => !markings[elem.id])
+}
+
+
+function findInSubset (node, subset, iterate, graph) {
+  if (!sameParent(node, subset[0])) return false
+  if (subset.find(Node.equal(node))) return true
+  return iterate(node, graph).some((n) => findInSubset(n, subset, iterate, graph))
+}
+
+function successorInSubset (node, subset, graph) {
+  return findInSubset(node, subset, Graph.successors, graph)
+}
+
+function predecessorInSubset (node, subset, graph) {
+  return findInSubset(node, subset, Graph.predecessors, graph)
+}
+
+/**
+ * Checks whether a node is blocked inside a subset or not. A node is blocked by a subset
+ * when it as at least one predecessor that is part of the subset and at least one successor
+ * that is part of the subset. In the following example, b is blocked as a is a predecessor
+ * and b is a successor and thus it is not possible to compoundify a and c.
+ *
+ * +------------------+
+ * |Compound          |
+ * |        +---+     |
+ * |        | a |     |
+ * |        +-+-+     |
+ * |          |       |
+ * |     +------------+
+ * |     |    |
+ * |     |  +-v-+
+ * |     |  | b |
+ * |     |  +-+-+
+ * |     |    |
+ * |     +------------+
+ * |          |       |
+ * |        +-v-+     |
+ * |        | c |     |
+ * |        +---+     |
+ * |                  |
+ * +------------------+
+ *
+ */
+function blocked (nodes, graph) {
+  return (node) => successorInSubset(node, nodes, graph) && predecessorInSubset(node, nodes, graph)
+}
+
+function moveIntoCompound (subset, topo, componentId) {
+  return (graph) => {
+    const topoSubset = topo.filter((t) => subset.some(Node.equal(t)))
+    const lastNode = topoSubset[topoSubset.length - 1]
+    var newComp = Graph.flow(
+      Graph.addNode(lastNode),
+      Node.inputPorts(lastNode).map((p) => Compound.addInputPort(p)),
+      (graph, objs) => Graph.flow(Node.inputPorts(lastNode).map((p) => Graph.addEdge({from: '@' + p.port, to: objs()[0].id + '@' + p.port})))(graph),
+      Node.outputPorts(lastNode).map((p) => Compound.addOutputPort(p)),
+      (graph, objs) => Graph.flow(Node.outputPorts(lastNode).map((p) => Graph.addEdge({from: objs()[0].id + '@' + p.port, to: '@' + p.port})))(graph),
+    )(Graph.node('/' + componentId, graph))
+    return Graph.flow(
+      Graph.replaceNode('/' + componentId, newComp),
+      // Node.inputPorts(lastNode).map((p) => Compound.addInputPort(p)),
+    )(graph)
+  }
 }
 
 /**
@@ -153,18 +242,28 @@ function sameParents (nodes) {
 */
 export const compoundify = curry((nodes, graph) => {
   if (nodes.length < 1) return graph
-  const markings = keyBy('id', nodes)
-  if (!sameParents(nodes)) {
+  const nodeObjs = nodes.map((n) => Graph.node(n, graph))
+  if (!sameParents(nodeObjs)) {
     throw new Error('Cannot compoundify nodes, the have different parents. (' + JSON.stringify(nodes) + ')')
   }
 
+  const topo = topologicalSort(Graph.parent(nodeObjs[0], graph))
+  const critical = criticalNodes(nodeObjs, topo, graph)
+  const blockedNodes = critical.filter(blocked(nodeObjs, graph))
+  if (blockedNodes.length > 0) {
+    throw new Error('Subset of nodes is not compoundably. Nodes [' + blockedNodes.map((c) => c.id).join(', ') + '] are blocked')
+  }
+  const parent = Graph.parent(nodeObjs[0], graph)
+  const compId = 'compoundify-' + cuid()
+  const newGraph = Graph.flow(
+    Graph.addNode(Graph.compound({componentId: compId})),
+    moveIntoCompound(nodeObjs, topo, compId)
+  )(graph)
+  debug(newGraph)
   // todo:
-  // 1. topological sorting
-  // 2. for all not marked inbetween nodes..
-  //    2.1. test if they have a successor that is marked
-  //    2.2. test if they have a predecessor that is marked
-  //    2.3. if a node hat both, we cannot create the compound, throw Error
   // 3. add compound. move nodes inside, create ports...
   //    3.1. finding all ports simply by finding all ports of marekd nodes
   //         whose predecessors/successors are not marked.
+
+  return graph
 })

@@ -2,7 +2,7 @@
 
 import chai from 'chai'
 import * as Graph from '../src/graph'
-import {includePredecessor, excludeNode, unCompound} from '../src/rewrite/compound'
+import {includePredecessor, excludeNode, unCompound, compoundify} from '../src/rewrite/compound'
 import * as Node from '../src/node'
 import _ from 'lodash'
 
@@ -167,5 +167,48 @@ describe('Rewrite basic API', () => {
     var newNode = _.cloneDeep(node)
     var newGraph = Graph.replaceNode(node, newNode, graph)
     expect(Graph.edges(newGraph)).to.have.length(1)
+  })
+
+  describe('Compoudify', () => {
+    it.only('Can compoundify one node', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addEdge({from: 'a@out', to: 'b@in'}),
+        Graph.addEdge({from: 'b@out', to: 'c@in'})
+      )()
+      const cmpd = compoundify(['b'], graph)
+      expect(Graph.successors('a', cmpd)).to.have.length(1)
+      expect(Graph.successors('a', cmpd)[0].atomic).to.be.false
+      expect(Graph.predecessors('c', cmpd)).to.have.length(1)
+      expect(Graph.predecessors('c', cmpd)[0].atomic).to.be.false
+    })
+
+    it('Can compoundify all nodes in a compound layer', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addEdge({from: 'a@out', to: 'b@in'}),
+        Graph.addEdge({from: 'b@out', to: 'c@in'})
+      )()
+      const cmpd = compoundify(['b', 'a', 'c'], graph)
+      expect(Graph.successors('a', cmpd)).to.have.length(1)
+      expect(Graph.successors('a', cmpd)[0].atomic).to.be.false
+      expect(Graph.predecessors('c', cmpd)).to.have.length(1)
+      expect(Graph.predecessors('c', cmpd)[0].atomic).to.be.false
+    })
+
+    it('Fails if the node is blocked', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addEdge({from: 'a@out', to: 'b@in'}),
+        Graph.addEdge({from: 'b@out', to: 'c@in'})
+      )()
+      expect(() => compoundify(['a', 'c'], graph)).to.throw(Error)
+    })
   })
 })
