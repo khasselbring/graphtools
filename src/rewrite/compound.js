@@ -166,7 +166,6 @@ function criticalNodes (nodes, topo, graph) {
   return topo.slice(firstIdx, lastIdx + 1).filter((elem) => !markings[elem.id])
 }
 
-
 function findInSubset (node, subset, iterate, graph) {
   if (!sameParent(node, subset[0])) return false
   if (subset.find(Node.equal(node))) return true
@@ -212,21 +211,61 @@ function blocked (nodes, graph) {
   return (node) => successorInSubset(node, nodes, graph) && predecessorInSubset(node, nodes, graph)
 }
 
-function moveIntoCompound (subset, topo, componentId) {
+function moveIntoCompound (node, cmpdId) {
   return (graph) => {
-    const topoSubset = topo.filter((t) => subset.some(Node.equal(t)))
-    const lastNode = topoSubset[topoSubset.length - 1]
     var newComp = Graph.flow(
-      Graph.addNode(lastNode),
-      Node.inputPorts(lastNode).map((p) => Compound.addInputPort(p)),
-      (graph, objs) => Graph.flow(Node.inputPorts(lastNode).map((p) => Graph.addEdge({from: '@' + p.port, to: objs()[0].id + '@' + p.port})))(graph),
-      Node.outputPorts(lastNode).map((p) => Compound.addOutputPort(p)),
-      (graph, objs) => Graph.flow(Node.outputPorts(lastNode).map((p) => Graph.addEdge({from: objs()[0].id + '@' + p.port, to: '@' + p.port})))(graph),
-    )(Graph.node('/' + componentId, graph))
+      Graph.addNode(node),
+      (graph, objs) => mergeNodes({id: node.id}, objs()[0], graph),
+      Node.inputPorts(node).map((p) => Compound.addInputPort(p)),
+      (graph, objs) => Graph.flow(Node.inputPorts(node).map((p) => Graph.addEdge({from: '@' + p.port, to: node.id + '@' + p.port})))(graph),
+      Node.outputPorts(node).map((p) => Compound.addOutputPort(p)),
+      (graph, objs) => Graph.flow(Node.outputPorts(node).map((p) => Graph.addEdge({from: node.id + '@' + p.port, to: '@' + p.port})))(graph)
+    )(Graph.node(cmpdId, graph))
+    const newInputs = Node.inputPorts(node).map((p) =>
+        Graph.flow(Graph.inIncidents(p, graph)
+          .map((edge) => Graph.addEdge({from: edge.from, to: cmpdId.id + '@' + edge.to.port}))))
+    const newOutputs = Node.outputPorts(node).map((p) =>
+        Graph.flow(
+          Graph.outIncidents(p, graph)
+          .map((edge) => Graph.addEdge({from: cmpdId.id + '@' + edge.from.port, to: edge.to}))))
     return Graph.flow(
-      Graph.replaceNode('/' + componentId, newComp),
-      // Node.inputPorts(lastNode).map((p) => Compound.addInputPort(p)),
+      Graph.removeNode(node),
+      Graph.replaceNode(cmpdId, newComp),
+      newInputs,
+      newOutputs
     )(graph)
+  }
+}
+
+function inSubset (subset) {
+  return (node) => !!((node) ? subset.find(Node.equal(node)) : false)
+}
+
+function moveEndsIntoCompound (subset, cmpdId) {
+  return (graph) => {
+    return Graph.flow(
+      subset.filter((n) => Graph.successors(n, graph).every(negate(inSubset(subset))))
+      .map((n) => moveIntoCompound(n, cmpdId))
+    )(graph)
+  }
+}
+
+function moveSubsetIntoCompound (subset, cmpdId) {
+  return (graph) => {
+    var curGraph = moveEndsIntoCompound(subset, cmpdId)(graph)
+    // as long as not every node of the subset is included in the new graph
+    while (!subset.every((n) => !Graph.hasNode(n, curGraph))) {
+      const preCompoundNodes = Graph.nodes(Graph.node(cmpdId, curGraph)).length
+      curGraph = Graph.flow(
+        Node.inputPorts(Graph.node(cmpdId, curGraph))
+          .filter((p) => inSubset(subset)(Graph.predecessor(p, curGraph)))
+          .map((p) => includePredecessor(p))
+      )(curGraph)
+      const nowCompoundNodes = Graph.nodes(Graph.node(cmpdId, curGraph)).length
+      // there was nothing to do
+      if (nowCompoundNodes === preCompoundNodes) break
+    }
+    return curGraph
   }
 }
 
@@ -253,11 +292,11 @@ export const compoundify = curry((nodes, graph) => {
   if (blockedNodes.length > 0) {
     throw new Error('Subset of nodes is not compoundably. Nodes [' + blockedNodes.map((c) => c.id).join(', ') + '] are blocked')
   }
-  const parent = Graph.parent(nodeObjs[0], graph)
+  // const parent = Graph.parent(nodeObjs[0], graph)
   const compId = 'compoundify-' + cuid()
   const newGraph = Graph.flow(
     Graph.addNode(Graph.compound({componentId: compId})),
-    moveIntoCompound(nodeObjs, topo, compId)
+    (graph, objs) => moveSubsetIntoCompound(nodeObjs, objs()[0])(graph)
   )(graph)
   debug(newGraph)
   // todo:
@@ -265,5 +304,5 @@ export const compoundify = curry((nodes, graph) => {
   //    3.1. finding all ports simply by finding all ports of marekd nodes
   //         whose predecessors/successors are not marked.
 
-  return graph
+  return newGraph
 })

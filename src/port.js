@@ -169,7 +169,11 @@ export function toString (port) {
  */
 export const equal = curry((port1, port2) => {
   // console.log('port equal', port1, port2, node(port1) === node(port2) && portName(port1) === portName(port2))
-  return node(port1) === node(port2) && portName(port1) === portName(port2)
+  return node(port1) === node(port2) && isomorph(port1, port2)
+})
+
+export const isomorph = curry((port1, port2) => {
+  return portName(port1) === portName(port2) && (type(port1) === type(port2))
 })
 
 /**
@@ -181,11 +185,11 @@ export const equal = curry((port1, port2) => {
  * @param {String} kind 'input' or 'output'
  * @returns {Port} A valid port object.
  */
-export const create = curry((node, port, kind) => {
+export const create = curry((node, port, kind, type = 'generic') => {
   if (typeof (node) === 'object') {
-    return normalize({node: node.id, port, kind})
+    return normalize({node: node.id, port, kind, type})
   } else {
-    return normalize({node, port, kind})
+    return normalize({node, port, kind, type})
   }
 })
 

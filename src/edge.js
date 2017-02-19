@@ -129,8 +129,22 @@ export function setType (type, edge) {
   return merge({type}, edge)
 }
 
+
+/**
+ * Checks whether an object is a valid edge.
+ * @param {Object} edge The object to test.
+ * @returns {Boolean} True if the object is an edge, false otherwise.
+ */
 export function isValid (edge) {
+  return typeof (edge) === 'object' && edge.from && edge.to
+}
+
+export function isBetweenPorts (edge) {
   return typeof (edge) === 'object' &&
     Port.isValid(Object.assign({type: '-'}, edge.from)) &&
     Port.isValid(Object.assign({type: '-'}, edge.to))
+}
+
+export function isBetweenNodes (edge) {
+  return isValid(edge) && !isBetweenPorts(edge)
 }

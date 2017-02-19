@@ -170,7 +170,7 @@ describe('Rewrite basic API', () => {
   })
 
   describe('Compoudify', () => {
-    it.only('Can compoundify one node', () => {
+    it('Can compoundify one node', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
@@ -180,9 +180,9 @@ describe('Rewrite basic API', () => {
       )()
       const cmpd = compoundify(['b'], graph)
       expect(Graph.successors('a', cmpd)).to.have.length(1)
-      expect(Graph.successors('a', cmpd)[0].atomic).to.be.false
+      expect(Graph.node(Graph.successors('a', cmpd)[0], cmpd).atomic).to.be.false
       expect(Graph.predecessors('c', cmpd)).to.have.length(1)
-      expect(Graph.predecessors('c', cmpd)[0].atomic).to.be.false
+      expect(Graph.node(Graph.predecessors('c', cmpd)[0], cmpd).atomic).to.be.false
     })
 
     it('Can compoundify all nodes in a compound layer', () => {
@@ -194,10 +194,8 @@ describe('Rewrite basic API', () => {
         Graph.addEdge({from: 'b@out', to: 'c@in'})
       )()
       const cmpd = compoundify(['b', 'a', 'c'], graph)
-      expect(Graph.successors('a', cmpd)).to.have.length(1)
-      expect(Graph.successors('a', cmpd)[0].atomic).to.be.false
-      expect(Graph.predecessors('c', cmpd)).to.have.length(1)
-      expect(Graph.predecessors('c', cmpd)[0].atomic).to.be.false
+      expect(Graph.nodes(cmpd)).to.have.length(1)
+      expect(Graph.nodes(Graph.nodes(cmpd)[0])).to.have.length(3)
     })
 
     it('Fails if the node is blocked', () => {

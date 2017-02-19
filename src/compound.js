@@ -4,12 +4,13 @@ import omit from 'lodash/fp/omit'
 import merge from 'lodash/fp/merge'
 import curry from 'lodash/fp/curry'
 import negate from 'lodash/fp/negate'
-import {isReference, id as nodeID, hasPort, inputPorts, outputPorts, ports, component} from './node'
+// import {isReference, id as nodeID, hasPort, inputPorts, outputPorts, ports, component} from './node'
+import * as Node from './node'
 import * as Edge from './edge'
 import * as Port from './port'
 import {edges, removeEdge} from './graph/edge'
-import {pointsTo, isFrom} from './graph/connections'
-import {nodes} from './graph/node'
+import {pointsTo, isFrom, predecessor} from './graph/connections'
+import {nodes, node} from './graph/node'
 import _ from 'lodash'
 import cuid from 'cuid'
 
@@ -19,7 +20,7 @@ import cuid from 'cuid'
  * @returns {boolean} True if the node is a compound node, false otherwise.
  */
 export function isCompound (node) {
-  return !isReference(node) && !node.atomic && !!node.nodes && !!node.edges
+  return !Node.isReference(node) && !node.atomic && !!node.nodes && !!node.edges
 }
 
 /**
@@ -41,7 +42,7 @@ export function isRecursion (node) {
  */
 export function id (node) {
   if (node.id) {
-    return nodeID(node)
+    return Node.id(node)
   } else return null
 }
 
@@ -90,7 +91,10 @@ export function create (node) {
  * @returns {Node[]} An array of child nodes.
  */
 export const children = nodes
-export {hasPort, inputPorts, outputPorts, component}
+export const hasPort = Node.hasPort
+export const inputPorts = Node.inputPorts
+export const outputPorts = Node.outputPorts
+export const component = Node.component
 
 const getPort = (portOrString, node) =>
   (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : merge({node: node.id}, portOrString)
@@ -125,15 +129,20 @@ export const removePort = curry((port, node) => {
   var portEdges = edges(node).filter((e) => pointsTo(port, node, e) || isFrom(port, node, e))
   var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge, cmp), node)
   return merge(omit(['ports', 'componentId'], newNode),
-    {ports: ports(newNode).filter(negate((p) => Port.equal(port, p)))})
+    {ports: Node.ports(newNode).filter(negate((p) => Port.equal(port, p)))})
 })
 
 const addPort = (port, kind, node) => {
   if (hasPort(port, node)) {
     throw new Error('Cannot add already existing port ' + Port.toString(port) + ' to node.')
   }
-  return omit('componentId',
-    merge(node, {ports: node.ports.concat([Port.create(node.id, port.port, kind)])}))
+  if (port.type) {
+    return omit('componentId',
+      merge(node, {ports: node.ports.concat([Port.create(node.id, port.port, kind, port.type)])}))
+  } else {
+    return omit('componentId',
+      merge(node, {ports: node.ports.concat([Port.create(node.id, port.port, kind)])}))
+  }
 }
 
 /**
@@ -163,3 +172,50 @@ export const addOutputPort = curry((port, node) => {
   port = getPort(port, node)
   return addPort(port, 'output', node)
 })
+
+function checkStructureEquality (compound1, compound2) {
+  if (!Node.inputPorts(compound1).every((p) => Node.hasInputPort(p, compound2))) {
+    return false
+  }
+  if (!Node.outputPorts(compound1).every((p) => Node.hasOutputPort(p, compound2))) {
+    return false
+  }
+  if (nodes(compound1).length !== nodes(compound2).length) return false
+  // check from the output ports to the input ports. Every node must have the same ports
+  // in the same order and each input port has exactly one predecessor. Thus it is unambiguous
+  // if we follow the edges backwards through the compound node checking recursively for
+  // isomophy for each child node.
+  var q1 = []
+  var q2 = []
+  Node.outputPorts(compound1).map((p) => q1.push(predecessor(p, compound1)))
+  Node.outputPorts(compound2).map((p) => q2.push(predecessor(p, compound2)))
+  while (q1.length !== 0 && q2.length !== 0) {
+    const p1 = q1.shift()
+    const p2 = q2.shift()
+    if (typeof (p1) === 'undefined' && typeof (p2) === 'undefined') continue
+    if (typeof (p1) === 'undefined' || typeof (p2) === 'undefined') return false
+    if (!Port.isomorph(p1, p2)) return false
+    const cur1 = node(p1, compound1)
+    const cur2 = node(p2, compound2)
+    if (Node.equal(cur1, compound1) && Node.equal(cur2, compound2)) continue
+    if (!isomorph(cur1, cur2)) return false
+    Node.inputPorts(cur1).map((p) => q1.push(predecessor(p, compound1)))
+    Node.inputPorts(cur2).map((p) => q2.push(predecessor(p, compound2)))
+  }
+  // both queues must be empty
+  return (q1.length === 0 && q2.length === 0)
+}
+
+/**
+ * Tests whether two graphs are isomorph (strutucally equal). IDs and paths might differ.
+ * @param {Portgraph} graph1 One of the graphs
+ * @param {Portgraph} graph2 The other one of the graphs
+ * @returns {Boolean} True if the graphs are stucturally equal, false otherwise.
+ */
+export function isomorph (graph1, graph2) {
+  if (!isCompound(graph1) === isCompound(graph2)) return false
+  if (isCompound(graph1)) {
+    if (!checkStructureEquality(graph1, graph2)) return false
+  }
+  return Node.isomorph(graph1, graph2) // componentId, ports
+}

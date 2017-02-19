@@ -7,6 +7,7 @@ import merge from 'lodash/fp/merge'
 import find from 'lodash/fp/find'
 import has from 'lodash/fp/has'
 import every from 'lodash/fp/every'
+import zip from 'lodash/fp/zip'
 import * as Port from './port'
 import cuid from 'cuid'
 import {node as pathNode, isCompoundPath, equal as pathEqual, parent} from './compoundPath'
@@ -130,6 +131,17 @@ export const equal = curry((node1, node2) => {
     return pathEqual(parent(node1), parent(node2)) && name(node1) === name(node2)
   } else {
     return name(node1) === name(node2)
+  }
+})
+
+export const isomorph = curry((node1, node2) => {
+  if (!zip(ports(node1), ports(node2)).every(([p1, p2]) => Port.isomorph(p1, p2))) {
+    return false
+  }
+  if (isAtomic(node1)) {
+    return isAtomic(node2) && component(node1) === component(node2)
+  } else {
+    return !isAtomic(node2)
   }
 })
 
@@ -264,6 +276,37 @@ export const hasPort = curry((name, node) => {
   }
   return !!find((p) => Port.portName(p) === name, node.ports)
 })
+
+/**
+ * @function
+ * @name hasPort
+ * @description Checks whether the node has the specific input port.
+ * @param {String|Port} name The name of the port or a port object.
+ * @param {Node} node The node which has the port.
+ * @returns {Port} True if the port has an input port with the given name, false otherwise.
+ */
+export const hasInputPort = curry((name, node) => {
+  if (Port.isPort(name)) {
+    return hasInputPort(Port.portName(name), node)
+  }
+  return !!find((p) => Port.portName(p) === name, inputPorts(node))
+})
+
+/**
+ * @function
+ * @name hasPort
+ * @description Checks whether the node has the specific output port.
+ * @param {String|Port} name The name of the port or a port object.
+ * @param {Node} node The node which has the port.
+ * @returns {Port} True if the port has an output port with the given name, false otherwise.
+ */
+export const hasOutputPort = curry((name, node) => {
+  if (Port.isPort(name)) {
+    return hasOutputPort(Port.portName(name), node)
+  }
+  return !!find((p) => Port.portName(p) === name, outputPorts(node))
+})
+
 
 /**
  * Checks whether the node is a reference.

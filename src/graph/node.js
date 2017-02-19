@@ -4,7 +4,6 @@ import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relati
 import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
-import {allowsReferences} from './basic'
 import {namedFlow} from './flow'
 import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './internal'
 import {query} from '../location'
@@ -116,12 +115,6 @@ export const hasNode = curry((loc, graph) => {
 export function checkNode (graph, nodeToCheck) {
   if (hasNode(unID(nodeToCheck), graph) && !equal(node(unID(nodeToCheck), graph).path, graph.path) && !Node.equal(nodeToCheck, graph)) {
     throw new Error('Cannot add already existing node: ' + Node.name(nodeToCheck))
-  }
-  if (allowsReferences(graph) && Node.isReference(nodeToCheck)) {
-    if (Node.hasName(nodeToCheck) && hasNode(Node.name(nodeToCheck), graph) && !Node.equal(unID(nodeToCheck), graph)) {
-      throw new Error('Cannot add a reference if the name is already used. Names must be unique in every compound. Tried to add reference: ' + JSON.stringify(nodeToCheck))
-    }
-    return
   }
   if (!nodeToCheck) {
     throw new Error('Cannot add undefined node to graph.')
