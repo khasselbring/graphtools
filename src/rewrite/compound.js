@@ -42,21 +42,22 @@ export const includePredecessor = curry((port, graph) => {
     throw new Error('Cannot include the predecessor of port: ' + JSON.stringify(port) + ' as it has multiple successors.')
   }
   var preInPorts = inIncidents(pred.node, graph)
-  var effectedPorts = successors(pred, graph)
-  var postInPorts = flatten(effectedPorts.map((p) => outIncidents(p, graph)))
+  var affectedPorts = uniqBy((pair) => pair.compoundPort,
+    flatten(Node.outputPorts(predNode).map((p) => successors(p, graph).map((s) => ({predecessorPort: p, compoundPort: s})))))
+  var postInPorts = affectedPorts.map((p) => Object.assign(p, {outEdges: outIncidents(p.compoundPort, graph)}))
   var compound = Graph.node(port, graph)
 
   var newCompound = flow(
-    // remove old port and add predecessor
-    effectedPorts.map((p) => Compound.removePort(p)),
     Graph.addNode(predNode),
+    // remove old port and add predecessor
+    affectedPorts.map((p) => Compound.removePort(p.compoundPort)),
     // set the id of the included predecessor to the id of the predecessor
-    (graph, objs) => mergeNodes({id: predNode.id}, objs()[1], graph),
+    (graph, objs) => mergeNodes({id: predNode.id}, objs()[0], graph),
     // add all input ports of predecessor
     preInPorts.map((edge) => Compound.addInputPort(edge.to)),
     preInPorts.map((edge) =>
         Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})),
-    postInPorts.map((edge) => Graph.addEdge({from: pred, to: edge.to}))
+    postInPorts.map((obj) => Graph.flow(obj.outEdges.map((edge) => Graph.addEdge({from: obj.predecessorPort, to: edge.to}))))
   )(compound)
   var newGraph = flow(
     [
@@ -266,7 +267,6 @@ function moveSubsetIntoCompound (subset, cmpdId) {
     var curGraph = moveEndsIntoCompound(subset, cmpdId)(graph)
     // as long as not every node of the subset is included in the new graph
     while (!subset.every((n) => !Graph.hasNode(n, curGraph))) {
-      break
       const preCompoundNodes = Graph.nodes(Graph.node(cmpdId, curGraph)).length
       const activeInputPorts = Node.inputPorts(Graph.node(cmpdId, curGraph))
         .filter((p) => inSubset(subset)(Graph.predecessor(p, curGraph)))
@@ -277,7 +277,6 @@ function moveSubsetIntoCompound (subset, cmpdId) {
       const nowCompoundNodes = Graph.nodes(Graph.node(cmpdId, curGraph)).length
       // there was nothing to do
       if (nowCompoundNodes === preCompoundNodes) break
-      break
     }
     return curGraph
   }

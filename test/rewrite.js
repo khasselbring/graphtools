@@ -53,7 +53,7 @@ describe('Rewrite basic API', () => {
       expect(Graph.node(Graph.predecessor('c@outC', rewGraph), rewGraph).componentId).to.equal('moved')
     })
 
-    it.only('can include a node that is a predecessor of multiple ports', () => {
+    it('can include a node that is a predecessor of multiple ports', () => {
       var comp = Graph.flow(
         Graph.addNode({name: 'inner', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addEdge({from: '@inC1', to: '@outC'}),
@@ -70,9 +70,38 @@ describe('Rewrite basic API', () => {
         (graph, objs) =>
           Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
       )()
-      debug(graph)
       var rewGraph1 = includePredecessor('c@inC1', graph)
-      debug(rewGraph1)
+      var rewGraph2 = includePredecessor('c@inC2', graph)
+      expect(Graph.nodes(rewGraph1)).to.have.length(2)
+      expect(Graph.nodes(Graph.node('c', rewGraph1))).to.have.length(2)
+      expect(Node.inputPorts(Graph.node('c', rewGraph1))).to.have.length(1)
+      expect(Graph.nodes(rewGraph2)).to.have.length(2)
+      expect(Graph.nodes(Graph.node('c', rewGraph2))).to.have.length(2)
+      expect(Node.inputPorts(Graph.node('c', rewGraph2))).to.have.length(1)
+    })
+
+    it('can add new outputs for predecessor successors that are not inside the compound', () => {
+      expect(null).to.be.ok
+    })
+
+    it('can include a preceeding node whose ports all point to the compound', () => {
+      var comp = Graph.flow(
+        Graph.addNode({name: 'inner', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
+        Graph.addEdge({from: '@inC1', to: '@outC'}),
+        Graph.addEdge({from: '@inC2', to: 'inner@in'})
+      )(Graph.compound({name: 'c', ports: [{port: 'inC1', kind: 'input'}, {port: 'inC2', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
+      var graph = Graph.flow(
+        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'outB', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+        Graph.addNode(comp),
+        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC1'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[0].id + '@outB', to: objs()[1].id + '@inC2'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
+      )()
+      var rewGraph1 = includePredecessor('c@inC1', graph)
       var rewGraph2 = includePredecessor('c@inC2', graph)
       expect(Graph.nodes(rewGraph1)).to.have.length(2)
       expect(Graph.nodes(Graph.node('c', rewGraph1))).to.have.length(2)
