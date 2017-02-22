@@ -4,6 +4,7 @@ import chai from 'chai'
 import * as Graph from '../src/graph'
 import {includePredecessor, excludeNode, unCompound, compoundify} from '../src/rewrite/compound'
 import * as Node from '../src/node'
+import {debug} from '../src/debug'
 import _ from 'lodash'
 
 var expect = chai.expect
@@ -50,6 +51,35 @@ describe('Rewrite basic API', () => {
       expect(Graph.nodes(Graph.node('c', rewGraph))).to.have.length(1)
       expect(Graph.inIncidents('c', rewGraph)).to.have.length(2)
       expect(Graph.node(Graph.predecessor('c@outC', rewGraph), rewGraph).componentId).to.equal('moved')
+    })
+
+    it.only('can include a node that is a predecessor of multiple ports', () => {
+      var comp = Graph.flow(
+        Graph.addNode({name: 'inner', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
+        Graph.addEdge({from: '@inC1', to: '@outC'}),
+        Graph.addEdge({from: '@inC2', to: 'inner@in'})
+      )(Graph.compound({name: 'c', ports: [{port: 'inC1', kind: 'input'}, {port: 'inC2', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
+      var graph = Graph.flow(
+        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+        Graph.addNode(comp),
+        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC1'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC2'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
+      )()
+      debug(graph)
+      var rewGraph1 = includePredecessor('c@inC1', graph)
+      debug(rewGraph1)
+      var rewGraph2 = includePredecessor('c@inC2', graph)
+      expect(Graph.nodes(rewGraph1)).to.have.length(2)
+      expect(Graph.nodes(Graph.node('c', rewGraph1))).to.have.length(2)
+      expect(Node.inputPorts(Graph.node('c', rewGraph1))).to.have.length(1)
+      expect(Graph.nodes(rewGraph2)).to.have.length(2)
+      expect(Graph.nodes(Graph.node('c', rewGraph2))).to.have.length(2)
+      expect(Node.inputPorts(Graph.node('c', rewGraph2))).to.have.length(1)
     })
 
     it('throws an error if the predecessor of an port has other successors', () => {
@@ -196,6 +226,21 @@ describe('Rewrite basic API', () => {
       const cmpd = compoundify(['b', 'a', 'c'], graph)
       expect(Graph.nodes(cmpd)).to.have.length(1)
       expect(Graph.nodes(Graph.nodes(cmpd)[0])).to.have.length(3)
+    })
+
+    it('Can compoundify all nodes in a compound layer with multiple ends', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'd', ports: [{port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addEdge({from: 'a@out', to: 'b@in'}),
+        Graph.addEdge({from: 'b@out', to: 'c@in'}),
+        Graph.addEdge({from: 'b@out', to: 'd@in'})
+      )()
+      const cmpd = compoundify(['b', 'a', 'c', 'd'], graph)
+      expect(Graph.nodes(cmpd)).to.have.length(1)
+      expect(Graph.nodes(Graph.nodes(cmpd)[0])).to.have.length(4)
     })
 
     it('Fails if the node is blocked', () => {
