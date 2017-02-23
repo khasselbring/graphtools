@@ -80,7 +80,7 @@ describe('Rewrite basic API', () => {
       expect(Node.inputPorts(Graph.node('c', rewGraph2))).to.have.length(1)
     })
 
-    it.only('can add new outputs for predecessor successors that are not inside the compound', () => {
+    it('can add new outputs for predecessor successors that are not inside the compound', () => {
       var comp = Graph.flow(
         Graph.addEdge({from: '@inC', to: '@outC'}),
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
@@ -100,8 +100,8 @@ describe('Rewrite basic API', () => {
       debug(graph)
       var rewGraph1 = includePredecessor('c@inC', graph)
       debug(rewGraph1)
-      expect(Graph.nodes(rewGraph1)).to.have.length(2)
-      expect(Graph.nodes(Graph.node('c', rewGraph1))).to.have.length(2)
+      expect(Graph.nodes(rewGraph1)).to.have.length(3)
+      expect(Graph.nodes(Graph.node('c', rewGraph1))).to.have.length(1)
       expect(Node.inputPorts(Graph.node('c', rewGraph1))).to.have.length(1)
       expect(Node.outputPorts(Graph.node('c', rewGraph1))).to.have.length(2)
     })
@@ -131,24 +131,6 @@ describe('Rewrite basic API', () => {
       expect(Graph.nodes(rewGraph2)).to.have.length(2)
       expect(Graph.nodes(Graph.node('c', rewGraph2))).to.have.length(2)
       expect(Node.inputPorts(Graph.node('c', rewGraph2))).to.have.length(1)
-    })
-
-    it('throws an error if the predecessor of an port has other successors', () => {
-      var comp = Graph.addEdge({from: '@inC', to: '@outC'},
-        Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
-      var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
-        Graph.addNode(comp),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        Graph.addNode({ports: [{port: 'inB', kind: 'input'}]}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[3].id + '@inB'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
-      )()
-      expect(() => includePredecessor({node: 'c', port: 'inC'}, graph)).to.throw(Error)
     })
   })
 

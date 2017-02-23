@@ -61,7 +61,7 @@ export const includePredecessor = curry((port, graph) => {
     preInPorts.map((edge) =>
         Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})),
     postInPorts.map((obj) => Graph.flow(obj.outEdges.map((edge) => Graph.addEdge({from: obj.predecessorPort, to: edge.to})))),
-    additionalPorts.map((p) => Graph.addEdge({from: predecessor(p, graph), to: '@' + p.name}))
+    additionalPorts.map((p) => Graph.addEdge({from: predecessor(p, graph), to: '@' + p.port}))
   )(compound)
   var newGraph = flow(
     [
@@ -70,6 +70,8 @@ export const includePredecessor = curry((port, graph) => {
     ]
     .concat(preInPorts.map((edge) =>
         Graph.addEdge({from: edge.from, to: compound.id + '@' + edge.to.port})))
+    .concat(additionalPorts.map((p) =>
+        Graph.addEdge({from: newCompound.id + '@' + p.port, to: p})))
   )(graph)
   return newGraph
 })
