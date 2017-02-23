@@ -38,14 +38,16 @@ export const includePredecessor = curry((port, graph) => {
   var pred = predecessor(port, graph)
   var portNode = Graph.node(port, graph)
   var predNode = Graph.node(pred, graph)
-  if (outIncidents(pred.node, graph).length > 1 && !successors(pred.node, graph).every((n) => Node.equal(n, portNode))) {
+  /* if (outIncidents(pred.node, graph).length > 1 && !successors(pred.node, graph).every((n) => Node.equal(n, portNode))) {
     throw new Error('Cannot include the predecessor of port: ' + JSON.stringify(port) + ' as it has multiple successors.')
   }
+  */
   var preInPorts = inIncidents(pred.node, graph)
   var affectedPorts = uniqBy((pair) => pair.compoundPort,
     flatten(Node.outputPorts(predNode).map((p) => successors(p, graph).map((s) => ({predecessorPort: p, compoundPort: s})))))
   var postInPorts = affectedPorts.map((p) => Object.assign(p, {outEdges: outIncidents(p.compoundPort, graph)}))
-  var compound = Graph.node(port, graph)
+  var additionalPorts = successors(pred.node, graph).filter((n) => !Node.equal(n, portNode))
+  var compound = portNode
 
   var newCompound = flow(
     Graph.addNode(predNode),
@@ -55,9 +57,11 @@ export const includePredecessor = curry((port, graph) => {
     (graph, objs) => mergeNodes({id: predNode.id}, objs()[0], graph),
     // add all input ports of predecessor
     preInPorts.map((edge) => Compound.addInputPort(edge.to)),
+    additionalPorts.map((p) => Compound.addOutputPort(p)),
     preInPorts.map((edge) =>
         Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})),
-    postInPorts.map((obj) => Graph.flow(obj.outEdges.map((edge) => Graph.addEdge({from: obj.predecessorPort, to: edge.to}))))
+    postInPorts.map((obj) => Graph.flow(obj.outEdges.map((edge) => Graph.addEdge({from: obj.predecessorPort, to: edge.to})))),
+    additionalPorts.map((p) => Graph.addEdge({from: predecessor(p, graph), to: '@' + p.name}))
   )(compound)
   var newGraph = flow(
     [
