@@ -1,5 +1,5 @@
 
-import {nodesBy} from './node'
+import {nodesDeepBy} from './node'
 import {isReference, isAtomic} from '../node'
 import {isCompound} from '../compound'
 
@@ -9,7 +9,7 @@ import {isCompound} from '../compound'
  * @returns {References[]} A list of all defined reference nodes in the graph.
  */
 export function references (graph) {
-  return nodesBy(isReference, graph)
+  return nodesDeepBy(isReference, graph)
 }
 
 /**
@@ -18,14 +18,14 @@ export function references (graph) {
  * @returns {References[]} A list of all defined compound nodes in the graph.
  */
 export function compounds (graph) {
-  return nodesBy(isCompound, graph)
+  return nodesDeepBy(isCompound, graph)
 }
 
 /**
  * Gets a list of all atomic nodes.
  * @param {PortGraph} graph The graph.
- * @returns {References[]} A list of all defined atomci nodes in the graph.
+ * @returns {References[]} A list of all defined atomic nodes in the graph.
  */
 export function atomics (graph) {
-  return nodesBy(isAtomic, graph)
+  return nodesDeepBy(isAtomic, graph)
 }

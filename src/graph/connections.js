@@ -4,7 +4,7 @@ import map from 'lodash/fp/map'
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
 import * as Edge from '../edge'
-import {edges} from './edge'
+import {edgesDeep} from './edge'
 import {query} from '../location'
 import {node} from '../graph/node'
 
@@ -50,7 +50,7 @@ export const isFrom = curry((source, graph, edge) => {
  * @returns {boolean} True if the graph has an edge going from "nodeFrom" to "nodeTo".
  */
 export function areConnected (nodeFrom, nodeTo, graph) {
-  return !!find(edges(graph), (e) => Edge.isFrom(nodeFrom, e, graph) && Edge.pointsTo(nodeTo, e, graph))
+  return !!find(edgesDeep(graph), (e) => Edge.isFrom(nodeFrom, e, graph) && Edge.pointsTo(nodeTo, e, graph))
 }
 
 /**
@@ -82,7 +82,7 @@ export function predecessor (target, graph) {
  * @returns {Edge[]} An array of all ingoing (i.e. pointsTo(port)) incident edges.
  */
 export function inIncidents (target, graph) {
-  return edges(graph).filter(pointsTo(target, graph))
+  return edgesDeep(graph).filter(pointsTo(target, graph))
 }
 
 /**
@@ -102,7 +102,7 @@ export function inIncident (target, graph) {
  * @returns {Edge[]} An array of all outgoing (i.e. isFrom(port)) incident edges.
  */
 export function outIncidents (source, graph) {
-  return edges(graph).filter(isFrom(source, graph))
+  return edgesDeep(graph).filter(isFrom(source, graph))
 }
 
 /**
@@ -128,5 +128,5 @@ function or (fn1, fn2) {
  * @returns {Edge[]} An array of all incident edges to the given location.
  */
 export const incidents = curry((loc, graph) => {
-  return edges(graph).filter(or(isFrom(loc, graph), pointsTo(loc, graph)))
+  return edgesDeep(graph).filter(or(isFrom(loc, graph), pointsTo(loc, graph)))
 })

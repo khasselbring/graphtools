@@ -8,7 +8,7 @@ import negate from 'lodash/fp/negate'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Port from './port'
-import {edges, removeEdge} from './graph/edge'
+import {edgesDeep, removeEdge} from './graph/edge'
 import {pointsTo, isFrom, predecessor} from './graph/connections'
 import {nodes, node} from './graph/node'
 import _ from 'lodash'
@@ -126,7 +126,7 @@ export const renamePort = curry((port, newName, node) => {
  */
 export const removePort = curry((port, node) => {
   port = getPort(port, node)
-  var portEdges = edges(node).filter((e) => pointsTo(port, node, e) || isFrom(port, node, e))
+  var portEdges = edgesDeep(node).filter((e) => pointsTo(port, node, e) || isFrom(port, node, e))
   var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge, cmp), node)
   return merge(omit(['ports', 'componentId'], newNode),
     {ports: Node.ports(newNode).filter(negate((p) => Port.equal(port, p)))})
@@ -184,7 +184,7 @@ function checkStructureEquality (compound1, compound2) {
   // check from the output ports to the input ports. Every node must have the same ports
   // in the same order and each input port has exactly one predecessor. Thus it is unambiguous
   // if we follow the edges backwards through the compound node checking recursively for
-  // isomophy for each child node.
+  // isomorphy for each child node.
   var q1 = []
   var q2 = []
   Node.outputPorts(compound1).map((p) => q1.push(predecessor(p, compound1)))

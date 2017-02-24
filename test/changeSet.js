@@ -46,7 +46,7 @@ describe('Change Sets', () => {
     ])
     var cS = changeSet.insertEdge({ from: 'a', to: 'b' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.edges(newGraph)).to.have.length(1)
+    expect(Graph.edgesDeep(newGraph)).to.have.length(1)
   })
 
   it('can remove an edge', () => {
@@ -57,7 +57,7 @@ describe('Change Sets', () => {
     ])
     var cS = changeSet.removeEdge({ from: '#a', to: '#b', layer: 'c' })
     var newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.edges(newGraph)).to.have.length(0)
+    expect(Graph.edgesDeep(newGraph)).to.have.length(0)
 
     graph = changeSet.applyChangeSets(Graph.empty(), [
       changeSet.insertNode({id: '#a', ports: [{port: 'a', kind: 'output', type: 'number'}], path: ['#a']}),
@@ -69,8 +69,8 @@ describe('Change Sets', () => {
     ])
     cS = changeSet.removeEdge({ from: {node: '#c', port: 'a'}, to: {node: '#d', port: 'a'}, layer: 'dataflow' })
     newGraph = changeSet.applyChangeSet(graph, cS)
-    expect(Graph.edges(newGraph)).to.have.length(1)
-    expect(Graph.edges(newGraph)[0].from.node).to.eql('#a')
+    expect(Graph.edgesDeep(newGraph)).to.have.length(1)
+    expect(Graph.edgesDeep(newGraph)[0].from.node).to.eql('#a')
   })
 
   it('can set meta information', () => {

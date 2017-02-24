@@ -251,11 +251,11 @@ describe('Rewrite basic API', () => {
       Graph.addEdge({ from: 'Source@out', to: 'Sink@in' })
     )(Graph.compound({ }))
     var graph = Graph.addNode(cmp, Graph.empty())
-    expect(Graph.edges(graph)).to.have.length(1)
+    expect(Graph.edgesDeep(graph)).to.have.length(1)
     var node = Graph.nodesDeepBy((n) => n.name === 'Source', graph)[0]
     var newNode = _.cloneDeep(node)
     var newGraph = Graph.replaceNode(node, newNode, graph)
-    expect(Graph.edges(newGraph)).to.have.length(1)
+    expect(Graph.edgesDeep(newGraph)).to.have.length(1)
   })
 
   describe('Compoudify', () => {

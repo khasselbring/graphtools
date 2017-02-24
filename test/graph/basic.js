@@ -39,7 +39,7 @@ describe('Basic graph functions', () => {
     var graph = Graph.fromJSON(graphJSON)
     expect(graph).to.be.ok
     expect(Graph.nodes(graph)).to.have.length(2)
-    expect(Graph.edges(graph)).to.have.length(1)
+    expect(Graph.edgesDeep(graph)).to.have.length(1)
     expect(Graph.components(graph)).to.have.length(1)
   })
 
@@ -72,11 +72,22 @@ describe('Basic graph functions', () => {
           Graph.addEdge({from: port(objs()[0], 'a'), to: port(objs()[1], 'other')}, graph)
     )()
     expect(graph).to.be.ok
-    expect(Graph.edges(graph)).to.have.length(1)
+    expect(Graph.edgesDeep(graph)).to.have.length(1)
   })
 
   it('cannot add two nodes with the same name', () => {
     var graph = Graph.flow(Graph.addNode({ref: 'a', name: 'a'}))()
     expect(() => Graph.addNode({ref: 'a', name: 'a'}, graph)).to.throw(Error)
+  })
+
+  it('Gets all atomics in the graph', () => {
+    var cmpd = Graph.flow(
+      Graph.addNode({atomic: true, ports: [{port: 'a', kind: 'output', type: 'b'}]})
+    )(Graph.compound({ports: [{port: 'a', kind: 'output', type: 'b'}]}))
+    var graph = Graph.flow(
+      Graph.addNode({atomic: true, ports: [{port: 'a', kind: 'output', type: 'b'}]}),
+      Graph.addNode(cmpd)
+    )()
+    expect(Graph.atomics(graph)).to.have.length(2)
   })
 })

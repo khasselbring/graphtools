@@ -20,9 +20,9 @@ describe('Basic graph functions', () => {
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input', type: 'a'}]})
       )()
       var newGraph = Graph.addEdge({from: 'a@out', to: 'b@in'}, graph)
-      expect(Graph.edges(newGraph)).to.have.length(1)
-      expect(Graph.edges(newGraph)[0].from.port).to.eql('out')
-      expect(Graph.edges(newGraph)[0].to.port).to.eql('in')
+      expect(Graph.edgesDeep(newGraph)).to.have.length(1)
+      expect(Graph.edgesDeep(newGraph)[0].from.port).to.eql('out')
+      expect(Graph.edgesDeep(newGraph)[0].to.port).to.eql('in')
     })
 
     it('Can remove edges from the graph', () => {
@@ -32,7 +32,7 @@ describe('Basic graph functions', () => {
         Graph.addEdge({from: 'a@out', to: 'b@in'})
       )()
       var newGraph = Graph.removeEdge({from: 'a@out', to: 'b@in'}, graph)
-      expect(Graph.edges(newGraph)).to.have.length(0)
+      expect(Graph.edgesDeep(newGraph)).to.have.length(0)
     })
 
     it('Throws an error if the edge that should be deleted does not exist', () => {
@@ -273,8 +273,8 @@ describe('Basic graph functions', () => {
         (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
       )()
       var edge = Graph.inIncident('b', graph)
-      expect(Graph.edges(Graph.removeEdge(edge, graph)).length).to.equal(0)
-      expect(Graph.edges(Graph.removeEdge({from: 'a@out', to: 'b@in'}, graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeEdge(edge, graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeEdge({from: 'a@out', to: 'b@in'}, graph)).length).to.equal(0)
     })
 
     it('Can remove an edge inside a compound', () => {
@@ -287,8 +287,8 @@ describe('Basic graph functions', () => {
         Graph.addEdge({from: '»c»a@out', to: '»c»b@in'})
       )()
       var edge = Graph.inIncident('»c»b', graph)
-      expect(Graph.edges(Graph.removeEdge(edge, graph)).length).to.equal(0)
-      expect(Graph.edges(Graph.removeEdge({from: '»c»a@out', to: '»c»b@in'}, graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeEdge(edge, graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeEdge({from: '»c»a@out', to: '»c»b@in'}, graph)).length).to.equal(0)
     })
 
     it.skip('Supports special syntax', () => {
@@ -300,16 +300,16 @@ describe('Basic graph functions', () => {
         Graph.addEdge({from: 'b@out', to: 'c@in'})
       )()
       // all edges from a to b
-      expect(Graph.edges(Graph.removeEdge({from: 'a', to: 'b'}, graph)).length).to.equal(1)
+      expect(Graph.edgesDeep(Graph.removeEdge({from: 'a', to: 'b'}, graph)).length).to.equal(1)
       // all edges from a
-      expect(Graph.edges(Graph.removeEdge({from: 'a'}, graph)).length).to.equal(1)
-      expect(Graph.edges(Graph.removeEdge('a→', graph)).length).to.equal(1)
+      expect(Graph.edgesDeep(Graph.removeEdge({from: 'a'}, graph)).length).to.equal(1)
+      expect(Graph.edgesDeep(Graph.removeEdge('a→', graph)).length).to.equal(1)
       // all edges to b
-      expect(Graph.edges(Graph.removeEdge({to: 'b'}, graph)).length).to.equal(1)
-      expect(Graph.edges(Graph.removeEdge('→b', graph)).length).to.equal(1)
+      expect(Graph.edgesDeep(Graph.removeEdge({to: 'b'}, graph)).length).to.equal(1)
+      expect(Graph.edgesDeep(Graph.removeEdge('→b', graph)).length).to.equal(1)
       // all edges from and to b
-      expect(Graph.edges(Graph.removeEdge('b', graph)).length).to.equal(0)
-      expect(Graph.edges(Graph.removeEdge('→b→', graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeEdge('b', graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeEdge('→b→', graph)).length).to.equal(0)
     })
 
     it('Gets the successors for a node', () => {
@@ -342,7 +342,7 @@ describe('Basic graph functions', () => {
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c»a', to: 'c', layer: 'recursion'})
       )()
-      expect(Graph.edges(graph)).to.have.length(1)
+      expect(Graph.edgesDeep(graph)).to.have.length(1)
       expect(Graph.hasEdge({from: '»c»a', to: 'c', layer: 'recursion'}, graph)).to.be.true
     })
 
@@ -354,7 +354,7 @@ describe('Basic graph functions', () => {
       var graph = Graph.flow(
         Graph.addNode(cmpd)
       )()
-      expect(Graph.edges(graph)).to.have.length(1)
+      expect(Graph.edgesDeep(graph)).to.have.length(1)
       expect(Graph.hasEdge({from: '»c»a', to: 'c', layer: 'recursion'}, graph)).to.be.true
     })
 

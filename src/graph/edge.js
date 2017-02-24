@@ -19,13 +19,29 @@ import {incidents} from './connections'
 /**
  * Returns a list of edges in the graph. Each edge also has an extra field identifying the parent
  * node to which the edge belongs in the hierarchy.
+ * @example <caption>Getting all the edges in a graph</caption>
+ * edgesDeep(graph) // -> [{from: ..., to: ..., layer: ..., parent: '#...'}, ...]
+ * @param {PortGraph} graph The graph.
+ * @returns {Edges[]} A list of edges.
+ */
+export function edgesDeep (graph) {
+  return compact(flatten(map((parent) => (parent.edges || []).map((e) => merge(e, {parent: Node.id(parent)})), nodesDeep(graph))))
+    .map((edge) =>
+      (edge.layer === 'dataflow' && hasPort(edge.from, graph))
+        ? Edge.setType(Port.type(port(edge.from, graph)), edge)
+        : edge)
+}
+
+/**
+ * Returns a list of edges in the graph layer. Each edge also has an extra field identifying the parent
+ * node to which the edge belongs in the hierarchy. This function will not recurse into compounds, use edgesDeep for that.
  * @example <caption>Getting the edges in a graph</caption>
  * edges(graph) // -> [{from: ..., to: ..., layer: ..., parent: '#...'}, ...]
  * @param {PortGraph} graph The graph.
  * @returns {Edges[]} A list of edges.
  */
 export function edges (graph) {
-  return compact(flatten(map((parent) => (parent.edges || []).map((e) => merge(e, {parent: Node.id(parent)})), nodesDeep(graph))))
+  return (graph.edges || [])
     .map((edge) =>
       (edge.layer === 'dataflow' && hasPort(edge.from, graph))
         ? Edge.setType(Port.type(port(edge.from, graph)), edge)
@@ -214,7 +230,7 @@ function identifies (edge, graph) {
 function findEdge (edge, graph) {
   try { // TODO: improve error message when an error is thrown
     var normEdge = normalize(edge, graph)
-    return find(identifies(normEdge, graph), edges(graph))
+    return find(identifies(normEdge, graph), edgesDeep(graph))
   } catch (err) {
     return null
   }

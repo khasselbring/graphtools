@@ -236,8 +236,8 @@ describe('Basic graph functions', () => {
         Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
         (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
       )()
-      expect(Graph.edges(Graph.removeNode('a', graph)).length).to.equal(0)
-      expect(Graph.edges(Graph.removeNode('b', graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeNode('a', graph)).length).to.equal(0)
+      expect(Graph.edgesDeep(Graph.removeNode('b', graph)).length).to.equal(0)
     })
 
     it('Adding a compound relabels all edges to the new id', () => {
