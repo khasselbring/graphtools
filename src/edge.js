@@ -85,7 +85,9 @@ export function normalize (edge) {
  */
 export const equal = curry((edge1, edge2) => {
   if (edge1.layer === 'dataflow') {
-    return Port.equal(edge1.from, edge2.from) && Port.equal(edge1.to, edge2.to) && edge1.layer === edge2.layer
+    return Port.node(edge1.from) === Port.node(edge2.from) && Port.node(edge1.to) === Port.node(edge2.to) &&
+      Port.portName(edge1.from) === Port.portName(edge2.from) && Port.portName(edge1.to) === Port.portName(edge2.to) &&
+      edge1.layer === edge2.layer
   } else {
     return edge1.from === edge2.from && edge1.to === edge2.to && edge1.layer === edge2.layer
   }
@@ -126,6 +128,11 @@ export function type (edge) {
  * @returns {Edge} A new edge that has a field for the type.
  */
 export function setType (type, edge) {
+  if (isBetweenPorts(edge)) {
+    return merge(edge, {type, from: Port.setType(type, edge.from), to: Port.setType(type, edge.to)})
+  } else if (!isBetweenNodes(edge)) {
+    throw new Error('[Edge.setType] Cannot handle mixed edges (from port to node or from node into port)')
+  }
   return merge({type}, edge)
 }
 
@@ -141,8 +148,8 @@ export function isValid (edge) {
 
 export function isBetweenPorts (edge) {
   return typeof (edge) === 'object' &&
-    Port.isValid(Object.assign({type: '-'}, edge.from)) &&
-    Port.isValid(Object.assign({type: '-'}, edge.to))
+    Port.isValid(Object.assign({type: '-', kind: 'input'}, edge.from)) &&
+    Port.isValid(Object.assign({type: '-', kind: 'output'}, edge.to))
 }
 
 export function isBetweenNodes (edge) {

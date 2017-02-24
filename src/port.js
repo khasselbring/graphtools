@@ -85,6 +85,16 @@ export function type (port) {
 }
 
 /**
+ * Sets the type of a port and returns a new port with this updated port.
+ * @param type The type to set.
+ * @param {Port} port The port
+ * @returns The updated port.
+ */
+export function setType (type, port) {
+  return merge(port, {type})
+}
+
+/**
  * Returns the kind of the port. Either output or input.
  * @param {Port} port The port
  * @returns The kind of the port. It is either 'input' or 'output'.
@@ -168,7 +178,6 @@ export function toString (port) {
  * @returns {boolean} True if the ports are equal, false otherwise.
  */
 export const equal = curry((port1, port2) => {
-  // console.log('port equal', port1, port2, node(port1) === node(port2) && portName(port1) === portName(port2))
   return node(port1) === node(port2) && isomorph(port1, port2)
 })
 

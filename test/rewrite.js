@@ -4,7 +4,6 @@ import chai from 'chai'
 import * as Graph from '../src/graph'
 import {includePredecessor, excludeNode, unCompound, compoundify} from '../src/rewrite/compound'
 import * as Node from '../src/node'
-import {debug} from '../src/debug'
 import _ from 'lodash'
 
 var expect = chai.expect
@@ -97,9 +96,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'moved@outA', to: 'other@inOther'})(graph)
       )()
       expect(Node.outputPorts(Graph.node('c', graph))).to.have.length(1)
-      debug(graph)
       var rewGraph1 = includePredecessor('c@inC', graph)
-      debug(rewGraph1)
       expect(Graph.nodes(rewGraph1)).to.have.length(3)
       expect(Graph.nodes(Graph.node('c', rewGraph1))).to.have.length(1)
       expect(Node.inputPorts(Graph.node('c', rewGraph1))).to.have.length(1)
@@ -131,6 +128,34 @@ describe('Rewrite basic API', () => {
       expect(Graph.nodes(rewGraph2)).to.have.length(2)
       expect(Graph.nodes(Graph.node('c', rewGraph2))).to.have.length(2)
       expect(Node.inputPorts(Graph.node('c', rewGraph2))).to.have.length(1)
+    })
+
+    it('removes ports that are unused after including predecessor', () => {
+      var comp = Graph.flow(
+        Graph.addNode({name: 'inner1', ports: [{port: 'in', kind: 'input', type: 'a'}, {port: 'out', kind: 'output', type: 'a'}]}),
+        Graph.addNode({name: 'inner2', ports: [{port: 'in', kind: 'input', type: 'a'}, {port: 'out', kind: 'output', type: 'a'}]}),
+        Graph.addEdge({from: '@inC1', to: 'inner1@in'}),
+        Graph.addEdge({from: '@inC2', to: 'inner2@in'}),
+        Graph.addEdge({from: 'inner1@out', to: '@outC'}),
+        Graph.addEdge({from: 'inner2@out', to: '@outC'})
+      )(Graph.compound({name: 'c', ports: [{port: 'inC1', kind: 'input'}, {port: 'inC2', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
+      var graph = Graph.flow(
+        Graph.addNode({ports: [{port: 'in', kind: 'input', type: 'a'}]}),
+        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'outB', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+        Graph.addNode(comp),
+        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[1].id + '@outA', to: objs()[2].id + '@inC1'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[1].id + '@outB', to: objs()[2].id + '@inC2'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[3].id + '@outF', to: objs()[1].id + '@inA'})(graph),
+        (graph, objs) =>
+          Graph.addEdge({from: objs()[2].id + '@outC', to: objs()[0].id + '@in'})(graph)
+      )()
+      expect(Node.inputPorts(comp)).to.have.length(2)
+      var inc = includePredecessor('c@inC1', graph)
+      expect(Node.inputPorts(Graph.node('c', inc))).to.have.length(1)
     })
   })
 

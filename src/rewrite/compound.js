@@ -19,7 +19,6 @@ import * as Node from '../node'
 import * as Path from '../compoundPath'
 import {mergeNodes} from '../graph/internal'
 import {topologicalSort} from '../algorithm'
-import {debug} from '../debug'
 import cuid from 'cuid'
 
 /**
@@ -317,7 +316,6 @@ export const compoundify = curry((nodes, graph) => {
     Graph.addNode(Graph.compound({componentId: compId})),
     (graph, objs) => moveSubsetIntoCompound(nodeObjs, objs()[0])(graph)
   )(graph)
-  debug(newGraph)
   // todo:
   // 3. add compound. move nodes inside, create ports...
   //    3.1. finding all ports simply by finding all ports of marekd nodes
