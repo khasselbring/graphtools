@@ -3,6 +3,7 @@ import flatten from 'lodash/fp/flatten'
 import chunk from 'lodash/fp/chunk'
 import snakeCase from 'lodash/fp/snakeCase'
 import {empty} from './basic'
+import {debug} from '../debug'
 
 /**
  * @function
@@ -32,6 +33,10 @@ export const flow = function () {
       }
     }, {graph, store: {}}).graph
   }
+}
+
+export const debugFlow = function () {
+  return flow(flatten(Array.prototype.map.call(arguments, (a) => [a, debug])))
 }
 
 export const namedFlow = function () {

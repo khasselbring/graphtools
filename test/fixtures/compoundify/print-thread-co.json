@@ -1,0 +1,310 @@
+{
+  "nodes": [
+    {
+      "ports": [
+        {
+          "port": "TIO",
+          "kind": "input",
+          "type": "IO"
+        },
+        {
+          "node": "#cizbed8ag0005b94uoii1qiwg",
+          "port": "value",
+          "kind": "output",
+          "type": "IO"
+        }
+      ],
+      "settings": {},
+      "nodes": [
+        {
+          "ports": [
+            {
+              "port": "text",
+              "kind": "input",
+              "type": "String"
+            },
+            {
+              "port": "IO_in",
+              "kind": "input",
+              "type": "IO"
+            },
+            {
+              "port": "IO_out",
+              "kind": "output",
+              "type": "IO"
+            }
+          ],
+          "settings": {},
+          "componentId": "print",
+          "version": "1.0.0",
+          "atomic": true,
+          "id": "#cizbed9sw0000ba4urmyy6zhx",
+          "path": [
+            "#cizbed8ag0005b94uoii1qiwg",
+            "#cizbed9sw0000ba4urmyy6zhx"
+          ],
+          "edges": []
+        },
+        {
+          "metaInformation": {
+            "parameters": {
+              "type": "STRING",
+              "value": "Hello world!"
+            }
+          },
+          "settings": {},
+          "ports": [
+            {
+              "port": "const",
+              "kind": "output",
+              "type": "String"
+            }
+          ],
+          "componentId": "std/const",
+          "version": "1.0.0",
+          "atomic": true,
+          "edges": [],
+          "id": "#cizbed9sw0001ba4u9b7v2vub",
+          "path": [
+            "#cizbed8ag0005b94uoii1qiwg",
+            "#cizbed9sw0001ba4u9b7v2vub"
+          ]
+        }
+      ],
+      "metaInformation": {},
+      "edges": [
+        {
+          "from": {
+            "type": "generic",
+            "node": "#cizbed9sw0001ba4u9b7v2vub",
+            "port": "const",
+            "kind": "output"
+          },
+          "to": {
+            "type": "String",
+            "node": "#cizbed9sw0000ba4urmyy6zhx",
+            "port": "text",
+            "kind": "input"
+          },
+          "layer": "dataflow"
+        },
+        {
+          "from": {
+            "type": "generic",
+            "node": "#cizbed8ag0005b94uoii1qiwg",
+            "port": "TIO"
+          },
+          "to": {
+            "type": "IO",
+            "node": "#cizbed9sw0000ba4urmyy6zhx",
+            "port": "IO_in",
+            "kind": "input"
+          },
+          "layer": "dataflow",
+          "innerCompoundOutput": true
+        },
+        {
+          "from": {
+            "type": "IO",
+            "node": "#cizbed9sw0000ba4urmyy6zhx",
+            "port": "IO_out",
+            "kind": "output"
+          },
+          "to": {
+            "type": "generic",
+            "node": "#cizbed8ag0005b94uoii1qiwg",
+            "port": "value"
+          },
+          "layer": "dataflow",
+          "innerCompoundInput": true
+        }
+      ],
+      "components": [],
+      "atomic": false,
+      "version": "0.0.0",
+      "componentId": "thread",
+      "id": "#cizbed8ag0005b94uoii1qiwg",
+      "path": [
+        "#cizbed8ag0005b94uoii1qiwg"
+      ]
+    }
+  ],
+  "metaInformation": {},
+  "edges": [
+    {
+      "from": {
+        "type": "generic",
+        "node": "#cizbed8af0004b94u9z3zlepi",
+        "port": "IO"
+      },
+      "to": {
+        "type": "generic",
+        "node": "#cizbed8ag0005b94uoii1qiwg",
+        "port": "TIO",
+        "kind": "input"
+      },
+      "layer": "dataflow",
+      "innerCompoundOutput": true
+    },
+    {
+      "from": {
+        "type": "generic",
+        "node": "#cizbed8ag0005b94uoii1qiwg",
+        "port": "value",
+        "kind": "output"
+      },
+      "to": {
+        "type": "generic",
+        "node": "#cizbed8af0004b94u9z3zlepi",
+        "port": "value"
+      },
+      "layer": "dataflow",
+      "innerCompoundInput": true
+    }
+  ],
+  "components": [
+    {
+      "nodes": [
+        {
+          "ref": "print",
+          "ports": [],
+          "id": "#cizbed89d0002b94uwb3muor4",
+          "settings": {},
+          "path": [
+            "#cizbed89d0002b94uwb3muor4"
+          ]
+        },
+        {
+          "ref": "std/const",
+          "metaInformation": {
+            "parameters": {
+              "type": "STRING",
+              "value": "Hello world!"
+            }
+          },
+          "id": "#cizbed89g0003b94u8jylzohb",
+          "settings": {},
+          "ports": [],
+          "path": [
+            "#cizbed89g0003b94u8jylzohb"
+          ]
+        }
+      ],
+      "metaInformation": {},
+      "edges": [
+        {
+          "from": {
+            "type": "generic",
+            "node": "#cizbed89g0003b94u8jylzohb",
+            "port": "0"
+          },
+          "to": {
+            "type": "generic",
+            "node": "#cizbed89d0002b94uwb3muor4",
+            "port": "0"
+          },
+          "layer": "dataflow"
+        },
+        {
+          "from": {
+            "type": "generic",
+            "node": "#cizbed8990001b94u95m61e6k",
+            "port": "TIO"
+          },
+          "to": {
+            "type": "generic",
+            "node": "#cizbed89d0002b94uwb3muor4",
+            "port": "1"
+          },
+          "layer": "dataflow",
+          "innerCompoundOutput": true
+        },
+        {
+          "from": {
+            "type": "generic",
+            "node": "#cizbed89d0002b94uwb3muor4",
+            "port": "0"
+          },
+          "to": {
+            "type": "generic",
+            "node": "#cizbed8990001b94u95m61e6k",
+            "port": "value"
+          },
+          "layer": "dataflow",
+          "innerCompoundInput": true
+        }
+      ],
+      "components": [],
+      "path": [],
+      "ports": [
+        {
+          "port": "TIO",
+          "kind": "input",
+          "type": "generic"
+        },
+        {
+          "port": "value",
+          "kind": "output",
+          "type": "generic"
+        }
+      ],
+      "atomic": false,
+      "id": "#cizbed8990001b94u95m61e6k",
+      "version": "0.0.0",
+      "componentId": "thread"
+    },
+    {
+      "componentId": "print",
+      "version": "1.0.0",
+      "atomic": true,
+      "ports": [
+        {
+          "port": "text",
+          "kind": "input",
+          "type": "String"
+        },
+        {
+          "port": "IO_in",
+          "kind": "input",
+          "type": "IO"
+        },
+        {
+          "port": "IO_out",
+          "kind": "output",
+          "type": "IO"
+        }
+      ]
+    },
+    {
+      "componentId": "std/const",
+      "version": "1.0.0",
+      "atomic": true,
+      "ports": [
+        {
+          "port": "const",
+          "kind": "output",
+          "type": "generic"
+        }
+      ]
+    }
+  ],
+  "path": [],
+  "ports": [
+    {
+      "node": "#cizbed8af0004b94u9z3zlepi",
+      "port": "IO",
+      "kind": "input",
+      "type": "IO"
+    },
+    {
+      "node": "#cizbed8af0004b94u9z3zlepi",
+      "port": "value",
+      "kind": "output",
+      "type": "IO"
+    }
+  ],
+  "atomic": false,
+  "id": "#cizbed8af0004b94u9z3zlepi",
+  "version": "0.0.0",
+  "componentId": "main"
+}

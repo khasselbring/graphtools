@@ -4,6 +4,7 @@ import chai from 'chai'
 import * as Graph from '../src/graph'
 import * as Algorithms from '../src/algorithm'
 import * as Node from '../src/node'
+import fs from 'fs'
 
 const expect = chai.expect
 
@@ -62,6 +63,11 @@ describe('Graph Algorithms', () => {
           Graph.addEdge({to: '@outC', from: objs()[0].id + '@outA'})(graph)
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       expect(Algorithms.topologicalSort(comp).map(Node.name)).to.eql(['a'])
+    })
+
+    it('Can sort the thread example', () => {
+      var graph = Graph.fromJSON(JSON.parse(fs.readFileSync('./test/fixtures/print-thread-co.json', 'utf8')))
+      expect(Algorithms.topologicalSort(graph).map(Node.component)).to.eql(['std/const', 'print'])
     })
   })
 })

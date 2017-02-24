@@ -268,7 +268,7 @@ function moveEndsIntoCompound (subset, cmpdId) {
 }
 
 function moveSubsetIntoCompound (subset, cmpdId) {
-  return (graph) => {
+  return (graph, ...cb) => {
     var curGraph = moveEndsIntoCompound(subset, cmpdId)(graph)
     // as long as not every node of the subset is included in the new graph
     while (!subset.every((n) => !Graph.hasNode(n, curGraph))) {
@@ -282,6 +282,9 @@ function moveSubsetIntoCompound (subset, cmpdId) {
       const nowCompoundNodes = Graph.nodes(Graph.node(cmpdId, curGraph)).length
       // there was nothing to do
       if (nowCompoundNodes === preCompoundNodes) break
+    }
+    if (cb.length > 0) {
+      cb[0](Graph.node(cmpdId, curGraph))
     }
     return curGraph
   }
@@ -297,7 +300,7 @@ function moveSubsetIntoCompound (subset, cmpdId) {
  * @returns {Portgraph} A new graph in which the list of nodes is combined inside one compound.
  * @throws {Error} If it is not possible to combine the nodes in one compound.
 */
-export const compoundify = curry((nodes, graph) => {
+export const compoundify = curry((nodes, graph, ...cb) => {
   if (nodes.length < 1) return graph
   const nodeObjs = nodes.map((n) => Graph.node(n, graph))
   if (!sameParents(nodeObjs)) {
@@ -314,7 +317,13 @@ export const compoundify = curry((nodes, graph) => {
   const compId = 'compoundify-' + cuid()
   const newGraph = Graph.flow(
     Graph.addNode(Graph.compound({componentId: compId})),
-    (graph, objs) => moveSubsetIntoCompound(nodeObjs, objs()[0])(graph)
+    (graph, objs) => moveSubsetIntoCompound(nodeObjs, objs()[0])(graph, objs),
+    (graph, objs) => {
+      if (cb.length > 0) {
+        cb[0](objs()[1])
+      }
+      return graph
+    }
   )(graph)
   // todo:
   // 3. add compound. move nodes inside, create ports...
