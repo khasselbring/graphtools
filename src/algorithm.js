@@ -17,7 +17,7 @@ const debug = debugLog('graphtools')
 
 const nonConnected = (graph) => {
   return Graph.nodes(graph).filter(
-    (n) => Graph.predecessors(n, graph).length === 0)
+    (n) => Node.inputPorts(n).reduce((count, p) => count + Graph.predecessors(p, graph).length, 0) === 0)
 }
 
 /**
@@ -27,9 +27,9 @@ const nonConnected = (graph) => {
  * @throws {Error} If the graph has loops.
  */
 export function topologicalSort (graph) {
-  if (Node.inputPorts(graph, true).length > 0) {
+  if (Node.inputPorts(graph).length > 0) {
     return topologicalSort(
-      Graph.flow(Node.inputPorts(graph, true).map((p) => Compound.removePort(p)))(graph))
+      Graph.flow(Node.inputPorts(graph).map((p) => Compound.removePort(p)))(graph))
   }
   if (Graph.nodes(graph).length === 0) {
     return []

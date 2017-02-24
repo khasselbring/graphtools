@@ -315,7 +315,7 @@ describe('Rewrite basic API', () => {
   })
 
   describe('Functionifying nodes', () => {
-    it.only('Functionifiys nodes', () => {
+    it('Functionifiys nodes', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),

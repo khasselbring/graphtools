@@ -67,7 +67,8 @@ describe('Graph Algorithms', () => {
 
     it('Can sort the thread example', () => {
       var graph = Graph.fromJSON(JSON.parse(fs.readFileSync('./test/fixtures/print-thread-co.json', 'utf8')))
-      expect(Algorithms.topologicalSort(graph).map(Node.component)).to.eql(['std/const', 'print'])
+      expect(Algorithms.topologicalSort(graph).map(Node.component)).to.eql(['thread'])
+      expect(Algorithms.topologicalSort(Graph.node('/thread', graph)).map(Node.component)).to.eql(['std/const', 'print'])
     })
   })
 })
