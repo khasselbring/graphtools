@@ -28,7 +28,7 @@ describe('Rewrite basic API', () => {
       var rewGraph = includePredecessor({node: 'c', port: 'inC'}, graph)
       expect(Graph.nodes(rewGraph)).to.have.length(2)
       expect(Graph.nodes(Graph.node('c', rewGraph))).to.have.length(1)
-      expect(Graph.inIncidents('c', rewGraph)).to.have.length(2)
+      expect(Graph.inIncidents('c', rewGraph, true)).to.have.length(2)
       expect(Graph.node(Graph.predecessor('c@outC', rewGraph), rewGraph).componentId).to.equal('moved')
     })
 
@@ -49,7 +49,7 @@ describe('Rewrite basic API', () => {
       var rewGraph = includePredecessor('c@inC', graph)
       expect(Graph.nodes(rewGraph)).to.have.length(2)
       expect(Graph.nodes(Graph.node('c', rewGraph))).to.have.length(1)
-      expect(Graph.inIncidents('c', rewGraph)).to.have.length(2)
+      expect(Graph.inIncidents('c', rewGraph, true)).to.have.length(2)
       expect(Graph.node(Graph.predecessor('c@outC', rewGraph), rewGraph).componentId).to.equal('moved')
     })
 

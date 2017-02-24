@@ -243,11 +243,13 @@ describe('Basic graph functions', () => {
     it('Adding a compound relabels all edges to the new id', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
         Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
-      expect(Graph.predecessors('', comp)).to.have.length(1)
-      expect(Graph.successors('', comp)).to.have.length(1)
+      expect(Graph.predecessors('', comp, true)).to.have.length(1)
+      expect(Graph.successors('', comp, true)).to.have.length(1)
       var graph = Graph.addNode(comp, Graph.empty())
-      expect(Graph.predecessors('c', graph)).to.have.length(1)
-      expect(Graph.successors('c', graph)).to.have.length(1)
+      expect(Graph.predecessors('c', graph, true)).to.have.length(1)
+      expect(Graph.successors('c', graph, true)).to.have.length(1)
+      expect(Graph.predecessors('c', graph)).to.have.length(0)
+      expect(Graph.successors('c', graph)).to.have.length(0)
     })
 
     it('is possible to set node values deep in the graph', () => {

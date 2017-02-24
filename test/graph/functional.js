@@ -79,7 +79,7 @@ describe('Basic graph functions', () => {
       var graph = Graph.flow(
         Graph.addNode(l)
       )()
-      expect(Graph.successors('/X', graph)).to.have.length(1)
+      expect(Graph.successors('/X', graph, true)).to.have.length(1)
     })
   })
 })

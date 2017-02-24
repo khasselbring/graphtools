@@ -1,12 +1,11 @@
 /* eslint-env mocha */
 
 import chai from 'chai'
-import * as changeSet from '../../src/changeSet'
 import * as Graph from '../../src/graph'
 import * as Node from '../../src/node'
 import {port} from '../../src/port'
 import _ from 'lodash'
-import semver from 'semver'
+import fs from 'fs'
 
 var expect = chai.expect
 
@@ -207,8 +206,8 @@ describe('Basic graph functions', () => {
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c@in', to: '»c»a@in'})
       )()
-      expect(Graph.successors('c', graph)).to.have.length(1)
-      expect(Graph.node(Graph.successors('c', graph)[0], graph).name).to.equal('a')
+      expect(Graph.successors('c', graph, true)).to.have.length(1)
+      expect(Graph.node(Graph.successors('c', graph, true)[0], graph).name).to.equal('a')
     })
 
     it('Can connect from the root compound to an inner node', () => {
@@ -217,8 +216,8 @@ describe('Basic graph functions', () => {
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addEdge({from: '@in', to: 'a@in'})
       )(cmpd)
-      expect(Graph.successors(cmpd.id, graph)).to.have.length(1)
-      expect(Graph.node(Graph.successors(cmpd.id, graph)[0], graph).name).to.equal('a')
+      expect(Graph.successors(cmpd.id, graph, true)).to.have.length(1)
+      expect(Graph.node(Graph.successors(cmpd.id, graph, true)[0], graph).name).to.equal('a')
     })
 
     it('Fails if the connecting ports do not exist', () => {
@@ -250,8 +249,8 @@ describe('Basic graph functions', () => {
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c»a@out', to: '»c@out'})
       )()
-      expect(Graph.predecessors('c', graph)).to.have.length(1)
-      expect(Graph.node(Graph.predecessor('c', graph), graph).name).to.equal('a')
+      expect(Graph.predecessors('c', graph, true)).to.have.length(1)
+      expect(Graph.node(Graph.predecessor('c', graph, true), graph).name).to.equal('a')
     })
 
     it('adds edges via a flow', () => {
@@ -365,6 +364,14 @@ describe('Basic graph functions', () => {
         Graph.addEdge({from: 'a@out', to: 'b@in'})
       )()
       expect(Graph.edges(graph)[0]).to.have.property('type', 'a')
+    })
+
+    it('does not implicity go in compounds when looking for node predecessors / successors', () => {
+      var graph = Graph.fromJSON(JSON.parse(fs.readFileSync('./test/fixtures/print-thread-co.json', 'utf8')))
+      expect(Graph.successors('/thread', graph)).to.have.length(1)
+      expect(Graph.outIncidents('/thread', graph)).to.have.length(1)
+      expect(Graph.predecessors('/thread', graph)).to.have.length(1)
+      expect(Graph.inIncidents('/thread', graph)).to.have.length(1)
     })
   })
 })
