@@ -10,7 +10,7 @@ import {createLambda} from '../functional/lambda'
 export const functionify = curry((nodes, graph) => {
   return Graph.debugFlow(
     CmpRewrite.compoundify(nodes),
-    (graph, objs) =>
-      Graph.replaceNode(objs()[0], createLambda(objs()[0]), graph)
+    (graph, objs) => Graph.addNode(createLambda(objs()[0]), graph),
+    (graph, objs) => Graph.removeNode(objs()[0], graph)
   )(graph)
 })

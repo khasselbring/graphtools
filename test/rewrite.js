@@ -315,7 +315,7 @@ describe('Rewrite basic API', () => {
   })
 
   describe('Functionifying nodes', () => {
-    it('Functionifiys nodes', () => {
+    it.only('Functionifiys nodes', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
@@ -323,10 +323,8 @@ describe('Rewrite basic API', () => {
         Graph.addEdge({from: 'a@out', to: 'b@in'}),
         Graph.addEdge({from: 'b@out', to: 'c@in'})
       )()
-      const fn = functionify(['b', 'a', 'c'], graph)
+      const fn = functionify(['b', 'a'], graph)
       expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
     })
-
-    it('')
   })
 })
