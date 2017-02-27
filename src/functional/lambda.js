@@ -42,7 +42,7 @@ const reID = (node, oldNode) => {
 }
 
 export function createLambda (implementation, node) {
-  var ref = Node.create({ref: 'λ'})
+  var ref = reID(Node.create({ref: 'λ'}), implementation)
   var lambda = Node.create(merge({
     componentId: 'functional/lambda',
     atomic: true,

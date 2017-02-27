@@ -308,6 +308,30 @@ export const replaceNode = curry((loc, newNode, graph) => {
     'Updating Paths inside Replacement', rePath,
     'Updating Nodes for realized References', (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
   )(graph)
+
+/*
+  // let sequential callbacks
+  return flow(
+    'Replacing old node', let(removeNodeInternal(loc, false), (removedNode) =>
+      let(addNodeByPath(nodeParentPath(loc, graph), newNode), (newNode) =>
+        mergeNodes(removedNode, newNode)
+      )
+    ),
+    'Updating paths inside replacement', rePath,
+    'Updating nodes for realized references',
+    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
+  )
+
+  // let sequential arrays
+  return flow(
+    'Replacing old node', let(
+        [removeNodeInternal(loc, false), addNodeByPath(nodeParentPath(loc, graph), newNode)],
+        ([removedNode, insertedNode]) => mergeNodes(removedNode, insertedNode)),
+    'Updating paths inside replacement', rePath,
+    'Updating nodes for realized references',
+    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
+  )
+*/
 })
 
 /**
