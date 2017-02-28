@@ -113,3 +113,25 @@ export function assertValid (node) {
     throw new Error('Lambda nodes must not have any edges between their implementation and the lambda node. Inspecting Node at : "' + node.path + '"')
   }
 }
+
+export function createPartial () {
+  return {
+    componentId: 'functional/partial',
+    ports: [
+      {port: 'inFn', kind: 'input', type: 'function'},
+      {port: 'value', kind: 'input', type: 'generic'},
+      {port: 'fn', kind: 'output', type: 'function'}
+    ],
+    atomic: true
+  }
+}
+
+export function createFunctionCall (outputs) {
+  return {
+    componentId: 'functional/call',
+    ports: [
+      {port: 'fn', kind: 'input', type: 'function'}
+    ].concat(outputs.map((p) => omit('node', p[0]))),
+    atomic: true
+  }
+}

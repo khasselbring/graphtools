@@ -207,6 +207,7 @@ export const port = curry((name, node) => {
   if (!curPort) {
     throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
   }
+  curPort.node = node.id
   return curPort
 })
 

@@ -3,8 +3,9 @@
 import chai from 'chai'
 import * as Graph from '../src/graph'
 import {includePredecessor, excludeNode, unCompound, compoundify} from '../src/rewrite/compound'
-import {functionify} from '../src/rewrite/functional'
+import * as Functional from '../src/rewrite/functional'
 import * as Node from '../src/node'
+import {debug} from '../src/debug'
 import _ from 'lodash'
 
 var expect = chai.expect
@@ -333,7 +334,7 @@ describe('Rewrite basic API', () => {
   })
 
   describe('Functionifying nodes', () => {
-    it('Functionifiys nodes', () => {
+    it('Can put compounds into lambda nodes', () => {
       var graph = Graph.flow(
         Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
         Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
@@ -341,8 +342,22 @@ describe('Rewrite basic API', () => {
         Graph.addEdge({from: 'a@out', to: 'b@in'}),
         Graph.addEdge({from: 'b@out', to: 'c@in'})
       )()
-      const fn = functionify(['b', 'a'], graph)
+      const fn = Functional.convertToLambda(['b', 'a'], graph)
       expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
+    })
+
+    it.only('Can create a lambda function out of an compound with matching partials and call', () => {
+      var graph = Graph.flow(
+        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+        Graph.addEdge({from: 'a@out', to: 'b@in'}),
+        Graph.addEdge({from: 'b@out', to: 'c@in'})
+      )()
+      debug(graph)
+      const fn = Functional.replaceByCall(['b', 'a'], graph)
+      expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
+      expect(Graph.hasNode('/functional/call', fn)).to.be.true
     })
   })
 })

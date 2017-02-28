@@ -8,7 +8,6 @@ module.exports = (wallaby) => {
       {pattern: 'test/**/*.js', load: true},
       {pattern: 'test/fixtures/**/*', load: true}
     ],
-    debug: true,
     env: {
       type: 'node',
       params: {
