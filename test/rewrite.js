@@ -15,13 +15,16 @@ describe('Rewrite basic API', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
         Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
-        Graph.addNode(comp),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+            Graph.addNode(comp),
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]})
+          ], ([n1, n2, n3], graph) =>
+          Graph.flow(
+            Graph.addEdge({from: n1.id + '@outA', to: n2.id + '@inC'}),
+            Graph.addEdge({from: n3.id + '@outF', to: n1.id + '@inA'})
+          )(graph))
       )()
       expect(Graph.nodes(graph)).to.have.length(3)
       expect(Graph.nodes(Graph.node('c', graph))).to.have.length(0)
@@ -36,13 +39,16 @@ describe('Rewrite basic API', () => {
       var comp = Graph.addEdge({from: '@inC', to: '@outC'},
         Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
-        Graph.addNode(comp),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+            Graph.addNode(comp),
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]})
+          ], ([n1, n2, n3], graph) =>
+          Graph.flow(
+            Graph.addEdge({from: n1.id + '@outA', to: n2.id + '@inC'}),
+            Graph.addEdge({from: n3.id + '@outF', to: n1.id + '@inA'})
+          )(graph))
       )()
       expect(Graph.nodes(graph)).to.have.length(3)
       expect(Graph.nodes(Graph.node('c', graph))).to.have.length(0)
@@ -60,15 +66,17 @@ describe('Rewrite basic API', () => {
         Graph.addEdge({from: '@inC2', to: 'inner@in'})
       )(Graph.compound({name: 'c', ports: [{port: 'inC1', kind: 'input'}, {port: 'inC2', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
-        Graph.addNode(comp),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC1'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC2'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+            Graph.addNode(comp),
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]})
+          ], ([n1, n2, n3], graph) =>
+          Graph.flow(
+            Graph.addEdge({from: n1.id + '@outA', to: n2.id + '@inC1'}),
+            Graph.addEdge({from: n1.id + '@outA', to: n2.id + '@inC2'}),
+            Graph.addEdge({from: n3.id + '@outF', to: n1.id + '@inA'})
+          )(graph))
       )()
       var rewGraph1 = includePredecessor('c@inC1', graph)
       var rewGraph2 = includePredecessor('c@inC2', graph)
@@ -85,16 +93,18 @@ describe('Rewrite basic API', () => {
         Graph.addEdge({from: '@inC', to: '@outC'}),
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved', name: 'moved'}),
-        Graph.addNode(comp),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        Graph.addNode({ports: [{port: 'inOther', kind: 'input'}], name: 'other'}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: 'moved@outA', to: 'other@inOther'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved', name: 'moved'}),
+            Graph.addNode(comp),
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
+            Graph.addNode({ports: [{port: 'inOther', kind: 'input'}], name: 'other'})
+          ], ([n1, n2, n3, n4], graph) =>
+          Graph.flow(
+            Graph.addEdge({from: n1.id + '@outA', to: n2.id + '@inC'}),
+            Graph.addEdge({from: n3.id + '@outF', to: n1.id + '@inA'}),
+            Graph.addEdge({from: 'moved@outA', to: 'other@inOther'})
+          )(graph))
       )()
       expect(Node.outputPorts(Graph.node('c', graph))).to.have.length(1)
       var rewGraph1 = includePredecessor('c@inC', graph)
@@ -111,15 +121,17 @@ describe('Rewrite basic API', () => {
         Graph.addEdge({from: '@inC2', to: 'inner@in'})
       )(Graph.compound({name: 'c', ports: [{port: 'inC1', kind: 'input'}, {port: 'inC2', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'outB', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
-        Graph.addNode(comp),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outA', to: objs()[1].id + '@inC1'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outB', to: objs()[1].id + '@inC2'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[2].id + '@outF', to: objs()[0].id + '@inA'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'outB', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+            Graph.addNode(comp),
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]})
+          ], ([n1, n2, n3], graph) =>
+            Graph.flow(
+              Graph.addEdge({from: n1.id + '@outA', to: n2.id + '@inC1'}),
+              Graph.addEdge({from: n1.id + '@outB', to: n2.id + '@inC2'}),
+              Graph.addEdge({from: n3.id + '@outF', to: n1.id + '@inA'})
+            )(graph))
       )()
       var rewGraph1 = includePredecessor('c@inC1', graph)
       var rewGraph2 = includePredecessor('c@inC2', graph)
@@ -141,18 +153,19 @@ describe('Rewrite basic API', () => {
         Graph.addEdge({from: 'inner2@out', to: '@outC'})
       )(Graph.compound({name: 'c', ports: [{port: 'inC1', kind: 'input'}, {port: 'inC2', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'in', kind: 'input', type: 'a'}]}),
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'outB', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
-        Graph.addNode(comp),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[1].id + '@outA', to: objs()[2].id + '@inC1'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[1].id + '@outB', to: objs()[2].id + '@inC2'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[3].id + '@outF', to: objs()[1].id + '@inA'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[2].id + '@outC', to: objs()[0].id + '@in'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'in', kind: 'input', type: 'a'}]}),
+            Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'outB', kind: 'output'}, {port: 'inA', kind: 'input'}], componentId: 'moved'}),
+            Graph.addNode(comp),
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]})
+          ], ([n1, n2, n3, n4], graph) =>
+            Graph.flow(
+              Graph.addEdge({from: n2.id + '@outA', to: n3.id + '@inC1'}),
+              Graph.addEdge({from: n2.id + '@outB', to: n3.id + '@inC2'}),
+              Graph.addEdge({from: n4.id + '@outF', to: n2.id + '@inA'}),
+              Graph.addEdge({from: n3.id + '@outC', to: n1.id + '@in'})
+            )(graph))
       )()
       expect(Node.inputPorts(comp)).to.have.length(2)
       var inc = includePredecessor('c@inC1', graph)
@@ -163,17 +176,20 @@ describe('Rewrite basic API', () => {
   describe('Excluding inner nodes', () => {
     it('moves a node out of an compound', () => {
       var comp = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
-        (graph, objs) =>
-          Graph.addEdge({from: '@inC', to: objs()[0].id + '@inA'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({to: '@outC', from: objs()[0].id + '@outA'})(graph)
+        Graph.letFlow(Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
+          (node, graph) =>
+            Graph.flow(
+              Graph.addEdge({from: '@inC', to: node.id + '@inA'}),
+              Graph.addEdge({to: '@outC', from: node.id + '@outA'})
+            )(graph))
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        Graph.addNode(comp),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outF', to: 'c@inC'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
+            Graph.addNode(comp)
+          ], ([node1, node2], graph) =>
+            Graph.addEdge({from: node1.id + '@outF', to: 'c@inC'})(graph))
       )()
       expect(Graph.nodes(graph)).to.have.length(2)
       var rewGraph = excludeNode('»c»a', graph)
@@ -187,12 +203,15 @@ describe('Rewrite basic API', () => {
 
     it('throws an error if the node has predecessors in the compound node', () => {
       var comp = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}, {port: 'inB', kind: 'input'}], name: 'a'}),
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[1].id + '@outF', to: objs()[0].id + '@inA'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: '@inC', to: objs()[0].id + '@inB'})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}, {port: 'inB', kind: 'input'}], name: 'a'}),
+            Graph.addNode({ports: [{port: 'outF', kind: 'output'}]})
+          ], ([node1, node2], graph) =>
+          Graph.flow(
+            Graph.addEdge({from: node2.id + '@outF', to: node1.id + '@inA'}),
+            Graph.addEdge({from: '@inC', to: node1.id + '@inB'})
+          )(graph))
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.addNode(comp, Graph.empty())
       expect(() => excludeNode('a', graph)).to.throw(Error)
@@ -211,21 +230,20 @@ describe('Rewrite basic API', () => {
       var comp = Graph.flow(
         Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
         Graph.addNode({ports: [{port: 'outB', kind: 'output'}, {port: 'inB', kind: 'input'}], name: 'b'}),
-        (graph, objs) =>
-          Graph.addEdge({from: '@inC', to: 'a@inA'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({to: 'b@inB', from: 'a@outA'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({to: '@outC', from: 'b@outB'})(graph)
+        Graph.addEdge({from: '@inC', to: 'a@inA'}),
+        Graph.addEdge({to: 'b@inB', from: 'a@outA'}),
+        Graph.addEdge({to: '@outC', from: 'b@outB'})
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
-        Graph.addNode({ports: [{port: 'inH', kind: 'input'}], name: 'h'}),
-        Graph.addNode(comp),
-        (graph, objs) =>
-          Graph.addEdge({from: objs()[0].id + '@outF', to: 'c@inC'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({from: 'c@outC', to: objs()[1].id + '@inH'})(graph)
+        Graph.letFlow([
+          Graph.addNode({ports: [{port: 'outF', kind: 'output'}]}),
+          Graph.addNode({ports: [{port: 'inH', kind: 'input'}], name: 'h'}),
+          Graph.addNode(comp)
+        ], ([node1, node2, node3], graph) =>
+          Graph.flow(
+            Graph.addEdge({from: node1.id + '@outF', to: 'c@inC'}),
+            Graph.addEdge({from: 'c@outC', to: node2.id + '@inH'})
+          )(graph))
       )()
       expect(Graph.nodes(graph)).to.have.length(3)
       var rewGraph = unCompound('c', graph)

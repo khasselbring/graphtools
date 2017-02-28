@@ -4,22 +4,24 @@
 
 import curry from 'lodash/fp/curry'
 import * as Graph from '../graph'
+import * as Node from '../node'
+import {successors, predecessor} from '../graph/connections'
 import * as CmpRewrite from './compound'
 import {createLambda} from '../functional/lambda'
 
 const letF = Graph.letFlow
-const Node = Graph.Node
 
-export const functionify = curry((nodes, graph, ...cb) => {
+export const functionify = curry((nodes, graph, ...cbs) => {
+  const cb = Graph.flowCallback(cbs)
   return Graph.debugFlow(
     letF(CmpRewrite.compoundify(nodes), (compound, curGraph) => {
       const context = {
-        inputs: Node.inputPorts(compound).map((input) => [input, Graph.predecessor(input, curGraph)]),
-        outputs: Node.outputPorts(compound).map((output) => [output, Graph.successor(output, curGraph)])
+        inputs: Node.inputPorts(compound).map((input) => [input, predecessor(input, curGraph)]),
+        outputs: Node.outputPorts(compound).map((output) => [output, successors(output, curGraph)])
       }
       return cb(context, Graph.flow(
-        Graph.addNode(createLambda(compound), graph),
-        Graph.removeNode(compound, graph)
+        Graph.addNode(createLambda(compound)),
+        Graph.removeNode(compound)
       )(curGraph))
     })
   )(graph)

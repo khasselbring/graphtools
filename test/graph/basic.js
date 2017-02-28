@@ -66,10 +66,13 @@ describe('Basic graph functions', () => {
 
   it('can have edges between references', () => {
     var graph = Graph.flow(
-        Graph.addNode({ref: 'a'}),
-        Graph.addNode({ref: 'a'}),
-        (graph, objs) =>
-          Graph.addEdge({from: port(objs()[0], 'a'), to: port(objs()[1], 'other')}, graph)
+      Graph.letFlow(
+        [
+          Graph.addNode({ref: 'a'}),
+          Graph.addNode({ref: 'a'}),
+        ], ([n1, n2], graph) =>
+          Graph.addEdge({from: port(n1, 'a'), to: port(n2, 'other')}, graph)
+      )
     )()
     expect(graph).to.be.ok
     expect(Graph.edgesDeep(graph)).to.have.length(1)

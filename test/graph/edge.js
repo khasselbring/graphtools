@@ -255,9 +255,13 @@ describe('Basic graph functions', () => {
 
     it('adds edges via a flow', () => {
       var graph = Graph.flow(
-        Graph.addNode({ports: [{port: 'out', kind: 'output'}]}),
-        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
-        (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({ports: [{port: 'out', kind: 'output'}]}),
+            Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]})
+          ], ([n1, n2], graph) =>
+          Graph.addEdge({from: port(n1, 'out'), to: port(n2, 'in')}, graph)
+        )
       )()
       expect(Graph.predecessors('b', graph)).to.have.length(1)
       expect(Graph.predecessor('b', graph).port).to.equal('out')
@@ -267,9 +271,11 @@ describe('Basic graph functions', () => {
 
     it('Can remove an edge', () => {
       var graph = Graph.flow(
-        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
-        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
-        (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
+        Graph.letFlow([
+          Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
+          Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]})
+        ], ([newNode1, newNode2], graph) =>
+          Graph.addEdge({from: port(newNode1, 'out'), to: port(newNode2, 'in')}, graph))
       )()
       var edge = Graph.inIncident('b', graph)
       expect(Graph.edgesDeep(Graph.removeEdge(edge, graph)).length).to.equal(0)

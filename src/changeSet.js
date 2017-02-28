@@ -14,8 +14,8 @@ import _ from 'lodash'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Component from './component'
-import {isCompound} from './compound'
-import {hasChildren} from './node'
+
+const hasChildren = Node.hasChildren
 
 /**
  * Creates a change set to update a node with a given value

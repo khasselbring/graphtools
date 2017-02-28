@@ -232,9 +232,12 @@ describe('Basic graph functions', () => {
 
     it('Removing a node removes its edges', () => {
       var graph = Graph.flow(
-        Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
-        Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]}),
-        (graph, objs) => Graph.addEdge({from: port(objs()[0], 'out'), to: port(objs()[1], 'in')})(graph)
+        Graph.letFlow(
+          [
+            Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
+            Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]})
+          ], ([node1, node2], graph) =>
+            Graph.addEdge({from: port(node1, 'out'), to: port(node2, 'in')}, graph))
       )()
       expect(Graph.edgesDeep(Graph.removeNode('a', graph)).length).to.equal(0)
       expect(Graph.edgesDeep(Graph.removeNode('b', graph)).length).to.equal(0)

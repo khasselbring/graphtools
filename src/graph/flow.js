@@ -1,7 +1,6 @@
 
 import flatten from 'lodash/fp/flatten'
 import chunk from 'lodash/fp/chunk'
-import curry from 'lodash/fp/curry'
 import {empty} from './basic'
 import {debug} from '../debug'
 
@@ -66,8 +65,7 @@ export const letFlow = (fn, cb) => {
         return cbGraph
       }
       var resGraph = fn.reduce((gr, f, idx) => f(gr, arrCb(idx)), graph)
-      cb(res, resGraph)
-      return resGraph
+      return cb(res, resGraph)
     }
     return fn(graph, cb)
   }

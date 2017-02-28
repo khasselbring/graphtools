@@ -56,11 +56,12 @@ describe('Graph Algorithms', () => {
 
     it('Can sort compound nodes', () => {
       var comp = Graph.flow(
-        Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
-        (graph, objs) =>
-          Graph.addEdge({from: '@inC', to: objs()[0].id + '@inA'})(graph),
-        (graph, objs) =>
-          Graph.addEdge({to: '@outC', from: objs()[0].id + '@outA'})(graph)
+        Graph.letFlow(Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
+          (node, graph) =>
+            Graph.flow(
+              Graph.addEdge({from: '@inC', to: node.id + '@inA'}),
+              Graph.addEdge({to: '@outC', from: node.id + '@outA'})
+            )(graph))
       )(Graph.compound({name: 'c', ports: [{port: 'inC', kind: 'input'}, {port: 'outC', kind: 'output'}]}))
       expect(Algorithms.topologicalSort(comp).map(Node.name)).to.eql(['a'])
     })

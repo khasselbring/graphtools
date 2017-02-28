@@ -49,11 +49,11 @@ export const includePredecessor = curry((port, graph) => {
   var compound = portNode
 
   var newCompound = flow(
-    Graph.addNode(predNode),
+    Graph.letFlow(Graph.addNode(predNode), (newNode, graph) =>
+      mergeNodes({id: predNode.id}, newNode, graph)),
     // remove old port and add predecessor
     affectedPorts.map((p) => Compound.removePort(p.compoundPort)),
     // set the id of the included predecessor to the id of the predecessor
-    (graph, objs) => mergeNodes({id: predNode.id}, objs()[0], graph),
     // add all input ports of predecessor
     preInPorts.map((edge) => Compound.addInputPort(edge.to)),
     additionalPorts.map((p) => Compound.addOutputPort(p)),
@@ -117,8 +117,8 @@ export const excludeNode = curry((node, graph) => {
     // disconnect all edges whose ports get removed
     flow(portPreds.map((edges) => Graph.removeEdge(edges[0]))),
     Graph.replaceNode(parent, newCompound),
-    Graph.addNodeIn(Graph.parent(parent, graph), nodeObj),
-    (graph, objs) => mergeNodes({id: nodeObj.id}, objs()[2], graph),
+    Graph.letFlow(Graph.addNodeIn(Graph.parent(parent, graph), nodeObj), (node, graph) =>
+      mergeNodes({id: nodeObj.id}, node, graph)),
     portPreds.map((edges) => Graph.addEdge({from: edges[0].from, to: nodeObj.id + '@' + edges[1].to.port})),
     Node.outputPorts(nodeObj, true).map((port) => Graph.addEdge({from: nodeObj.id + '@' + port.port, to: parent.id + '@' + port.port}))
   )(graph)
@@ -231,12 +231,12 @@ function prefixPort (port, prefix) {
 function moveIntoCompound (node, cmpdId) {
   return (graph) => {
     var newComp = Graph.flow(
-      Graph.addNode(node),
-      (graph, objs) => mergeNodes({id: node.id}, objs()[0], graph),
+      Graph.letFlow(Graph.addNode(node), (newNode, graph) =>
+        mergeNodes({id: node.id}, newNode, graph)),
       Node.inputPorts(node).map((p) => Compound.addInputPort(prefixPort(p, node.id))),
-      (graph, objs) => Graph.flow(Node.inputPorts(node).map((p) => Graph.addEdge({from: '@' + prefixedPortName(p, node.id), to: node.id + '@' + p.port})))(graph),
+      Graph.flow(Node.inputPorts(node).map((p) => Graph.addEdge({from: '@' + prefixedPortName(p, node.id), to: node.id + '@' + p.port}))),
       Node.outputPorts(node).map((p) => Compound.addOutputPort(prefixPort(p, node.id))),
-      (graph, objs) => Graph.flow(Node.outputPorts(node).map((p) => Graph.addEdge({from: node.id + '@' + p.port, to: '@' + prefixedPortName(p, node.id)})))(graph)
+      Graph.flow(Node.outputPorts(node).map((p) => Graph.addEdge({from: node.id + '@' + p.port, to: '@' + prefixedPortName(p, node.id)})))
     )(Graph.node(cmpdId, graph))
     const newInputs = Node.inputPorts(node).map((p) =>
         Graph.flow(Graph.inIncidents(p, graph)

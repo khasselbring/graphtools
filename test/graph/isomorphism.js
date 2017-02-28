@@ -47,12 +47,12 @@ describe('Basic graph functions', () => {
           Graph.addEdge({from: 'a@a', to: '@b'})
         )(Graph.compound({ports: [{port: 'b', kind: 'output', type: 'a'}]}))
         const c2 = () => Graph.flow(
-          Graph.addNode(c1()),
-          (graph, obj) => Graph.addEdge({from: obj()[0].id + '@a', to: '@b'})
+          Graph.letFlow(Graph.addNode(c1()), (newNode, graph) => 
+            Graph.addEdge({from: newNode.id + '@a', to: '@b'}))
         )(Graph.compound({ports: [{port: 'b', kind: 'output', type: 'a'}]}))
         const g = () => Graph.flow(
-          Graph.addNode(c2()),
-          (graph, obj) => Graph.addEdge({from: obj()[0].id + '@a', to: '@b'})
+          Graph.letFlow(Graph.addNode(c2()), (newNode, graph) =>
+            Graph.addEdge({from: newNode.id + '@a', to: '@b'}))
         )(Graph.compound({ports: [{port: 'b', kind: 'output', type: 'a'}]}))
 
         expect(Graph.isomorph(g(), g())).to.be.true

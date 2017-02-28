@@ -223,9 +223,11 @@ export const set = curry((value, loc, graph) => {
  */
 export const addNodeTuple = curry((node, graph) => {
   var id
-  var newGraph = namedFlow(
-    'Adding Node to Graph', addNode(node),
-    'Getting New NodeID', (graph, objs) => { id = Node.id(objs()[0]); return graph }
+  var newGraph = flow(
+    letFlow(addNode(node), (node, graph) => {
+      id = Node.id(node)
+      return graph
+    })
   )(graph)
   return [newGraph, id]
 })
@@ -263,7 +265,6 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cbs) => {
   // remove node in its compound and replace the graphs on the path
   return letFlow(removeNodeInternal(pathRest(path), deleteEdges), (remNode, newSubGraph) =>
     cb(remNode, replaceNode(basePath, newSubGraph, graph)))(parentGraph)
-  return replaceNode(basePath, removeNodeInternal(pathRest(path), deleteEdges, parentGraph, ...cbs), graph)
 })
 
 /**
@@ -301,32 +302,10 @@ function nodeParentPath (path, graph) {
 export const replaceNode = curry((loc, newNode, graph) => {
   var preNode = node(loc, graph)
   if (equal(preNode.path, graph.path)) return newNode
-  /* return namedFlow(
-    'Removing Node To Replace', removeNodeInternal(loc, false),
-    'Adding Replacement', addNodeByPath(nodeParentPath(loc, graph), newNode),
-    'Modifying New Node to match old Node', (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
-    'Updating Paths inside Replacement', rePath,
-    'Updating Nodes for realized References', (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
-  )(graph)
-*/
-/*
-  // let sequential callbacks
-  return flow(
-    'Replacing old node', let(removeNodeInternal(loc, false), (removedNode) =>
-      let(addNodeByPath(nodeParentPath(loc, graph), newNode), (newNode) =>
-        mergeNodes(removedNode, newNode)
-      )
-    ),
-    'Updating paths inside replacement', rePath,
-    'Updating nodes for realized references',
-    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
-  )
-*/
-  // let sequential arrays
   return flow(
     letFlow(
         [removeNodeInternal(loc, false), addNodeByPath(nodeParentPath(loc, graph), newNode)],
-        ([removedNode, insertedNode]) => mergeNodes(removedNode, insertedNode)),
+        ([removedNode, insertedNode], graph) => mergeNodes(removedNode, insertedNode, graph)),
     rePath,
     (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
   )(graph)
