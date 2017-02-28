@@ -268,7 +268,8 @@ function moveEndsIntoCompound (subset, cmpdId) {
 }
 
 function moveSubsetIntoCompound (subset, cmpdId) {
-  return (graph, ...cb) => {
+  return (graph, ...cbs) => {
+    const cb = Graph.flowCallback(cbs)
     var curGraph = moveEndsIntoCompound(subset, cmpdId)(graph)
     // as long as not every node of the subset is included in the new graph
     while (!subset.every((n) => !Graph.hasNode(n, curGraph))) {
@@ -283,10 +284,7 @@ function moveSubsetIntoCompound (subset, cmpdId) {
       // there was nothing to do
       if (nowCompoundNodes === preCompoundNodes) break
     }
-    if (cb.length > 0) {
-      cb[0](Graph.node(cmpdId, curGraph))
-    }
-    return curGraph
+    return cb(Graph.node(cmpdId, curGraph), curGraph)
   }
 }
 
@@ -300,7 +298,8 @@ function moveSubsetIntoCompound (subset, cmpdId) {
  * @returns {Portgraph} A new graph in which the list of nodes is combined inside one compound.
  * @throws {Error} If it is not possible to combine the nodes in one compound.
 */
-export const compoundify = curry((nodes, graph, ...cb) => {
+export const compoundify = curry((nodes, graph, ...cbs) => {
+  const cb = Graph.flowCallback(cbs)
   if (nodes.length < 1) return graph
   const nodeObjs = nodes.map((n) => Graph.node(n, graph))
   if (!sameParents(nodeObjs)) {
@@ -315,20 +314,9 @@ export const compoundify = curry((nodes, graph, ...cb) => {
   }
   // const parent = Graph.parent(nodeObjs[0], graph)
   const compId = 'compoundify-' + cuid()
-  const newGraph = Graph.flow(
-    Graph.addNode(Graph.compound({componentId: compId})),
-    (graph, objs) => moveSubsetIntoCompound(nodeObjs, objs()[0])(graph, objs),
-    (graph, objs) => {
-      if (cb.length > 0) {
-        cb[0](objs()[1])
-      }
-      return graph
-    }
+  return Graph.flow(
+    Graph.letFlow(Graph.addNode(Graph.compound({componentId: compId})), (newNode, curGraph) =>
+      Graph.letFlow(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) =>
+        cb(upNode, upGraph))(curGraph))
   )(graph)
-  // todo:
-  // 3. add compound. move nodes inside, create ports...
-  //    3.1. finding all ports simply by finding all ports of marekd nodes
-  //         whose predecessors/successors are not marked.
-
-  return newGraph
 })

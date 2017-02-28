@@ -108,7 +108,7 @@ describe('Basic graph functions', () => {
       expect(Graph.edgesDeep(newGraphIn)[0].to.port).to.equal('bIn')
     })
 
-    it('Resolves @Number from and to compound nodes', () => {
+    it.only('Resolves @Number from and to compound nodes', () => {
       var cmpd = Graph.flow(
         Graph.addNode({name: 'a', ref: 'a'}),
       )(Graph.compound({name: 'c', ports: [{port: 'out', kind: 'input', type: 'a'}]}))

@@ -1,6 +1,7 @@
 
 import flatten from 'lodash/fp/flatten'
 import chunk from 'lodash/fp/chunk'
+import curry from 'lodash/fp/curry'
 import {empty} from './basic'
 import {debug} from '../debug'
 
@@ -40,16 +41,14 @@ export const flow = function () {
     }
     return [].reduce.call(args, (obj, fn, idx) => {
       try {
-        var newGraph = fn(obj.graph, (data) => {
-          obj.store[idx] = data
-          return obj.store
-        })
+        var newGraph = fn(obj.graph, (data, graph) => graph)
         if (options && options.debug) debug(newGraph)
         return {graph: newGraph, store: obj.store}
       } catch (err) {
+        var flowName = options && options.name
         var fnName = functionName(fn, options, idx)
         var fnDesc = functionDescription(fn, options, idx)
-        err.message += ' in flow function ' + ((options.name) ? '"' + options.name + '"' : '') + ' (at position: ' + (idx + 1) + ')' +
+        err.message += ' in flow function ' + ((flowName) ? '"' + flowName + '"' : '') + ' (at position: ' + (idx + 1) + ')' +
           ((fnName) ? ' named ' + fnName : '') +
           ((fnDesc) ? ' (Description: "' + fnDesc + '")' : '')
         throw err
@@ -62,16 +61,25 @@ export const letFlow = (fn, cb) => {
   return (graph) => {
     if (Array.isArray(fn)) {
       var res = []
-      const arrCb = (idx) => (data) => {
+      const arrCb = (idx) => (data, cbGraph) => {
         res[idx] = data
-        return res
+        return cbGraph
       }
-      var resGraph = fn.reduce((graph, f, idx) => f(graph, arrCb(idx)), graph)
-      cb(res)
+      var resGraph = fn.reduce((gr, f, idx) => f(gr, arrCb(idx)), graph)
+      cb(res, resGraph)
       return resGraph
     }
     return fn(graph, cb)
   }
+}
+
+export const flowCallback = (cbs) => {
+  if (Array.isArray(cbs) && typeof (cbs[0]) === 'function') {
+    return cbs[0]
+  } else if (typeof (cbs) === 'function') {
+    return cbs
+  }
+  return (_, graph) => graph
 }
 
 export const debugFlow = function () {

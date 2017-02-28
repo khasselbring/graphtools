@@ -15,6 +15,7 @@ import * as Node from '../node'
 import {equal as pathEqual, isRoot, relativeTo, join} from '../compoundPath'
 import {setPath as compoundSetPath} from '../compound'
 import * as changeSet from '../changeSet'
+import {flowCallback} from './flow'
 
 /**
  * @function
@@ -112,15 +113,13 @@ export function replaceEdgeIDs (edges, id, replaceId) {
  * @param {Callback} [cb] A callback function that is called with the newly inserted node.
  * @returns {PortGraph} The new graph with the merged nodes.
  */
-export const mergeNodes = curry((oldNode, newNode, graph, ...cb) => {
+export const mergeNodes = curry((oldNode, newNode, graph, ...cbs) => {
+  const cb = flowCallback(cbs)
   var path = idToPath(newNode.id, graph)
   var mergeGraph = changeSet.applyChangeSet(graph,
     changeSet.updateNode(relativeTo(path, graph.path), merge(
       pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id)})))
-  if (cb.length > 0) {
-    cb[0](nodeByPath(path, graph))
-  }
-  return mergeGraph
+  return cb(nodeByPath(path, graph), mergeGraph)
 })
 
 /**
@@ -156,14 +155,12 @@ export const unID = (node) => {
   return omit(['id', 'path'], node)
 }
 
-export function addNodeInternal (node, graph, checkNode, ...cb) {
+export function addNodeInternal (node, graph, checkNode, ...cbs) {
+  const cb = flowCallback(cbs)
   var newNode = setPath(Node.create(unID(node)), Node.path(graph))
   checkNode(graph, newNode)
   if (Node.hasChildren(newNode)) {
     newNode = set('edges', replaceEdgeIDs(newNode.edges, newNode.id, node.id), newNode)
   }
-  if (cb.length > 0) {
-    cb[0](newNode)
-  }
-  return changeSet.applyChangeSet(graph, changeSet.insertNode(newNode))
+  return cb(newNode, changeSet.applyChangeSet(graph, changeSet.insertNode(newNode)))
 }

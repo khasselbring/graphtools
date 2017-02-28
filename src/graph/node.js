@@ -4,7 +4,7 @@ import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relati
 import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
-import {namedFlow} from './flow'
+import {flow, flowCallback, letFlow} from './flow'
 import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
@@ -136,12 +136,12 @@ export function checkNode (graph, nodeToCheck) {
  * @param {PortGraph} graph The graph that is the root for the nodePath
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
-export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
+export const addNodeByPath = curry((parentPath, nodeData, graph, ...cbs) => {
   if (isRoot(parentPath)) {
-    return addNodeInternal(nodeData, graph, checkNode, ...cb)
+    return addNodeInternal(nodeData, graph, checkNode, ...cbs)
   } else {
     let parentGraph = node(parentPath, graph)
-    return replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, checkNode, ...cb), graph)
+    return replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, checkNode, ...cbs), graph)
   }
 })
 
@@ -154,11 +154,11 @@ export const addNodeByPath = curry((parentPath, nodeData, graph, ...cb) => {
  * @param {PortGraph} graph The graph
  * @returns {PortGraph} A new graph that contains the node as child of `parentLoc`.
  */
-export const addNodeIn = curry((parentLoc, nodeData, graph, ...cb) => {
+export const addNodeIn = curry((parentLoc, nodeData, graph, ...cbs) => {
   if (Node.isAtomic(node(parentLoc, graph))) {
     throw new Error('Cannot add Node to atomic node at: ' + graph.path)
   }
-  return addNodeByPath(Node.path(node(parentLoc, graph)), nodeData, graph, ...cb)
+  return addNodeByPath(Node.path(node(parentLoc, graph)), nodeData, graph, ...cbs)
 })
 
 /*
@@ -187,11 +187,11 @@ function replaceId (oldId, newId, edge) {
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph that includes the node.
  */
-export const addNode = curry((node, graph, ...cb) => {
+export const addNode = curry((node, graph, ...cbs) => {
   if (Node.isAtomic(graph)) {
     throw new Error('Cannot add Node to atomic node at: ' + graph.path)
   }
-  return addNodeInternal(node, graph, checkNode, ...cb)
+  return addNodeInternal(node, graph, checkNode, ...cbs)
 })
 
 /**
@@ -221,7 +221,7 @@ export const set = curry((value, loc, graph) => {
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph that includes the node and the id as an array in [graph, id].
  */
-export const addNodeTuple = curry((node, graph, ...cb) => {
+export const addNodeTuple = curry((node, graph) => {
   var id
   var newGraph = namedFlow(
     'Adding Node to Graph', addNode(node),
@@ -246,24 +246,24 @@ export const addNodeTuple = curry((node, graph, ...cb) => {
  */
 export const get = curry((key, nodeQuery, graph) => Node.get(key, node(nodeQuery, graph)))
 
-const removeNodeInternal = curry((query, deleteEdges, graph, ...cb) => {
+const removeNodeInternal = curry((query, deleteEdges, graph, ...cbs) => {
+  const cb = flowCallback(cbs)
   var remNode = node(query, graph)
   var path = relativeTo(remNode.path, graph.path)
   var basePath = pathBase(path)
   if (basePath.length === 0) {
-    if (cb.length > 0) {
-      cb[0](remNode)
-    }
     var remEdgesGraph = graph
     if (deleteEdges) {
       var inc = incidents(path, graph)
       remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge, curGraph), graph)
     }
-    return changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.id))
+    return cb(remNode, changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.id)))
   }
   var parentGraph = node(basePath, graph)
   // remove node in its compound and replace the graphs on the path
-  return replaceNode(basePath, removeNodeInternal(pathRest(path), deleteEdges, parentGraph, ...cb), graph)
+  return letFlow(removeNodeInternal(pathRest(path), deleteEdges), (remNode, newSubGraph) =>
+    cb(remNode, replaceNode(basePath, newSubGraph, graph)))(parentGraph)
+  return replaceNode(basePath, removeNodeInternal(pathRest(path), deleteEdges, parentGraph, ...cbs), graph)
 })
 
 /**
@@ -274,11 +274,11 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cb) => {
  * @param {PortGraph} graph The graph.
  * @returns {PortGraph} A new graph without the given node.
  */
-export const removeNode = curry((loc, graph, ...cb) => {
+export const removeNode = curry((loc, graph, ...cbs) => {
   if (parent(loc, graph) && Node.isAtomic(parent(loc, graph))) {
     throw new Error('Cannot remove child nodes of an atomic node. Tried deleting : ' + loc)
   }
-  return removeNodeInternal(loc, true, graph, ...cb)
+  return removeNodeInternal(loc, true, graph, ...cbs)
 })
 
 function nodeParentPath (path, graph) {
@@ -301,14 +301,14 @@ function nodeParentPath (path, graph) {
 export const replaceNode = curry((loc, newNode, graph) => {
   var preNode = node(loc, graph)
   if (equal(preNode.path, graph.path)) return newNode
-  return namedFlow(
+  /* return namedFlow(
     'Removing Node To Replace', removeNodeInternal(loc, false),
     'Adding Replacement', addNodeByPath(nodeParentPath(loc, graph), newNode),
     'Modifying New Node to match old Node', (graph, objs) => mergeNodes(objs()[0], objs()[1], graph),
     'Updating Paths inside Replacement', rePath,
     'Updating Nodes for realized References', (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
   )(graph)
-
+*/
 /*
   // let sequential callbacks
   return flow(
@@ -321,17 +321,15 @@ export const replaceNode = curry((loc, newNode, graph) => {
     'Updating nodes for realized references',
     (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
   )
-
+*/
   // let sequential arrays
   return flow(
-    'Replacing old node', let(
+    letFlow(
         [removeNodeInternal(loc, false), addNodeByPath(nodeParentPath(loc, graph), newNode)],
         ([removedNode, insertedNode]) => mergeNodes(removedNode, insertedNode)),
-    'Updating paths inside replacement', rePath,
-    'Updating nodes for realized references',
+    rePath,
     (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
-  )
-*/
+  )(graph)
 })
 
 /**
