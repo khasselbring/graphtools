@@ -4,10 +4,10 @@
  * A collection of algorithms that act on the port graph.
  * @module Algorithm */
 
-import * as Graph from './graph'
-import * as Node from './node'
-import * as Compound from './compound'
-import {debug} from './debug'
+import * as Graph from '../graph'
+import * as Node from '../node'
+import * as Compound from '../compound'
+import {debug} from '../debug'
 
 /*
 import debugLog from 'debug'

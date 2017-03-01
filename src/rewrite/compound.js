@@ -18,7 +18,7 @@ import * as Graph from '../graph'
 import * as Node from '../node'
 import * as Path from '../compoundPath'
 import {mergeNodes} from '../graph/internal'
-import {topologicalSort} from '../algorithm'
+import {topologicalSort} from '../algorithm/algorithms'
 import cuid from 'cuid'
 
 /**
@@ -151,10 +151,7 @@ function sameParent (node1, node2) {
   return Path.equal(Path.parent(Node.path(node1)), Path.parent(Node.path(node2)))
 }
 
-function sameParents (nodes) {
-  const compParent = Path.parent(Node.path(nodes[0]))
-  return nodes.every((n) => Path.equal(Path.parent(Node.path(n)), compParent))
-}
+const sameParents = Graph.sameParents
 
 /**
  * Find alls critical nodes for compoundify. The critical nodes are those, that are in the
@@ -301,7 +298,7 @@ export const compoundify = curry((nodes, graph, ...cbs) => {
   const cb = Graph.flowCallback(cbs)
   if (nodes.length < 1) return graph
   const nodeObjs = nodes.map((n) => Graph.node(n, graph))
-  if (!sameParents(nodeObjs)) {
+  if (!sameParents(nodeObjs, graph)) {
     throw new Error('Cannot compoundify nodes, the have different parents. (' + JSON.stringify(nodes) + ')')
   }
 

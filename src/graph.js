@@ -1,5 +1,6 @@
 
 export * from './graph/basic'
+export * from './graph/checks'
 export * from './graph/flow'
 export * from './graph/component'
 export * from './graph/connections'

@@ -1,6 +1,6 @@
 
 // import * as ChangeSet from './changeSet'
-import * as Algorithm from './algorithm'
+import * as Algorithm from './algorithm/algorithms'
 import * as Component from './component'
 import * as Compound from './compound'
 import * as CompoundPath from './compoundPath'
