@@ -255,7 +255,7 @@ describe('Basic graph functions', () => {
 
     it('adds edges via a flow', () => {
       var graph = Graph.flow(
-        Graph.letFlow(
+        Graph.Let(
           [
             Graph.addNode({ports: [{port: 'out', kind: 'output'}]}),
             Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]})
@@ -271,7 +271,7 @@ describe('Basic graph functions', () => {
 
     it('Can remove an edge', () => {
       var graph = Graph.flow(
-        Graph.letFlow([
+        Graph.Let([
           Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
           Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]})
         ], ([newNode1, newNode2], graph) =>

@@ -47,11 +47,11 @@ describe('Basic graph functions', () => {
           Graph.addEdge({from: 'a@a', to: '@b'})
         )(Graph.compound({ports: [{port: 'b', kind: 'output', type: 'a'}]}))
         const c2 = () => Graph.flow(
-          Graph.letFlow(Graph.addNode(c1()), (newNode, graph) => 
+          Graph.Let(Graph.addNode(c1()), (newNode, graph) => 
             Graph.addEdge({from: newNode.id + '@a', to: '@b'}))
         )(Graph.compound({ports: [{port: 'b', kind: 'output', type: 'a'}]}))
         const g = () => Graph.flow(
-          Graph.letFlow(Graph.addNode(c2()), (newNode, graph) =>
+          Graph.Let(Graph.addNode(c2()), (newNode, graph) =>
             Graph.addEdge({from: newNode.id + '@a', to: '@b'}))
         )(Graph.compound({ports: [{port: 'b', kind: 'output', type: 'a'}]}))
 

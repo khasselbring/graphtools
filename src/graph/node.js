@@ -4,7 +4,7 @@ import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relati
 import {normalize as normalizePort} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
-import {flow, flowCallback, letFlow} from './flow'
+import {flow, flowCallback, Let, sequential} from './flow'
 import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './internal'
 import {query} from '../location'
 import {incidents} from './connections'
@@ -194,6 +194,13 @@ export const addNode = curry((node, graph, ...cbs) => {
   return addNodeInternal(node, graph, checkNode, ...cbs)
 })
 
+export const addNodeWithID = curry((node, graph, ...cbs) => {
+  return sequential([
+    addNode(node),
+    mergeNodes({id: node.id})
+  ])(graph, ...cbs)
+})
+
 /**
  * @function
  * @name set
@@ -224,7 +231,7 @@ export const set = curry((value, loc, graph) => {
 export const addNodeTuple = curry((node, graph) => {
   var id
   var newGraph = flow(
-    letFlow(addNode(node), (node, graph) => {
+    Let(addNode(node), (node, graph) => {
       id = Node.id(node)
       return graph
     })
@@ -263,7 +270,7 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cbs) => {
   }
   var parentGraph = node(basePath, graph)
   // remove node in its compound and replace the graphs on the path
-  return letFlow(removeNodeInternal(pathRest(path), deleteEdges), (remNode, newSubGraph) =>
+  return Let(removeNodeInternal(pathRest(path), deleteEdges), (remNode, newSubGraph) =>
     cb(remNode, replaceNode(basePath, newSubGraph, graph)))(parentGraph)
 })
 
@@ -303,7 +310,7 @@ export const replaceNode = curry((loc, newNode, graph) => {
   var preNode = node(loc, graph)
   if (equal(preNode.path, graph.path)) return newNode
   return flow(
-    letFlow(
+    Let(
         [removeNodeInternal(loc, false), addNodeByPath(nodeParentPath(loc, graph), newNode)],
         ([removedNode, insertedNode], graph) => mergeNodes(removedNode, insertedNode, graph)),
     rePath,

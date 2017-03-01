@@ -7,7 +7,7 @@ import * as Graph from '../../src/graph'
 
 chai.use(sinonChai)
 var expect = chai.expect
-const letFlow = Graph.letFlow
+const Let = Graph.Let
 
 describe('Basic graph functions', () => {
   describe('» .flow', () => {
@@ -33,7 +33,7 @@ describe('Basic graph functions', () => {
     it('» Can use let to get information out of operations', () => {
       var resSpy = sinon.spy((res) => expect(res).to.equal('let-value'))
       Graph.flow(
-        letFlow((graph, cb) => cb('let-value'), resSpy)
+        Let((graph, cb) => cb('let-value'), resSpy)
       )()
       expect(resSpy).to.have.been.calledOnce
     })
@@ -41,7 +41,7 @@ describe('Basic graph functions', () => {
     it('» Can use let to get information out of operations', () => {
       var resSpy = sinon.spy((res) => expect(res).to.eql(['let-value-1', 'let-value-2']))
       Graph.flow(
-        letFlow([(graph, cb) => cb('let-value-1'), (graph, cb) => cb('let-value-2')], resSpy)
+        Let([(graph, cb) => cb('let-value-1'), (graph, cb) => cb('let-value-2')], resSpy)
       )()
       expect(resSpy).to.have.been.calledOnce
     })

@@ -56,7 +56,7 @@ describe('Graph Algorithms', () => {
 
     it('Can sort compound nodes', () => {
       var comp = Graph.flow(
-        Graph.letFlow(Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
+        Graph.Let(Graph.addNode({ports: [{port: 'outA', kind: 'output'}, {port: 'inA', kind: 'input'}], name: 'a'}),
           (node, graph) =>
             Graph.flow(
               Graph.addEdge({from: '@inC', to: node.id + '@inA'}),

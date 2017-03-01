@@ -1,6 +1,8 @@
 
 import flatten from 'lodash/fp/flatten'
 import chunk from 'lodash/fp/chunk'
+import curry from 'lodash/fp/curry'
+import last from 'lodash/fp/last'
 import {empty} from './basic'
 import {debug} from '../debug'
 
@@ -56,7 +58,22 @@ export const flow = function () {
   }
 }
 
-export const letFlow = (fn, cb) => {
+/**
+ * @function
+ * @name Let
+ * Handle the context information of an action in a separate callback. This is especially useful in flow chains
+ * to preserve the monadic structure. This is similar to the monadic let in haskell (in do notations). As let
+ * is already a JS keyword it is written in uppercase.
+ * @param {GraphAction} fn A graph action that might produce some contextual information.
+ * @param {Function<Context, GraphAction>} cb A function that takes a context information and returns a graph action.
+ * @returns {GraphAction} A graph action that takes a graph an produces a new graph.
+ * @example Creating a node and using it in further actions
+ * flow(
+ *   Let(Graph.addNode({...}), (newNode, newGraph) =>
+ *      Graph.addEdge({from: Node.port('x', newNode), to: '@out'})(newGraph))
+ * )(graph)
+ */
+export const Let = (fn, cb) => {
   return (graph) => {
     if (Array.isArray(fn)) {
       var res = []
@@ -71,9 +88,15 @@ export const letFlow = (fn, cb) => {
   }
 }
 
-export const flowCallback = (cbs) => {
+/**
+ * Utility function to get the callback function from an optional callbacks array.
+ * This function should be used to allow for additional, optional arguments in curried functions.
+ * @param cbs The callbacks array (possibly empty).
+ * @returns The callback function for the callbacks array.
+ */
+export function flowCallback (cbs) {
   if (Array.isArray(cbs) && typeof (cbs[0]) === 'function') {
-    return cbs[0]
+    return last(cbs.filter((cb) => typeof (cb) === 'function'))
   } else if (typeof (cbs) === 'function') {
     return cbs
   }
@@ -88,6 +111,73 @@ export const debugFlow = function () {
   return flow(...arguments, {debug: true})
 }
 
+/* unsure how to describe it properly... until now ;)
+   only sensible usage scenario seems to be the `distribute`
+*/
+function parallel (fns) {
+  if (fns.length === 0) return flowCallback()
+  return (graph) => fns[0](graph, parallel(fns.slice(1)))
+}
+
+/**
+ * Create a sequence of actions. Each action takes the result of the preceeding action and the current graph.
+ * @param {Array<GraphActions>} fns An array of actions that are applied in sequence to the graph.
+ * @returns {GraphAction} A function that takes a graph and returns a new graph. As with every GraphAction
+ * it is possible to add a callback to the arguments to process the result with context information
+ * @example Adding and removing a node
+ * // in the first action, we specify the contents of the node.
+ * // the second action gets the context information of the addNode (which is the added node)
+ * // and the graph (i.e. it calls `Graph.removeNode(newNode, newGraph)`)
+ * sequential([Graph.addNode({...}), Graph.removeNode])(graph)
+ */
+export function sequential (fns) {
+  if (fns.length === 0) return flowCallback()
+  return (...args) => fns[0](...args, sequential(fns.slice(1)))
+}
+
+/**
+ * @function
+ * @name distributeWith
+ * Distributes an argument over multiple Graph actions. After distributing it calls a reducer function.
+ * @param {Reducer} reducer The reducer function that takes multiple graph actions and creates one action out of them.
+ * This could be the sequential reducer that runs the actions sequentially (after distributing an argument).
+ * @param {Array<GraphActions>} fns An array of actions onto which the given callback argument should be distributed.
+ * @returns {GraphAction} A function that takes a graph and returns a new graph. As with every GraphAction
+ * it is possible to add a callback to the arguments to process the result with context information
+ * @example Connecting a nodes inputs and outputs
+ * // Add a graph (`distributeWith(parallel)` is defined as `distribute`)
+ * Graph.addNode({...}, distributeWith(parallel, [
+ *    (newNode) => Graph.addEdge({from: '@from', to: Node.port('input', newNode)}),
+ *    (newNode) => Graph.addEdge({from: Node.port('output', newNode), to: '@output'})
+ * ])(graph)
+ */
+export const distributeWith = curry((reducer, fns) => {
+  return (data, graph) =>
+    reducer(fns.map((f) => f(data)))(graph)
+})
+
+/**
+ * @function
+ * @name distribute
+ * Distributes an argument parallel. (Alias for `distributeWith(parallel)`).
+ * @see distributeWith
+ */
+export const distribute = distributeWith(parallel)
+
+/**
+ * @function
+ * @name distributeSequential
+ * Distributes an argument parallel. (Alias for `distributeWith(sequential)`).
+ * @see distributeWith
+ */
+export const distributeSeq = distributeWith(sequential)
+
+/**
+ * @function
+ * @name namedFlow
+ * @deprecated
+ * This function is deprecated. Use `flow` with and set the names via the optional parameter.
+ */
 export const namedFlow = function () {
   var lastArg = arguments[arguments.length - 1]
   var args = arguments

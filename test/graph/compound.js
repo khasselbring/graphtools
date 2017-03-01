@@ -232,7 +232,7 @@ describe('Basic graph functions', () => {
 
     it('Removing a node removes its edges', () => {
       var graph = Graph.flow(
-        Graph.letFlow(
+        Graph.Let(
           [
             Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output'}]}),
             Graph.addNode({name: 'b', ports: [{port: 'in', kind: 'input'}]})

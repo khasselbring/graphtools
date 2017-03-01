@@ -49,8 +49,7 @@ export const includePredecessor = curry((port, graph) => {
   var compound = portNode
 
   var newCompound = flow(
-    Graph.letFlow(Graph.addNode(predNode), (newNode, graph) =>
-      mergeNodes({id: predNode.id}, newNode, graph)),
+    Graph.addNodeWithID(predNode),
     // remove old port and add predecessor
     affectedPorts.map((p) => Compound.removePort(p.compoundPort)),
     // set the id of the included predecessor to the id of the predecessor
@@ -117,7 +116,7 @@ export const excludeNode = curry((node, graph) => {
     // disconnect all edges whose ports get removed
     flow(portPreds.map((edges) => Graph.removeEdge(edges[0]))),
     Graph.replaceNode(parent, newCompound),
-    Graph.letFlow(Graph.addNodeIn(Graph.parent(parent, graph), nodeObj), (node, graph) =>
+    Graph.Let(Graph.addNodeIn(Graph.parent(parent, graph), nodeObj), (node, graph) =>
       mergeNodes({id: nodeObj.id}, node, graph)),
     portPreds.map((edges) => Graph.addEdge({from: edges[0].from, to: nodeObj.id + '@' + edges[1].to.port})),
     Node.outputPorts(nodeObj, true).map((port) => Graph.addEdge({from: nodeObj.id + '@' + port.port, to: parent.id + '@' + port.port}))
@@ -231,7 +230,7 @@ function prefixPort (port, prefix) {
 function moveIntoCompound (node, cmpdId) {
   return (graph) => {
     var newComp = Graph.flow(
-      Graph.letFlow(Graph.addNode(node), (newNode, graph) =>
+      Graph.Let(Graph.addNode(node), (newNode, graph) =>
         mergeNodes({id: node.id}, newNode, graph)),
       Node.inputPorts(node).map((p) => Compound.addInputPort(prefixPort(p, node.id))),
       Graph.flow(Node.inputPorts(node).map((p) => Graph.addEdge({from: '@' + prefixedPortName(p, node.id), to: node.id + '@' + p.port}))),
@@ -315,8 +314,8 @@ export const compoundify = curry((nodes, graph, ...cbs) => {
   // const parent = Graph.parent(nodeObjs[0], graph)
   const compId = 'compoundify-' + cuid()
   return Graph.flow(
-    Graph.letFlow(Graph.addNode(Graph.compound({componentId: compId})), (newNode, curGraph) =>
-      Graph.letFlow(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) =>
+    Graph.Let(Graph.addNode(Graph.compound({componentId: compId})), (newNode, curGraph) =>
+      Graph.Let(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) =>
         cb(upNode, upGraph))(curGraph))
   )(graph)
 })

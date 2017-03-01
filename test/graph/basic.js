@@ -66,7 +66,7 @@ describe('Basic graph functions', () => {
 
   it('can have edges between references', () => {
     var graph = Graph.flow(
-      Graph.letFlow(
+      Graph.Let(
         [
           Graph.addNode({ref: 'a'}),
           Graph.addNode({ref: 'a'}),
