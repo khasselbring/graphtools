@@ -38,7 +38,14 @@ export const convertToLambda = curry((nodes, graph, ...cbs) => {
 function createInputPartials (inputs, from) {
   return (graph, ...cbs) => {
     const cb = Graph.flowCallback(cbs)
-    // context.inputs.map((input) => Graph.addNode(createPartial()))
+    if (inputs.length > 0) {
+      return letF(Graph.addNode(createPartial()), (newPartial, graph) =>
+        Graph.flow(
+          Graph.addEdge({from: Node.port('fn', from), to: Node.port('inFn', newPartial)}),
+          Graph.addEdge({from: inputs[0][1], to: Node.port('value', newPartial)}),
+          letF(createInputPartials(inputs.slice(1), newPartial), cb)
+        )(graph))(graph)
+    }
     return cb(from, graph)
   }
 }
