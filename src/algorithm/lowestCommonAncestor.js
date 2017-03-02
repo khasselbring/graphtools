@@ -14,9 +14,9 @@ function ancestorsArray (locs, graph) {
 
 function ancestors (location, graph) {
   if (!Array.isArray(location)) {
-    return new Set([...ancestorsArray([Node.id(Graph.node(location, graph))], graph)])
+    return new Set(ancestorsArray([location], graph))
   }
-  return new Set([...ancestorsArray(location.map((n) => Node.id(Graph.node(n, graph))), graph)])
+  return new Set(ancestorsArray(location, graph))
 }
 
 function hasOnlyOutEdgesToParent (graph) {
