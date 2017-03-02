@@ -1,3 +1,3 @@
 
 export * from './topologicalSort'
-export * from './leastCommonAncestor'
+export * from './lowestCommonAncestor'

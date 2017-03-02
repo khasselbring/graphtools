@@ -1,9 +1,9 @@
 /* eslint-env mocha */
 
 import chai from 'chai'
-import * as Graph from '../src/graph'
-import * as Algorithms from '../src/algorithm/algorithms'
-import * as Node from '../src/node'
+import * as Graph from '../../src/graph'
+import * as Algorithms from '../../src/algorithm/algorithms'
+import * as Node from '../../src/node'
 import fs from 'fs'
 
 const expect = chai.expect

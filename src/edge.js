@@ -75,6 +75,18 @@ export function normalize (edge) {
   return newEdge
 }
 
+export function isEdgeToParent (edge) {
+  return edge.innerCompoundInput
+}
+
+export function isInnerEdge (edge) {
+  return !edge.innerCompoundInput && !edge.innerCompoundOutput
+}
+
+export function isEdgeFromParent (edge) {
+  return edge.innerCompoundOutput
+}
+
 /**
  * @function
  * @name equal
