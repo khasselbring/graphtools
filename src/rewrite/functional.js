@@ -91,6 +91,8 @@ const createCall = (context) => (last, graph) =>
         succ.map((s) => Graph.addEdge({from: Node.port(port, call), to: s}))))
     )(graph))(graph)
 
-export const replaceByCall = curry((nodes, graph) => {
-  return convertToLambda(nodes, graph, distSeq([createInputPartials, createCall]))
-})
+export const replaceByCall = curry((nodes, graph) =>
+  replaceByThunk(nodes, graph, createCall))
+
+export const replaceByThunk = curry((nodes, graph, ...cbs) =>
+  convertToLambda(nodes, graph, distSeq([createInputPartials, Graph.flowCallback(cbs)])))
