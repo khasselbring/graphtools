@@ -32,6 +32,18 @@ function hasOnlyOutEdgesToParent (graph) {
   return (node) => Graph.outIncidents(node, graph).filter(isInnerEdge).length === 0
 }
 
+/**
+ * Find the lowest common ancestors (LCAs) of a set of locations.
+ * @param {Array<Location>} locations An array of at least 2 locations for which you want the LCAs.
+ * The locations can be ports or nodes or a mix of ports and nodes. If the location is a node it
+ * can be part of the LCAs. If the location identifies a port the corresponding node will not be
+ * part of the result. The locations must all have the exact same parent.
+ * @param {Portgraph} graph The graph
+ * @returns {Array<Node>} An array of nodes that represent the LCAs.
+ * @throws {Error} An error is thrown if it is not possible to calculate the LCAs. This might be because:
+ *  - the locations array is no array or does not have at least 2 nodes.
+ *  - the corresponding nodes to the locations do not all have the same parent.
+ */
 export const lowestCommonAncestors = curry((locations, graph) => {
   if (!Array.isArray(locations) || locations.length < 2) {
     throw new Error('Calculation of lowest common ancestor requires at least 2 nodes.')
