@@ -4,6 +4,7 @@ import flatten from 'lodash/fp/flatten'
 import * as Graph from '../graph'
 import {intersection, difference} from 'set-ops'
 import * as Node from '../node'
+import {isPort} from '../port'
 import {isInnerEdge} from '../edge'
 
 function ancestorsArray (locs, graph) {
@@ -14,9 +15,17 @@ function ancestorsArray (locs, graph) {
 
 function ancestors (location, graph) {
   if (!Array.isArray(location)) {
-    return new Set(ancestorsArray([location], graph))
+    if (isPort(location)) {
+      return new Set(ancestorsArray([location], graph))
+    } else {
+      return new Set(ancestorsArray([location], graph))
+        .add(Node.id(Graph.node(location, graph)))
+    }
   }
-  return new Set(ancestorsArray(location, graph))
+  return new Set(ancestorsArray(location, graph)
+    .concat(location
+      .filter((l) => !isPort(l))
+      .map((n) => Node.id(Graph.node(n, graph)))))
 }
 
 function hasOnlyOutEdgesToParent (graph) {

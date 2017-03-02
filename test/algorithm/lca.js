@@ -4,7 +4,6 @@ import chai from 'chai'
 import * as Graph from '../../src/graph'
 import * as Algorithms from '../../src/algorithm/algorithms'
 import * as Node from '../../src/node'
-import {debug} from '../../src/debug'
 
 const expect = chai.expect
 
@@ -52,7 +51,7 @@ describe('Graph Algorithms', () => {
       expect(Algorithms.lowestCommonAncestors(['b@in1', 'b@in2'], graph).map(Node.name)).to.eql(['c'])
     })
 
-    it('» Identifies in between nodes', () => {
+    it('» Does not return ancestors of only one node', () => {
       const graph = Graph.flow(
         Graph.addNode({name: 'a1', ports: [{port: 'out', kind: 'output', type: 'g'}]}),
         Graph.addNode({name: 'a2', ports: [{port: 'out', kind: 'output', type: 'g'}]}),
@@ -81,6 +80,36 @@ describe('Graph Algorithms', () => {
       const lcas = Algorithms.lowestCommonAncestors(['b@in1', 'b@in2'], graph).map(Node.name)
       expect(lcas).to.include('a1')
       expect(lcas).to.include('a2')
+    })
+
+    it('» Handles cases where an input node itself is the lca', () => {
+      const graph = Graph.flow(
+        Graph.addNode({name: 'a1', ports: [{port: 'out', kind: 'output', type: 'g'}]}),
+        Graph.addNode({name: 'a2', ports: [{port: 'out', kind: 'output', type: 'g'}]}),
+        Graph.addNode({
+          name: 'c1',
+          ports: [
+            {port: 'out1', kind: 'output', type: 'g'},
+            {port: 'in1', kind: 'input', type: 'g'},
+            {port: 'in2', kind: 'input', type: 'g'}
+          ]}),
+        Graph.addNode({
+          name: 'c2',
+          ports: [
+            {port: 'out1', kind: 'output', type: 'g'},
+            {port: 'in1', kind: 'input', type: 'g'},
+            {port: 'in2', kind: 'input', type: 'g'}
+          ]}),
+        Graph.addNode({name: 'b', ports: [{port: 'in1', kind: 'input', type: 'g'}, {port: 'in2', kind: 'input', type: 'g'}]}),
+        Graph.addEdge({from: 'a1@out', to: 'c1@in1'}),
+        Graph.addEdge({from: 'a1@out', to: 'c2@in1'}),
+        Graph.addEdge({from: 'a2@out', to: 'c1@in2'}),
+        Graph.addEdge({from: 'a2@out', to: 'c2@in2'}),
+        Graph.addEdge({from: 'c1@out1', to: 'b@in1'}),
+        Graph.addEdge({from: 'c2@out1', to: 'b@in2'})
+      )()
+      const lcas = Algorithms.lowestCommonAncestors(['b@in1', 'c1'], graph).map(Node.name)
+      expect(lcas).to.include('c1')
     })
   })
 })
