@@ -10,7 +10,8 @@ import * as Edge from './edge'
 import * as Node from './node'
 import * as Port from './port'
 import * as Rewrite from './rewrites'
+import {debug} from './debug'
 // import * as Walk from './walk'
 
 export * from './graph'
-export {Algorithm, Component, Compound, CompoundPath, Edge, Node, Port, Lambda, Rewrite}
+export {Algorithm, Component, Compound, CompoundPath, Edge, Node, Port, Lambda, Rewrite, debug}
