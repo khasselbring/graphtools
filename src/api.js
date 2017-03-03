@@ -9,7 +9,7 @@ import * as Lambda from './functional/lambda'
 import * as Edge from './edge'
 import * as Node from './node'
 import * as Port from './port'
-import * as Rewrite from './rewrites'
+import * as Rewrite from './rewrite/rewrites'
 import {debug} from './debug'
 // import * as Walk from './walk'
 
