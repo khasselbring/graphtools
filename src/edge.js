@@ -158,12 +158,22 @@ export function isValid (edge) {
   return typeof (edge) === 'object' && edge.from && edge.to
 }
 
+/**
+ * Checks if the edge connects two ports.
+ * @param {Edge} edge The edge to test
+ * @returns {Boolean} True if the edge connects two ports, false otherwise.
+ */
 export function isBetweenPorts (edge) {
   return typeof (edge) === 'object' &&
     Port.isValid(Object.assign({type: '-', kind: 'input'}, edge.from)) &&
     Port.isValid(Object.assign({type: '-', kind: 'output'}, edge.to))
 }
 
+/**
+ * Checks if the edge connects two nodes (and not ports of those nodes).
+ * @param {Edge} edge The edge to test
+ * @returns {Boolean} True if the edge connects two nodes, false otherwise (e.g. if it is an edge between ports).
+ */
 export function isBetweenNodes (edge) {
   return isValid(edge) && !isBetweenPorts(edge)
 }
