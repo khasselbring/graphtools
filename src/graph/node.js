@@ -1,7 +1,8 @@
 
 import curry from 'lodash/fp/curry'
+import merge from 'lodash/fp/merge'
 import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relativeTo, equal} from '../compoundPath'
-import {normalize as normalizePort} from '../port'
+import {normalize as normalizePort, portName} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
 import {flow, flowCallback, Let, sequential} from './flow'
@@ -357,3 +358,20 @@ export const parent = curry((loc, graph) => {
   }
   return node(pathParent(relativeTo(node(loc, graph).path, graph.path)), graph)
 })
+
+/**
+ * Replaces a port of a node in a graph
+ * @param {Port} oldPort Port object to be replaced
+ * @param {Port} newPort Port object to replace with. It will update the old port. Old attributes will not be overwritten.
+ * @return {Portgraph} Updated graph with oldPort replaced by newPort
+ */
+export function replacePort (oldPort, newPort, graph) {
+  const nodeObj = node(oldPort, graph)
+  const newNode = merge(nodeObj, {ports: Node.ports(nodeObj)
+    .map((port) =>
+      (portName(port) === portName(oldPort))
+      ? newPort
+      : port)
+  })
+  return replaceNode(nodeObj, newNode, graph)
+}

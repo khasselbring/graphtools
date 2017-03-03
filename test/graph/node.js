@@ -4,6 +4,7 @@ import chai from 'chai'
 import * as changeSet from '../../src/changeSet'
 import * as Graph from '../../src/graph'
 import * as Node from '../../src/node'
+import * as Port from '../../src/port'
 
 var expect = chai.expect
 
@@ -76,6 +77,12 @@ describe('Basic graph functions', () => {
       var graph2 = Graph.setNodePort('a', 1, {type: 'd'}, graph)
       expect(Graph.node('a', graph1).ports[0].type).to.equal('c')
       expect(Graph.node('a', graph2).ports[1].type).to.equal('d')
+    })
+
+    it('can replace a port of a node', () => {
+      const graph = Graph.addNode({name: 'a', ports: [{port: 'a', kind: 'output', type: 'generic'}]}, Graph.empty())
+      const repGraph = Graph.replacePort(Graph.port('a@a', graph), {kind: 'input'}, graph)
+      expect(Port.kind(Graph.port('a@a', repGraph))).to.equal('input')
     })
   })
 })
