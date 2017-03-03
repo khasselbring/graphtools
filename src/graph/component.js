@@ -20,7 +20,7 @@ export function components (graph) {
  * @returns {string[]} A list of component ids.
  */
 export function componentIds (graph) {
-  return graph.components.map(Component.componentId)
+  return components(graph).map(Component.id)
 }
 
 /**
@@ -33,7 +33,7 @@ export function componentIds (graph) {
  * @throws {Error} If the queried component does not exist in the graph.
  */
 export const component = curry((comp, graph) => {
-  var res = find(Component.equal(comp), graph.components)
+  var res = find(Component.equal(comp), components(graph))
   if (!res) {
     // TODO: debug(JSON.stringify(graph, null, 2)) // make printing the graph possible
     throw new Error(`Component with id '${comp}' does not exist in the graph.`)
@@ -50,7 +50,7 @@ export const component = curry((comp, graph) => {
  * @returns {boolean} True if the graph has a component with the given component id, false otherwise.
  */
 export const hasComponent = curry((comp, graph) => {
-  return !!find(Component.equal(comp), graph.components)
+  return !!find(Component.equal(comp), components(graph))
 })
 
 function checkComponent (graph, comp) {
@@ -106,3 +106,12 @@ export const updateComponent = curry((comp, merge, graph) => {
   return changeSet.applyChangeSet(graph,
     changeSet.updateComponent(Component.id(comp), omit('componentId', merge)))
 })
+
+export function isomorphComponents (graph1, graph2) {
+  const c1 = components(graph1)
+  const c2 = components(graph2)
+  if (c1.length !== c2.length) return false
+  if (!components(graph1).every((c) => hasComponent(c, graph2))) return false
+  if (!components(graph1).every((c) => Component.isomorph(c, component(c, graph2)))) return false
+  return true
+}

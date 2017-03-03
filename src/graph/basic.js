@@ -5,6 +5,7 @@
 import cloneObj from 'lodash/fp/clone'
 import curry from 'lodash/fp/curry'
 import {create, isomorph as cIsomorph} from '../compound'
+import {isomorphComponents} from './component'
 import {setMetaKey} from './meta'
 import {packageVersion} from '../internals'
 
@@ -25,7 +26,7 @@ export function clone (graph) {
  * @returns {boolean} True if both graphs are structually equal, false otherwise.
  */
 export const isomorph = curry((graph1, graph2) => {
-  return cIsomorph(graph1, graph2)
+  return cIsomorph(graph1, graph2) && isomorphComponents(graph1, graph2)
 })
 
 /**

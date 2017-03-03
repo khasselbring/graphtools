@@ -26,6 +26,7 @@ import * as Port from './port'
 import {children, isCompound} from './compound'
 import {create, id as nodeID} from './node'
 import semver from 'semver'
+import isEqual from 'lodash/fp/isEqual'
 
 const OUTPUT = 'output'
 const INPUT = 'input'
@@ -176,4 +177,15 @@ export function createNode (reference, comp) {
     })
   }
   return _.merge({}, reference, comp)
+}
+
+/**
+ * Tests if two components are isomorphic i.e. deep equal.
+ * @param {Portgraph} graph1 One of the graphs.
+ * @param {Portgraph} graph2 And the other graph to test.
+ * @returns {Boolean} True if the components of the two graphs are isomorphic, false otherwise. Components
+ * are isomorphic, if they are deep equal.
+ */
+export function isomorph (graph1, graph2) {
+  return isEqual(graph1, graph2)
 }
