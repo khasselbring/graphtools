@@ -9,7 +9,8 @@ import * as Lambda from './functional/lambda'
 import * as Edge from './edge'
 import * as Node from './node'
 import * as Port from './port'
+import * as Rewrite from './rewrites'
 // import * as Walk from './walk'
 
 export * from './graph'
-export {Algorithm, Component, Compound, CompoundPath, Edge, Node, Port, Lambda}
+export {Algorithm, Component, Compound, CompoundPath, Edge, Node, Port, Lambda, Rewrite}
