@@ -38,7 +38,7 @@ function createLambdaNode (compound) {
  * outputs use createCall for that.
  * @param {Array<Location>} subset A subset of nodes in the graph that should be included in the lambda node.
  * @param {Portgraph} graph The graph
- * @param {Function<Context, Portgraph>} [cb] A callback that is called after the lambda node is created. The context
+ * @param {Callback} [cb] A callback that is called after the lambda node is created. The context
  * will be an object that contains the lambda node, the predecessors of the subset and the successors of that subset. I.e.
  * the context object will look like this:
  *
@@ -91,8 +91,54 @@ const createCall = (context) => (last, graph) =>
         succ.map((s) => Graph.addEdge({from: Node.port(port, call), to: s}))))
     )(graph))(graph)
 
-export const replaceByCall = curry((nodes, graph) =>
-  replaceByThunk(nodes, graph, createCall))
+/**
+ * Takes a subset of nodes (all of them must have the same parent) and replaces them
+ * by a lambda function, the partial application of their inputs and a call with all
+ * outputs connected to the subsets successors.
+ * @param {Array<Location>} subset A subset of locations identifying nodes which will be replaced by
+ * a lambda call.
+ * @param {Portgraph} graph The graph
+ * @returns {Portgraph} A new graph in which the subset was replaced by a call to a lambda
+ * function.
+ */
+export const replaceByCall = curry((subset, graph) =>
+  replaceByThunk(subset, graph, createCall))
 
-export const replaceByThunk = curry((nodes, graph, ...cbs) =>
-  convertToLambda(nodes, graph, distSeq([createInputPartials, Graph.flowCallback(cbs)])))
+/**
+ * Takes a subset of nodes (all of them must have the same parent) and replaces them
+ * by a lambda function, the partial application of their inputs It will not call the
+ * lambda function and thus their outputs will not be connected. If you want to connect
+ * the outputs after the call use replaceByCall. Information about the successors is accessible
+ * via the context-callback.
+ * @param {Array<Location>} subset A subset of locations identifying nodes which will be replaced by
+ * a lambda call.
+ * @param {Portgraph} graph The graph
+ * @param {Callback} [contextCallback] A context callback that is called after the thunk is created.
+ * It has the signature Context x Node x Graph -> Graph . The context contains information about the
+ * lambda node, and the successors. The second parameter is the last partial/lambda node that
+ * outputs the thunk. The callback must return a graph which then will be the return value of this
+ * function (replaceByThunk). The context object has the following structure:
+ *
+ * ```
+ * {
+ *   "lambda": "<The lambda node>",
+ *   "inputs": [[<inputPort>, <predecessor>], ...],
+ *   "outputs": [[<outputPort, [<successors>, ...]],...]
+ * }
+ * ```
+ *
+ * The predecessors are already connected to create a thunk.
+ * @returns {Portgraph} A new graph in which the subset was replaced by a call to a lambda
+ * function. **Caution**: The new graph will not connect the output of the lambda function
+ * use the context-callback to connect the outputs.
+ * @example <caption>replaceByCall implementation</caption>
+ * // create call is a context-callback that creates a call node and connects it properly
+ * export const replaceByCall = curry((subset, graph) =>
+ *   replaceByThunk(subset, graph, createCall))
+ * @example <caption>Log the not connected successors as an array.</caption>
+ * replaceByThunk(subset, graph, curry((context, last, graph) => {
+ *   console.log(flatten(context.outputs.map((o) => o[1])))
+ * }))
+ */
+export const replaceByThunk = curry((subset, graph, ...cbs) =>
+  convertToLambda(subset, graph, distSeq([createInputPartials, Graph.flowCallback(cbs)])))

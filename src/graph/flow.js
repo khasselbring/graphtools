@@ -61,11 +61,12 @@ export const flow = function () {
 /**
  * @function
  * @name Let
+ * @description
  * Handle the context information of an action in a separate callback. This is especially useful in flow chains
  * to preserve the monadic structure. This is similar to the monadic let in haskell (in do notations). As let
  * is already a JS keyword it is written in uppercase.
  * @param {GraphAction} fn A graph action that might produce some contextual information.
- * @param {Function<Context, GraphAction>} cb A function that takes a context information and returns a graph action.
+ * @param {Callback} cb A function that takes a context information and returns a graph action.
  * @returns {GraphAction} A graph action that takes a graph an produces a new graph.
  * @example Creating a node and using it in further actions
  * flow(
@@ -138,6 +139,7 @@ export function sequential (fns) {
 /**
  * @function
  * @name distributeWith
+ * @description
  * Distributes an argument over multiple Graph actions. After distributing it calls a reducer function.
  * @param {Reducer} reducer The reducer function that takes multiple graph actions and creates one action out of them.
  * This could be the sequential reducer that runs the actions sequentially (after distributing an argument).
@@ -159,6 +161,7 @@ export const distributeWith = curry((reducer, fns) => {
 /**
  * @function
  * @name distribute
+ * @description
  * Distributes an argument parallel. (Alias for `distributeWith(parallel)`).
  * @see distributeWith
  */
@@ -167,6 +170,7 @@ export const distribute = distributeWith(parallel)
 /**
  * @function
  * @name distributeSequential
+ * @description
  * Distributes an argument parallel. (Alias for `distributeWith(sequential)`).
  * @see distributeWith
  */

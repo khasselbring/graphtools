@@ -1,8 +1,8 @@
 {
   "plugins": ["plugins/markdown"],
   "source": {
-    "include": ["src/compoundPath.js", "src/graph.js", "src/changeSet.js", "src/edge.js", "src/algorithm.js",
-      "src/port.js", "src/location.js",
+    "include": ["src/compoundPath.js", "src/graph.js", "src/changeSet.js", "src/edge.js", "src/algorithm",
+      "src/port.js", "src/location.js", "src/rewrite",
       "src/node.js", "src/component.js", "README.md", "package.json", "src/graph"]
   },
   "opts": {

@@ -1,31 +1,27 @@
 
 import curry from 'lodash/fp/curry'
-import flatten from 'lodash/fp/flatten'
 import * as Graph from '../graph'
 import {intersection, difference} from 'set-ops'
 import * as Node from '../node'
 import {isPort} from '../port'
 import {isInnerEdge} from '../edge'
-
-function ancestorsArray (locs, graph) {
-  if (locs.length === 0) return []
-  const preds = flatten(locs.map((l) => Graph.predecessors(l, graph))).map((n) => Node.id(Graph.node(n, graph)))
-  return preds.concat(ancestorsArray(preds, graph))
-}
+import {predecessorsUntil} from './predecessors'
 
 function ancestors (location, graph) {
   if (!Array.isArray(location)) {
     if (isPort(location)) {
-      return new Set(ancestorsArray([location], graph))
+      return new Set(predecessorsUntil([location], (node) => Graph.sameParents([node, location], graph), graph)
+        .map((n) => Node.id(Graph.node(n, graph))))
     } else {
-      return new Set(ancestorsArray([location], graph))
+      return new Set(predecessorsUntil([location], (node) => Graph.sameParents([node, location], graph), graph)
+          .map((n) => Node.id(Graph.node(n, graph))))
         .add(Node.id(Graph.node(location, graph)))
     }
   }
-  return new Set(ancestorsArray(location, graph)
+  return new Set(predecessorsUntil(location, graph)
     .concat(location
-      .filter((l) => !isPort(l))
-      .map((n) => Node.id(Graph.node(n, graph)))))
+      .filter((l) => !isPort(l)))
+      .map((n) => Node.id(Graph.node(n, graph))))
 }
 
 function hasOnlyOutEdgesToParent (graph) {

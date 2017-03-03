@@ -152,7 +152,15 @@ export const addNodeByPath = curry((parentPath, nodeData, graph, ...cbs) => {
  * @param {Location} parentLoc A location identifying the parent for the new node.
  * @param {Node} node The node to add to the graph.
  * @param {PortGraph} graph The graph
+ * @param {Callback} contextCallback A context-callback that is called after the new node was inserted. It
+ * has the signature `Node x Graph -> Graph`. It will get the newly inserted node and the graph (that
+ * has this node). And it must return a graph (the graph will be the return value of this function).
  * @returns {PortGraph} A new graph that contains the node as child of `parentLoc`.
+ * @example <caption>Printing the id of the newly inserted node</caption>
+ * Graph.addNodeIn(parent, {...}, graph, (newNode, graph) => {
+ *   console.log(Node.id(newNode))
+ *   return graph
+ * })
  */
 export const addNodeIn = curry((parentLoc, nodeData, graph, ...cbs) => {
   if (Node.isAtomic(node(parentLoc, graph))) {
@@ -160,22 +168,6 @@ export const addNodeIn = curry((parentLoc, nodeData, graph, ...cbs) => {
   }
   return addNodeByPath(Node.path(node(parentLoc, graph)), nodeData, graph, ...cbs)
 })
-
-/*
-function replaceIdInPort (oldId, newId, port, layer) {
-  if (layer === 'dataflow') {
-    return merge(port, {node: (port.node === oldId) ? newId : port.node})
-  } else {
-    return (port === oldId) ? newId : port
-  }
-}
-
-function replaceId (oldId, newId, edge) {
-  return merge(edge, {
-    from: replaceIdInPort(oldId, newId, edge.from, edge.layer),
-    to: replaceIdInPort(oldId, newId, edge.to, edge.layer)
-  })
-} */
 
 /**
  * @function
@@ -185,7 +177,23 @@ function replaceId (oldId, newId, edge) {
  *   The node object must contain at least one valid ports. This functions checks if the node has ports AND if
  *   every port is a valid port (i.e. has a name as `port` and the port type (output/input) as `kind`).
  * @param {PortGraph} graph The graph.
+ * @param {Callback} contextCallback A context-callback that is called after the new node was inserted. It
+ * has the signature `Node x Graph -> Graph`. It will get the newly inserted node and the graph (that
+ * has this node). And it must return a graph (the graph will be the return value of this function).
  * @returns {PortGraph} A new graph that includes the node.
+ * @example <caption>Inserting nodes and connecting them</caption>
+ * Graph.Let(
+ *   [
+ *     Graph.addNode({ports: [{port: 'out', kind: 'output', type: 'Number'}]}),
+ *     Graph.addNode({ports: [{port: 'in', kind: 'output', type: 'Number'}]})
+ *   ],
+ *   ([node1, node2], graph) =>
+ *     Graph.addEdge({from: Node.port('out', node1), to: Node.port('in', node2)}, graph))
+ * @example <caption>Printing the id of the newly inserted node</caption>
+ * Graph.addNode({...}, graph, (newNode, graph) => {
+ *   console.log(Node.id(newNode))
+ *   return graph
+ * })
  */
 export const addNode = curry((node, graph, ...cbs) => {
   if (Node.isAtomic(graph)) {
