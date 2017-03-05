@@ -101,7 +101,7 @@ export function flowCallback (cbs) {
   } else if (typeof (cbs) === 'function') {
     return cbs
   }
-  return (_, graph) => graph
+  return curry((data, graph) => graph)
 }
 
 export const debugFlow = function () {
@@ -116,7 +116,7 @@ export const debugFlow = function () {
    only sensible usage scenario seems to be the `distribute`
 */
 function parallel (fns) {
-  if (fns.length === 0) return flowCallback()
+  if (!fns || fns.length === 0) return flowCallback()
   return (graph) => fns[0](graph, parallel(fns.slice(1)))
 }
 
@@ -132,7 +132,7 @@ function parallel (fns) {
  * sequential([Graph.addNode({...}), Graph.removeNode])(graph)
  */
 export function sequential (fns) {
-  if (fns.length === 0) return flowCallback()
+  if (!fns || fns.length === 0) return flowCallback()
   return (...args) => fns[0](...args, sequential(fns.slice(1)))
 }
 

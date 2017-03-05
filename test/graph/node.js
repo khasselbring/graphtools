@@ -31,6 +31,15 @@ describe('Basic graph functions', () => {
       expect(Graph.nodesBy((n) => n.id.indexOf('a') === 0, graph)).to.have.length(2)
     })
 
+    it('supports query based node selection', () => {
+      var graph = changeSet.applyChangeSets(Graph.empty(), [
+        changeSet.insertNode({id: 'a0', componentId: 'a'}),
+        changeSet.insertNode({id: 'b1', componentId: 'b'}),
+        changeSet.insertNode({id: 'a1', componentId: 'a'})
+      ])
+      expect(Graph.nodesBy('/a', graph)).to.have.length(2)
+    })
+
     it('adds nodes to the graph', () => {
       var graph = Graph.addNode({name: 'a', ports: [{port: 'p', kind: 'output', type: 'a'}]}, Graph.empty())
       expect(Graph.hasNode('a', graph)).to.be.true

@@ -83,7 +83,7 @@ export const createInputPartials = curry((context, graph, ...cbs) => {
   return createInputPartialsInternal(context.inputs, context.lambda)(graph, ...cbs)
 })
 
-const createCall = (context) => (last, graph) =>
+const createCall = ([context, last], graph) =>
   Graph.Let(Graph.addNode(createFunctionCall(context.outputs)), (call, graph) =>
     Graph.flow(
       Graph.addEdge({from: Node.port('fn', last), to: Node.port('fn', call)}),
@@ -103,6 +103,11 @@ const createCall = (context) => (last, graph) =>
  */
 export const replaceByCall = curry((subset, graph) =>
   replaceByThunk(subset, graph, createCall))
+
+const ternaryPack = (fn) =>
+  curry((a, b, graph) => {
+    return fn([a, b], graph)
+  })
 
 /**
  * Takes a subset of nodes (all of them must have the same parent) and replaces them
@@ -141,4 +146,4 @@ export const replaceByCall = curry((subset, graph) =>
  * }))
  */
 export const replaceByThunk = curry((subset, graph, ...cbs) =>
-  convertToLambda(subset, graph, distSeq([createInputPartials, Graph.flowCallback(cbs)])))
+  convertToLambda(subset, graph, distSeq([createInputPartials, ternaryPack(Graph.flowCallback(cbs))])))

@@ -26,11 +26,20 @@ export const nodes = (graph) => {
  * @function
  * @name nodesBy
  * @description Returns a list of nodes on the root level selected by a given predicate.
- * @param {function} predicate A function that filters nodes.
+ * @param {function|Location} predicate A function that filters nodes. Or alternatively you can use a location query.
  * @param {PortGraph} graph The graph.
  * @returns {Nodes[]} A list of nodes.
+ * @example <caption>Select by function</caption>
+ * // all nodes that have the name select
+ * nodesBy((node) => node.name === 'select', graph)
+ * @example <caption>Select by location query</caption>
+ * // selects all if components in the current layer.
+ * nodesBy('/if', graph)
  */
 export const nodesBy = curry((predicate, graph) => {
+  if (typeof (predicate) !== 'function') {
+    return nodes(graph).filter(query(predicate, graph))
+  }
   return nodes(graph).filter(predicate)
 })
 
