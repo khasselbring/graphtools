@@ -5,9 +5,10 @@ import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relati
 import {normalize as normalizePort, portName} from '../port'
 import * as Node from '../node'
 import * as changeSet from '../changeSet'
+import {assertGraph} from '../assert'
 import {flow, flowCallback, Let, sequential} from './flow'
 import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './internal'
-import {query} from '../location'
+import {query, toString} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
 
@@ -206,6 +207,7 @@ export const addNodeIn = curry((parentLoc, nodeData, graph, ...cbs) => {
  * })
  */
 export const addNode = curry((node, graph, ...cbs) => {
+  assertGraph(graph, 2, 'addNode')
   if (Node.isAtomic(graph)) {
     throw new Error('Cannot add Node to atomic node at: ' + graph.path)
   }
@@ -213,6 +215,7 @@ export const addNode = curry((node, graph, ...cbs) => {
 })
 
 export const addNodeWithID = curry((node, graph, ...cbs) => {
+  assertGraph(graph, 2, 'addNode')
   return sequential([
     addNode(node),
     mergeNodes({id: node.id})
@@ -234,6 +237,7 @@ export const addNodeWithID = curry((node, graph, ...cbs) => {
  * @returns {PortGraph} A graph in which the change is realized.
  */
 export const set = curry((value, loc, graph) => {
+  assertGraph(graph, 3, 'set')
   var nodeObj = node(loc, graph)
   return replaceNode(nodeObj, Node.set(value, nodeObj), graph)
 })
@@ -247,6 +251,7 @@ export const set = curry((value, loc, graph) => {
  * @returns {PortGraph} A new graph that includes the node and the id as an array in [graph, id].
  */
 export const addNodeTuple = curry((node, graph) => {
+  assertGraph(graph, 2, 'addNodeTuple')
   var id
   var newGraph = flow(
     Let(addNode(node), (node, graph) => {
@@ -301,6 +306,7 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cbs) => {
  * @returns {PortGraph} A new graph without the given node.
  */
 export const removeNode = curry((loc, graph, ...cbs) => {
+  assertGraph(graph, 2, 'removeNode')
   if (parent(loc, graph) && Node.isAtomic(parent(loc, graph))) {
     throw new Error('Cannot remove child nodes of an atomic node. Tried deleting : ' + loc)
   }
@@ -325,6 +331,7 @@ function nodeParentPath (path, graph) {
  * @returns {PortGraph} A new graph in which the old node was replaces by the new one.
  */
 export const replaceNode = curry((loc, newNode, graph) => {
+  assertGraph(graph, 3, 'replaceNode')
   var preNode = node(loc, graph)
   if (equal(preNode.path, graph.path)) return newNode
   return flow(
@@ -332,7 +339,8 @@ export const replaceNode = curry((loc, newNode, graph) => {
         [removeNodeInternal(loc, false), addNodeByPath(nodeParentPath(loc, graph), newNode)],
         ([removedNode, insertedNode], graph) => mergeNodes(removedNode, insertedNode, graph)),
     rePath,
-    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph
+    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph,
+    {name: '[replaceNode] For location ' + toString(loc)}
   )(graph)
 })
 

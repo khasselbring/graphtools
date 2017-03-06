@@ -36,6 +36,7 @@ export const flow = function () {
     options = lastArg
     args = args.slice(0, -1)
   }
+  var flowName = options && options.name
   return (graph) => {
     if (!graph) {
       graph = empty()
@@ -46,7 +47,6 @@ export const flow = function () {
         if (options && options.debug) debug(newGraph)
         return {graph: newGraph, store: obj.store}
       } catch (err) {
-        var flowName = options && options.name
         var fnName = functionName(fn, options, idx)
         var fnDesc = functionDescription(fn, options, idx)
         err.message += ' in flow function ' + ((flowName) ? '"' + flowName + '"' : '') + ' (at position: ' + (idx + 1) + ')' +
@@ -101,7 +101,10 @@ export function flowCallback (cbs) {
   } else if (typeof (cbs) === 'function') {
     return cbs
   }
-  return curry((data, graph) => graph)
+  return curry((data, graph, ...cbs) => {
+    if (cbs && cbs.length > 0) return cbs[0](data, graph)
+    return graph
+  })
 }
 
 export const debugFlow = function () {
@@ -116,7 +119,7 @@ export const debugFlow = function () {
    only sensible usage scenario seems to be the `distribute`
 */
 function parallel (fns) {
-  if (!fns || fns.length === 0) return flowCallback()
+  if (fns.length === 0) return flowCallback()
   return (graph) => fns[0](graph, parallel(fns.slice(1)))
 }
 
@@ -131,9 +134,33 @@ function parallel (fns) {
  * // and the graph (i.e. it calls `Graph.removeNode(newNode, newGraph)`)
  * sequential([Graph.addNode({...}), Graph.removeNode])(graph)
  */
-export function sequential (fns) {
-  if (!fns || fns.length === 0) return flowCallback()
-  return (...args) => fns[0](...args, sequential(fns.slice(1)))
+export function sequential (fns, opt = 0, cb = null) {
+  if (fns.length === 0) return cb || flowCallback()
+  if (typeof (fns[0]) !== 'function') throw new Error('[graphtools-sequential] Argument in sequence at position ' + (opt + 1) + ' is not a callable. Make sure to use curried functions.')
+  return (...args) => {
+    var called = false
+    if (fns.length === 1) called = true
+    var res
+    if (opt === 0) {
+      res = fns[0](args[0], (...innerArgs) => {
+        called = true
+        return sequential(fns.slice(1), opt + 1, args[1])(...innerArgs)
+      })
+      if (typeof (res) === 'function') {
+        throw new Error('[graphtools-sequential] First call in sequential takes only the graph as an parameter. Function awaits more parameter.')
+      }
+    } else {
+      res = fns[0](args[0], args[1], (...innerArgs) => {
+        called = true
+        return sequential(fns.slice(1), opt + 1, cb)(...innerArgs)
+      })
+      if (typeof (res) === 'function') {
+        throw new Error('[graphtools-sequential] Calls in sequential (except the first call) take exactly two parameters, some payload and the graph. Function awaits more parameter than two.')
+      }
+    }
+    if (!called) throw new Error('[graphtools-sequential] Callback function not called in sequence function at position ' + (opt + 1))
+    return res
+  }
 }
 
 /**
@@ -154,8 +181,16 @@ export function sequential (fns) {
  * ])(graph)
  */
 export const distributeWith = curry((reducer, fns) => {
-  return (data, graph) =>
-    reducer(fns.map((f) => f(data)))(graph)
+  return (data, graph) => {
+    if (!fns.every((f) => typeof (f) === 'function')) {
+      throw new Error('[graphtools-distribute] Function ' + (fns.findIndex((f) => typeof (f) !== 'function') + 1) + ' is no function.')
+    }
+    const newFns = fns.map((f) => f(data))
+    if (!newFns.every((f) => typeof (f) === 'function')) {
+      throw new Error('[graphtools-distribute] Function ' + (newFns.findIndex((f) => typeof (f) !== 'function') + 1) + ' in distribute is not curried.')
+    }
+    return reducer(newFns)(graph)
+  }
 })
 
 /**

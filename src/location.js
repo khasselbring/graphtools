@@ -213,3 +213,7 @@ export const identifies = curry((loc, other) => {
     throw new Error('Unable to identify object type. Checking for: ' + JSON.stringify(loc) + ' object is: ' + JSON.stringify(other))
   }
 })
+
+export const toString = (loc) => {
+  return JSON.stringify(loc)
+}

@@ -4,6 +4,7 @@ import chai from 'chai'
 import sinonChai from 'sinon-chai'
 import sinon from 'sinon'
 import * as Graph from '../../src/graph'
+import * as Node from '../../src/node'
 
 chai.use(sinonChai)
 var expect = chai.expect
@@ -56,6 +57,52 @@ describe('Basic graph functions', () => {
       )
       expect(flowFn).to.throw(Error, /flowFunction/)
       expect(flowFn).to.throw(Error, /Bad function/)
+    })
+  })
+
+  describe('» .sequential', () => {
+    it('» feeds outputs to the next sequence function', () => {
+      Graph.sequential([
+        (graph, cb) => cb(1, graph),
+        (data, graph) => {
+          expect(data, 'Feeding data using a simple callback').to.equal(1)
+          return graph
+        }
+      ])(Graph.empty())
+
+      Graph.sequential([
+        Graph.addNode({name: 'a', ports: [{port: 'a', kind: 'output', type: 'generic'}]}),
+        (data, graph) => {
+          expect(Node.name(data), 'Works with existing API methods').to.equal('a')
+          return graph
+        }
+      ])(Graph.empty())
+    })
+
+    it('» Complains if not all elements in the array are functions', () => {
+      expect(() => Graph.sequential([(a, cb) => cb('data', a), (c, a, cb) => cb(a), 1])(1)).to.throw(Error, /Argument in sequence at position 3 is not a callable/)
+    })
+
+    it('» Complains if the callback function in one sequence function is not called', () => {
+      expect(() => Graph.sequential([(a, cb) => a, (c, a, cb) => cb(a)])(1)).to.throw(Error, /Callback function not called in sequence function at position 1/)
+    })
+
+    it('» Calls the last callback', () => {
+      var resSpy = sinon.spy()
+      Graph.sequential([
+        (graph, cb) => cb(1, graph),
+        (data, graph, cb) => {
+          resSpy()
+          return cb(data, graph)
+        }
+      ])(Graph.empty(), resSpy)
+      expect(resSpy).to.have.been.calledTwice
+    })
+  })
+
+  describe('» .distribute', () => {
+    it('» complains if not all functions for distribute are curried', () => {
+      expect(() => Graph.distribute([(a, graph) => graph])(Graph.empty())).to.throw(Error, /Function 1 in distribute is not curried./)
     })
   })
 })

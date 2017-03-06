@@ -26,7 +26,7 @@ const createContext = curry((compound, lambda, graph, ...cbs) => {
 function createLambdaNode (compound) {
   return (graph, ...cbs) => {
     const cb = Graph.flowCallback(cbs)
-    return Graph.addNode(createLambda(compound), graph, sequential([createContext(compound), cb]))
+    return sequential([Graph.addNode(createLambda(compound)), createContext(compound), cb])(graph)
   }
 }
 
@@ -119,7 +119,7 @@ const ternaryPack = (fn) =>
  * a lambda call.
  * @param {Portgraph} graph The graph
  * @param {Callback} [contextCallback] A context callback that is called after the thunk is created.
- * It has the signature Context x Node x Graph -> Graph . The context contains information about the
+ * It has the signature [Context x Node] x Graph -> Graph . The context contains information about the
  * lambda node, and the successors. The second parameter is the last partial/lambda node that
  * outputs the thunk. The callback must return a graph which then will be the return value of this
  * function (replaceByThunk). The context object has the following structure:

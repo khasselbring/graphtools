@@ -17,6 +17,7 @@ import {predecessor, successors, inIncidents, inIncident, outIncidents} from '..
 import * as Graph from '../graph'
 import * as Node from '../node'
 import * as Path from '../compoundPath'
+import * as Port from '../port'
 import {mergeNodes} from '../graph/internal'
 import {topologicalSort} from '../algorithm/algorithms'
 import cuid from 'cuid'
@@ -59,7 +60,8 @@ export const includePredecessor = curry((port, graph) => {
     preInPorts.map((edge) =>
         Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})),
     postInPorts.map((obj) => Graph.flow(obj.outEdges.map((edge) => Graph.addEdge({from: obj.predecessorPort, to: edge.to})))),
-    additionalPorts.map((p) => Graph.addEdge({from: predecessor(p, graph), to: '@' + p.port}))
+    additionalPorts.map((p) => Graph.addEdge({from: predecessor(p, graph), to: '@' + p.port})),
+    {name: 'Adding predecessor at port ' + JSON.stringify(Port.portName(port)) + ' to compound.'}
   )(compound)
   var newGraph = flow(
     [
@@ -69,7 +71,8 @@ export const includePredecessor = curry((port, graph) => {
     .concat(preInPorts.map((edge) =>
         Graph.addEdge({from: edge.from, to: compound.id + '@' + edge.to.port})))
     .concat(additionalPorts.map((p) =>
-        Graph.addEdge({from: newCompound.id + '@' + p.port, to: p})))
+        Graph.addEdge({from: newCompound.id + '@' + p.port, to: p}))),
+    {name: '[includePredecessor] Replacing compound node with new compound.'}
   )(graph)
   return newGraph
 })

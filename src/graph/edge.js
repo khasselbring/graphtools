@@ -10,6 +10,7 @@ import toPairs from 'lodash/fp/toPairs'
 import * as Port from '../port'
 import * as Node from '../node'
 import * as Edge from '../edge'
+import {assertGraph} from '../assert'
 import {equal, isRoot} from '../compoundPath'
 import {node, port, hasPort, hasNode, nodesDeep, parent, replaceNode} from './node'
 import * as changeSet from '../changeSet'
@@ -184,6 +185,7 @@ function addEdgeToCompound (edge, graph) {
  *  - the edge is not in normalizable form.
  */
 export const addEdge = curry((edge, graph) => {
+  assertGraph(graph, 2, 'addEdge')
   if (hasEdge(edge, graph)) {
     throw new Error('Cannot create already existing edge: ' + JSON.stringify(edge))
   }
@@ -202,6 +204,7 @@ export const addEdge = curry((edge, graph) => {
  * @throws {Error} If there is no such edge in the graph.
  */
 export const removeEdge = curry((edge, graph) => {
+  assertGraph(graph, 2, 'removeEdge')
   var normEdge = normalize(edge, graph)
   if (!hasEdge(normEdge, graph)) {
     throw new Error('Cannot delete edge that is not in the graph.')
@@ -218,6 +221,7 @@ export const removeEdge = curry((edge, graph) => {
 })
 
 function identifies (edge, graph) {
+  assertGraph(graph, 2, 'identifies')
   if (!edge.query) return Edge.equal(edge)
   var fromLoc = location(edge.from, graph)
   var toLoc = location(edge.to, graph)
@@ -245,6 +249,7 @@ function findEdge (edge, graph) {
  * @returns {boolean} True if the edge is contained in the graph, false otherwise.
  */
 export const hasEdge = curry((edge, graph) => {
+  assertGraph(graph, 2, 'hasEdge')
   return !!findEdge(edge, graph)
 })
 
@@ -258,6 +263,7 @@ export const hasEdge = curry((edge, graph) => {
  * @throws {Error} If the edge is not contained in the graph.
  */
 export const edge = curry((edge, graph) => {
+  assertGraph(graph, 2, 'edge')
   var retEdge = findEdge(edge, graph)
   if (!retEdge) {
     throw new Error('Edge is not defined in the graph: ' + JSON.stringify(edge))
@@ -316,6 +322,7 @@ function realizeEdge (edge, node) {
  * @returns {Portgraph} A new graph in which the edges for the given node are realized (if possible).
  */
 export const realizeEdgesForNode = curry((loc, graph) => {
+  assertGraph(graph, 2, 'realizeEdgesForNode')
   const nodeElem = node(loc, graph)
   if (Node.isReference(nodeElem)) return graph
   const edges = incidents(loc, graph)

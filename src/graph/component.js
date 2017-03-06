@@ -8,7 +8,7 @@ import * as changeSet from '../changeSet'
  * Returns a list of defined components. Components are not part of the program flow, but are defined
  * procedures that can be used in the resolve process.
  * @param {PortGraph} graph The graph.
- * @retuns {Components[]} A list of components that are defined in the graph.
+ * @returns {Components[]} A list of components that are defined in the graph.
  */
 export function components (graph) {
   return graph.components || []
