@@ -174,7 +174,8 @@ function criticalNodes (nodes, topo, graph) {
   return topo.slice(firstIdx, lastIdx + 1).filter((elem) => !markings[elem.id])
 }
 
-function findInSubset (node, subset, iterate, graph) {
+function findInSubset (nodeOrPort, subset, iterate, graph) {
+  const node = Graph.node(nodeOrPort, graph)
   if (!sameParent(node, subset[0])) return false
   if (subset.find(Node.equal(node))) return true
   return iterate(node, graph).some((n) => findInSubset(n, subset, iterate, graph))

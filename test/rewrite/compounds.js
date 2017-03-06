@@ -8,6 +8,19 @@ import _ from 'lodash'
 
 var expect = chai.expect
 
+const ifNode = (data) =>
+  Object.assign({
+    componentId: 'if',
+    ports: [
+      {port: 'cond', kind: 'input', type: 'Bool'},
+      {port: 'a', kind: 'input', type: 'generic'},
+      {port: 'b', kind: 'input', type: 'generic'},
+      {port: 'out', kind: 'output', type: 'generic'}
+    ],
+    atomic: true
+  }, data)
+
+
 describe('Rewrite basic API', () => {
   describe('» Compound', () => {
     describe('Including predecessors', () => {
@@ -318,6 +331,25 @@ describe('Rewrite basic API', () => {
         const cmpd = compoundify(['b', 'a', 'c', 'd'], graph)
         expect(Graph.nodes(cmpd)).to.have.length(1)
         expect(Graph.nodes(Graph.nodes(cmpd)[0])).to.have.length(4)
+      })
+
+      it('» Can handle testing multiple blocked nodes', () => {
+        const graph = Graph.flow(
+          Graph.addNode(ifNode({name: 'if'})),
+          Graph.addNode({name: 'a1', ports: [{port: 'out', kind: 'output', type: 'Number'}]}),
+          Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'Number'}, {port: 'out', kind: 'output', type: 'Number'}]}),
+          Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'Number'}]}),
+          Graph.addEdge({from: 'a1@out', to: 'a@in'}),
+          Graph.addEdge({from: 'a@out', to: 'if@a'}),
+          Graph.addEdge({from: 'b@out', to: 'if@b'}),
+          Graph.addEdge({from: '@cond', to: 'if@cond'}),
+          Graph.addEdge({from: 'if@out', to: '@out'})
+        )(Graph.compound({ports: [{port: 'cond', kind: 'input', type: 'Bool'}, {port: 'out', kind: 'output', type: 'generic'}]}))
+
+        const rewGraph = compoundify(['a', 'a1'], graph)
+        expect(Graph.nodes(rewGraph)).to.have.length(3)
+        expect(Graph.hasNode('a', rewGraph)).to.not.be.true
+        expect(Graph.hasNode('a1', rewGraph)).to.not.be.true
       })
 
       it('Fails if the node is blocked', () => {
