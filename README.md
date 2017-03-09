@@ -1,4 +1,4 @@
-# Buggy graphtools
+# Buggy graphtools [![Build Status](https://travis-ci.org/BuggyOrg/graphtools.svg?branch=master)](https://travis-ci.org/BuggyOrg/graphtools) [![Coverage Status](https://coveralls.io/repos/github/BuggyOrg/graphtools/badge.svg?branch=master)](https://coveralls.io/github/BuggyOrg/graphtools?branch=master)
 
 This package contains the graph API for Buggy graphs.
 
