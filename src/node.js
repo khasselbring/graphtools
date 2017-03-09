@@ -151,7 +151,7 @@ export const isomorph = curry((node1, node2) => {
  * @returns {Port[]} A list of ports.
  */
 export function ports (node) {
-  return (node.ports) ? node.ports.map(merge({node: node.id})) : []
+  return (node.ports) ? node.ports.map((n) => merge(n, {node: node.id})) : []
 }
 
 export function setPort (node, port, update) {

@@ -68,6 +68,10 @@ describe('Node API', () => {
     expect(Node.isValid()).to.be.false
   })
 
+  it('`ports` always return the correct node id', () => {
+    expect(Node.ports({ports: [{port: 'a', kind: 'output', type: 'g', node: '#aaaaa'}], id: '#123'})[0].node).to.equal('#123')
+  })
+
   it('can get different port types', () => {
     expect(Node.ports({ports: [{port: 'a', kind: 'output'}], atomic: true})).to.have.length(1)
     expect(Node.outputPorts({ports: [{port: 'a', kind: 'output', type: 'number'}], atomic: true})).to.have.length(1)
