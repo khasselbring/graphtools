@@ -95,12 +95,12 @@ export const excludeNode = curry((node, graph) => {
   var nodeObj = Graph.node(node, graph)
   var parent = Graph.parent(node, graph)
   var preds = inIncidents(node, graph)
-  if (any(negate(Node.equal(parent)), preds.map((edge) => edge.from.node))) {
+  if (any((n) => !Node.equal(parent, n)), preds.map((edge) => edge.from.node)) {
     throw new Error('Node has predecessor in the parent compound and thus cannot be moved out of the compound node.')
   }
   // ports that only lead to the node that should be excluded
   var exclusivePorts = uniq(preds
-    .filter((edge) => all(Node.equal(nodeObj), successors(edge.from, graph)))
+    .filter((edge) => all((n) => Node.equal(nodeObj, n), successors(edge.from, graph)))
     .map((edge) => edge.from))
   var portPreds = preds.map((edge) => [inIncident(edge.from, graph), edge])
   var succs = outIncidents(node, graph)
@@ -168,8 +168,8 @@ const sameParents = Graph.sameParents
  * The node `c` would be a critical node as it can have the predecessor b (or a) and successor d.
  */
 function criticalNodes (nodes, topo, graph) {
-  const firstIdx = topo.findIndex((t) => nodes.some(Node.equal(t)))
-  const lastIdx = topo.length - reverse(topo).findIndex((t) => nodes.some(Node.equal(t))) - 1
+  const firstIdx = topo.findIndex((t) => nodes.some((n) => Node.equal(t, n))
+  const lastIdx = topo.length - reverse(topo).findIndex((t) => nodes.some((n) => Node.equal(t, n))) - 1
   const markings = keyBy('id', nodes)
   return topo.slice(firstIdx, lastIdx + 1).filter((elem) => !markings[elem.id])
 }
@@ -177,7 +177,7 @@ function criticalNodes (nodes, topo, graph) {
 function findInSubset (nodeOrPort, subset, iterate, graph) {
   const node = Graph.node(nodeOrPort, graph)
   if (!sameParent(node, subset[0])) return false
-  if (subset.find(Node.equal(node))) return true
+  if (subset.find((n) => Node.equal(node, n))) return true
   return iterate(node, graph).some((n) => findInSubset(n, subset, iterate, graph))
 }
 
@@ -255,7 +255,7 @@ function moveIntoCompound (node, cmpdId) {
 }
 
 function inSubset (subset) {
-  return (node) => !!((node) ? subset.find(Node.equal(node)) : false)
+  return (node) => !!((node) ? subset.find((n) => Node.equal(node, n)) : false)
 }
 
 function moveEndsIntoCompound (subset, cmpdId) {

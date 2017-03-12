@@ -4,11 +4,40 @@
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
-import _ from 'lodash'
+import * as _ from 'lodash'
 import * as Port from './port'
 import * as Node from './node'
 
-function normalizeStructure (edge) {
+interface DataflowEdge {
+  from: Port.Port
+  to: Port.Port
+  layer: 'dataflow'
+  innerCompoundOutput?: boolean
+  innerCompoundInput?: boolean
+  type?: any
+}
+
+interface EdgeQuery {
+  from: any
+  to: any
+  layer?: string
+  innerCompoundOutput?: boolean
+  innerCompoundInput?: boolean
+}
+
+interface NodeEdge {
+  from: Node.Node
+  to: Node.Node
+  layer: string
+  innerCompoundOutput?: boolean
+  innerCompoundInput?: boolean
+  type?: any
+}
+
+type ConcreteEdge = NodeEdge | DataflowEdge
+export type Edge = ConcreteEdge | EdgeQuery
+
+function normalizeStructure (edge:Edge):ConcreteEdge {
   if (!_.has(edge, 'from') || !_.has(edge, 'to')) {
     throw new Error('The edge format is not valid. You need to have a from and to value in.\n\n' + JSON.stringify(edge, null, 2) + '\n')
   }
@@ -16,25 +45,22 @@ function normalizeStructure (edge) {
   if (layer !== 'dataflow') {
     var newEdge = _.clone(edge)
     if (Node.isValid(edge.from)) {
-      newEdge.from = Node.id(edge.from)
+      newEdge.from = Node.id((<NodeEdge>edge).from)
     }
     if (Node.isValid(edge.to)) {
-      newEdge.to = Node.id(edge.to)
+      newEdge.to = Node.id((<NodeEdge>edge).to)
     }
-    return newEdge
+    return <NodeEdge>newEdge
   }
   if ((typeof (edge.from) === 'string' && edge.from[0] === '/') ||
     (typeof (edge.to) === 'string' && edge.to[0] === '/')) {
-    return merge(edge, {query: true,
+    return <DataflowEdge>merge(edge, {query: true,
         from: (Port.isPort(edge.from)) ? Port.normalize(edge.from) : edge.from,
         to: (Port.isPort(edge.to)) ? Port.normalize(edge.to) : edge.to
       })
-  } if (edge.outPort && edge.inPort) {
-    return _.merge({}, _.omit(edge, ['outPort', 'inPort']),
-      {layer, from: Port.normalize({node: edge.from, port: edge.outPort}), to: Port.normalize({node: edge.to, port: edge.inPort})})
-  } else if (!edge.outPort && !edge.inPort && Port.isPort(edge.from) && Port.isPort(edge.to)) {
-    return { from: Port.normalize(edge.from), to: Port.normalize(edge.to), layer }
-  } else {
+  } else if (Port.isPort(edge.from) && Port.isPort(edge.to)) {
+    return <DataflowEdge>{ from: Port.normalize(edge.from), to: Port.normalize(edge.to), layer }
+  }else {
     throw new Error('Malformed edge. Cannot translate format into standard format.\nEdge: ' + JSON.stringify(edge))
   }
 }
@@ -64,55 +90,48 @@ function normalizeStructure (edge) {
  * @returns {Edge} The normalized form of the edge.
  * @throws {Error} An error is thrown if the edge is not in a consistent format.
  */
-export function normalize (edge) {
+export function normalize (edge:Edge):ConcreteEdge {
   var newEdge = normalizeStructure(edge)
-  if (typeof (newEdge.from) === 'object' && newEdge.from.node.length === 0) {
-    newEdge.innerCompoundOutput = true
-  }
-  if (typeof (newEdge.to) === 'object' && newEdge.to.node.length === 0) {
-    newEdge.innerCompoundInput = true
+  if (newEdge.layer === 'dataflow') {
+    if (Port.node((<DataflowEdge>newEdge).from).length === 0) {
+      newEdge.innerCompoundOutput = true
+    }
+    if (Port.node((<DataflowEdge>newEdge).to).length === 0) {
+      newEdge.innerCompoundInput = true
+    }
   }
   return newEdge
 }
 
-export function isEdgeToParent (edge) {
+export function isEdgeToParent (edge:ConcreteEdge) {
   return edge.innerCompoundInput
 }
 
-export function isInnerEdge (edge) {
+export function isInnerEdge (edge:ConcreteEdge) {
   return !edge.innerCompoundInput && !edge.innerCompoundOutput
 }
 
-export function isEdgeFromParent (edge) {
+export function isEdgeFromParent (edge:ConcreteEdge) {
   return edge.innerCompoundOutput
 }
 
 /**
- * @function
- * @name equal
  * @description Checks whether two normalized edges are equal.
  * @param {Edge} edge1 The first edge for the comparison.
  * @param {Edge} edge2 The second edge for the comparison.
  * @returns {boolean} True if the edges are equal (i.e. they connect the same ports), false otherwise.
  */
-export const equal = curry((edge1, edge2) => {
-  if (edge1.layer === 'dataflow') {
-    return Port.node(edge1.from) === Port.node(edge2.from) && Port.node(edge1.to) === Port.node(edge2.to) &&
-      Port.portName(edge1.from) === Port.portName(edge2.from) && Port.portName(edge1.to) === Port.portName(edge2.to) &&
+export function equal (edge1:ConcreteEdge, edge2:ConcreteEdge) {
+  if (edge1.layer === 'dataflow' && edge2.layer === 'dataflow') {
+    const dFlowEdge1 = edge1 as DataflowEdge
+    const dFlowEdge2 = edge2 as DataflowEdge
+    return Port.node(dFlowEdge1.from) === Port.node(dFlowEdge2.from) && Port.node(dFlowEdge1.to) === Port.node(dFlowEdge2.to) &&
+      Port.portName(dFlowEdge1.from) === Port.portName(dFlowEdge2.from) && Port.portName(dFlowEdge1.to) === Port.portName(dFlowEdge2.to) &&
       edge1.layer === edge2.layer
-  } else {
+  } else if (edge1.layer !== 'dataflow' && edge2.layer !== 'dataflow') {
     return edge1.from === edge2.from && edge1.to === edge2.to && edge1.layer === edge2.layer
   }
-})
-
-/**
- * Returns a copy of the edge where the path is prefixed with the specified path. [Does nothing currently... can probably be removed. Is used in ./compound.js]
- * @param {Edge} edge The edge that will be prefixed
- * @param {CompoundPath} path The compound path that prefixes the edge paths.
- * @returns {Edge} A new edge that has the prefixed paths.
- */
-export function setPath (edge, path) {
-  return edge
+  return false
 }
 
 /**
@@ -129,7 +148,7 @@ export function setPath (edge, path) {
  * @returns {Type|undefined} Either a real type, a typename or `undefined`. Some edges do not have type information. Usually non-dataflow edges like
  * recursion indicators. Those will yield `undefined`.
  */
-export function type (edge) {
+export function type (edge:ConcreteEdge) {
   return edge.type
 }
 
@@ -139,9 +158,13 @@ export function type (edge) {
  * @param {Edge} edge The edge that should get the type.
  * @returns {Edge} A new edge that has a field for the type.
  */
-export function setType (type, edge) {
+export function setType (type, edge:ConcreteEdge):ConcreteEdge {
   if (isBetweenPorts(edge)) {
-    return merge(edge, {type, from: Port.setType(type, edge.from), to: Port.setType(type, edge.to)})
+    return merge(edge, {
+      type,
+      from: Port.setType(type, (<DataflowEdge>edge).from),
+      to: Port.setType(type, (<DataflowEdge>edge).to)
+    })
   } else if (!isBetweenNodes(edge)) {
     throw new Error('[Edge.setType] Cannot handle mixed edges (from port to node or from node into port)')
   }
@@ -154,7 +177,7 @@ export function setType (type, edge) {
  * @param {Object} edge The object to test.
  * @returns {Boolean} True if the object is an edge, false otherwise.
  */
-export function isValid (edge) {
+export function isValid (edge):boolean {
   return typeof (edge) === 'object' && edge.from && edge.to
 }
 
@@ -163,10 +186,10 @@ export function isValid (edge) {
  * @param {Edge} edge The edge to test
  * @returns {Boolean} True if the edge connects two ports, false otherwise.
  */
-export function isBetweenPorts (edge) {
+export function isBetweenPorts (edge:ConcreteEdge):boolean {
   return typeof (edge) === 'object' &&
-    Port.isValid(Object.assign({type: '-', kind: 'input'}, edge.from)) &&
-    Port.isValid(Object.assign({type: '-', kind: 'output'}, edge.to))
+    Port.isValid(Object.assign({type: '-', kind: 'input'}, <any>edge.from)) &&
+    Port.isValid(Object.assign({type: '-', kind: 'output'}, <any>edge.to))
 }
 
 /**
@@ -174,6 +197,6 @@ export function isBetweenPorts (edge) {
  * @param {Edge} edge The edge to test
  * @returns {Boolean} True if the edge connects two nodes, false otherwise (e.g. if it is an edge between ports).
  */
-export function isBetweenNodes (edge) {
+export function isBetweenNodes (edge:ConcreteEdge):boolean {
   return isValid(edge) && !isBetweenPorts(edge)
 }

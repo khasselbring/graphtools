@@ -7,10 +7,26 @@
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
-import _ from 'lodash'
+import * as _ from 'lodash'
 
-const OUTPUT = 'output'
-const INPUT = 'input'
+
+export type PortKind = 'output' | 'input'
+
+interface ConcretePort {
+  port: string
+  kind: PortKind,
+  type: any,
+  node?: string
+}
+
+interface PortLike {
+  port: string
+  kind?: PortKind,
+  type?: any,
+  node?: string
+}
+
+export type Port = ConcretePort | PortLike
 
 /**
  * Checks whether a string represents a port notation. A port notation is a string that
@@ -18,14 +34,13 @@ const INPUT = 'input'
  * @params {string} port The string to check
  * @returns {boolean} True if the string represents a port notation, false otherwise.
  */
-export function isPortNotation (port) {
+export function isPortNotation (port:any) {
   return typeof (port) === 'string' && port.indexOf('@') !== -1
 }
 
-function parsePortNotation (port) {
+function parsePortNotation (port:string) :PortLike {
   var split = port.split('@')
-  var res = {}
-  res.node = split[0]
+  var res = {node: split[0], port}
   if (split[1] === '') {
     throw new Error('Invalid port notation. Port notation does not contain a port. Parsed port: ' + port)
   } else {
@@ -36,25 +51,25 @@ function parsePortNotation (port) {
 
 /**
  * Returns a normalized port object in the form `{node: <node-id>, port: <port-name>}`
- * @param port The port object in any digestable form.
+ * @param {Port|string} port The port object in any digestable form.
  * @returns {Port} A port object.
  */
-export function normalize (port) {
+export function normalize (port:Port|string) :ConcretePort {
   if (isPortNotation(port)) {
-    return assureType(parsePortNotation(port))
+    return assureType(parsePortNotation(<string>port))
   } else {
-    if (isPortNotation(port.port)) {
-      return assureType(merge(port, {port: parsePortNotation(port.port).port}))
+    if (isPortNotation((<Port>port).port)) {
+      return assureType(merge(port, {port: parsePortNotation((<Port>port).port).port}))
     }
-    return assureType(port)
+    return assureType(<Port>port)
   }
 }
 
-function assureType (port) {
+function assureType (port:Port) :ConcretePort {
   if (!port.type) {
-    return _.merge({type: 'generic'}, port)
+    return <ConcretePort>_.merge({type: 'generic'}, port)
   }
-  return port
+  return <ConcretePort>port
 }
 
 /**
@@ -62,7 +77,7 @@ function assureType (port) {
  * @param {Port} port The port in any form.
  * @returns {NodeID} The node of the port.
  */
-export function node (port) {
+export function node (port:Port) {
   return normalize(port).node
 }
 
@@ -71,8 +86,8 @@ export function node (port) {
  * @param {Port} port The port in any form.
  * @returns {string} The name of the port.
  */
-export function portName (port) {
-  return normalize(port).port
+export function portName (port:Port) {
+  return port.port
 }
 
 /**
@@ -80,7 +95,7 @@ export function portName (port) {
  * @param {Port} port The port
  * @returns The type of the port.
  */
-export function type (port) {
+export function type (port:Port) {
   return normalize(port).type
 }
 
@@ -90,7 +105,7 @@ export function type (port) {
  * @param {Port} port The port
  * @returns The updated port.
  */
-export function setType (type, port) {
+export function setType (type, port:Port):Port {
   return merge(port, {type})
 }
 
@@ -99,7 +114,7 @@ export function setType (type, port) {
  * @param {Port} port The port
  * @returns The kind of the port. It is either 'input' or 'output'.
  */
-export function kind (port) {
+export function kind (port:Port) {
   return normalize(port).kind
 }
 
@@ -108,8 +123,8 @@ export function kind (port) {
  * @param {Port} port The port to check
  * @returns {boolean} True if the port is an output port, false otherwise.
  */
-export function isOutputPort (port) {
-  return port.kind === OUTPUT
+export function isOutputPort (port:Port) {
+  return port.kind === 'output'
 }
 
 /**
@@ -117,8 +132,8 @@ export function isOutputPort (port) {
  * @param {Port} port The port to check
  * @returns {boolean} True if the port is an input port, false otherwise.
  */
-export function isInputPort (port) {
-  return port.kind === INPUT
+export function isInputPort (port:Port) {
+  return port.kind === 'input'
 }
 
 /**
@@ -136,8 +151,8 @@ export function isPort (any) {
  * @param port The object to test.
  * @returns {boolean} True if the value is a valid port, false otherwise.
  */
-export function isValid (port) {
-  return typeof (port) === 'object' && port.port && (port.kind === INPUT || port.kind === OUTPUT) && port.type
+export function isValid (port:PortLike) {
+  return typeof (port) === 'object' && port.port && (port.kind === 'output' || port.kind === 'input') && port.type
 }
 
 /**
@@ -155,7 +170,7 @@ export function assertValid (port) {
   if (!port.type) {
     throw new Error('Port does not have a `type` prop')
   }
-  if (port.kind !== INPUT && port.kind !== OUTPUT) {
+  if (port.kind !== 'input' && port.kind !== 'output') {
     throw new Error('Port `kind` prop should be "input" or "output", but was ' + port.kind)
   }
 }
@@ -165,56 +180,50 @@ export function assertValid (port) {
  * @params {Port} port The port
  * @returns {string} A string representation of the port.
  */
-export function toString (port) {
+export function toString (port:Port) {
   return node(port) + '@' + portName(port)
 }
 
 /**
- * @function
- * @name equal
  * @description Determines if two ports are equal
  * @param {Port} port1 One of the ports.
  * @param {Port} port2 The other port..
  * @returns {boolean} True if the ports are equal, false otherwise.
  */
-export const equal = curry((port1, port2) => {
+export function equal (port1:Port, port2:Port) {
   return node(port1) === node(port2) && isomorph(port1, port2)
-})
+}
 
-export const isomorph = curry((port1, port2) => {
+export function isomorph (port1:Port, port2:Port) {
   return portName(port1) === portName(port2) && (type(port1) === type(port2))
-})
+}
 
 /**
- * @function
- * @name create
  * @description Create a new port object.
- * @param {Node|String} node A node object or the id of a valid node.
- * @param {String} port The name of the port
- * @param {String} kind 'input' or 'output'
+ * @param {Node|string} node A node object or the id of a valid node.
+ * @param {string} port The name of the port
+ * @param {string} kind 'input' or 'output'
  * @returns {Port} A valid port object.
  */
-export const create = curry((node, port, kind, type = 'generic') => {
+export function create (node, port:string, kind:PortKind, type = 'generic') :ConcretePort {
   if (typeof (node) === 'object') {
     return normalize({node: node.id, port, kind, type})
   } else {
     return normalize({node, port, kind, type})
   }
-})
+}
 
 /**
- * @function
- * @name port
  * @description Create a proto port object that can be used as a location. It is no
  * valid port.
- * @param {Node|String} node A node object or the id of a valid node.
- * @param {String} port The name of the port
+ * @param {Node|string} node A node object or the id of a valid node.
+ * @param {string} port The name of the port
  * @returns {Port} A valid port object.
  */
-export const port = curry((node, port) => {
+export function port (node, port:string) {
   if (typeof (node) === 'object') {
     return normalize({node: node.id, port})
   } else {
     return normalize({node, port})
   }
-})
+}

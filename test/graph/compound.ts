@@ -1,14 +1,12 @@
 /* eslint-env mocha */
 
-import chai from 'chai'
+import {expect} from 'chai'
 import * as changeSet from '../../src/changeSet'
 import * as Graph from '../../src/graph'
 import * as Node from '../../src/node'
 import {port} from '../../src/port'
-import _ from 'lodash'
-import semver from 'semver'
-
-var expect = chai.expect
+import * as _ from 'lodash'
+import * as semver from 'semver'
 
 const toNames = (graph) => (id) => Node.name(Graph.node(id, graph))
 

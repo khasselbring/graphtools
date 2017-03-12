@@ -15,7 +15,7 @@ import * as Node from './node'
 import * as Edge from './edge'
 import * as Component from './component'
 
-const hasChildren = Node.hasChildren
+const hasChildren = Component.hasChildren
 
 /**
  * Creates a change set to update a node with a given value
@@ -180,7 +180,7 @@ const getReferences = (graph, changeSet) => {
 }
 
 const applyMergeByPath = (graph, path, value) => {
-  var idx = _.findIndex(graph.nodes, Node.equal(path[0]))
+  var idx = _.findIndex(graph.nodes, (n) => Node.equal(path[0], n))
   if (path.length === 1) {
     if (idx > -1) {
       _.merge(graph.nodes[idx], value)

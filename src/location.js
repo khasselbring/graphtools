@@ -83,7 +83,7 @@ function fromString (str, allowsPorts = true) {
 
 function idify (path, graph) {
   if (path.length === 0) return path
-  var node = nodes(graph).filter(equal(path[0]))[0]
+  var node = nodes(graph).filter((n) => equal(path[0], n))[0]
   if (!node) {
     if (equal(path[0], graph)) {
       return [id(graph)].concat(idify(rest(path), graph))

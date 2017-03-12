@@ -1,9 +1,7 @@
 /* eslint-env mocha */
 
-import chai from 'chai'
+import {expect} from 'chai'
 import * as Graph from '../src/graph'
-
-var expect = chai.expect
 
 describe('Components', () => {
   describe('Manipulating components in graphs', () => {

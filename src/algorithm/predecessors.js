@@ -31,7 +31,7 @@ export function predecessorsUntil (locs, predicate, graph) {
  */
 export function predecessorsUpTo (locs, other, graph) {
   if (!Array.isArray(other)) return predecessorsUpTo(locs, [other], graph)
-  return predecessorsUntil(locs, (n) => !other.some(Node.equal(n)), graph)
+  return predecessorsUntil(locs, (n) => !other.some((n2) => Node.equal(n, n2)), graph)
 }
 
 /**

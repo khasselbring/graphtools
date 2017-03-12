@@ -1,11 +1,9 @@
 /* global describe, it */
 
-import chai from 'chai'
-import * as Compound from '../src/compound.js'
-import * as Edge from '../src/graph/edge.js'
+import {expect} from 'chai'
+import * as Compound from '../src/compound'
+import * as Edge from '../src/graph/edge'
 // import _ from 'lodash'
-
-var expect = chai.expect
 
 describe('Compound API', () => {
   it('Can create new Compound nodes', () => {

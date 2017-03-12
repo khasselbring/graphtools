@@ -1,10 +1,8 @@
 /* global describe, it */
 
-import chai from 'chai'
-import * as Edge from '../src/edge.js'
+import {expect} from 'chai'
+import * as Edge from '../src/edge'
 import * as Port from '../src/port'
-
-var expect = chai.expect
 
 describe('Edge API', () => {
   it('Normalizes an edge correctly', () => {
@@ -16,7 +14,7 @@ describe('Edge API', () => {
 
   it('can compare edges', () => {
     const edge1 = Edge.normalize({from: 'a@out', to: 'b@in'})
-    const edge2 = Edge.normalize({from: 'a', outPort: 'out', to: 'b', inPort: 'in'})
+    const edge2 = Edge.normalize({from: {node: 'a', port: 'out'}, to: {node: 'b', port: 'in'}})
     const edge3 = Edge.normalize({from: 'a@out', to: 'c@in'})
     const edge4 = Edge.normalize({from: 'a@out2', to: 'b@in'})
     const edge5 = Edge.normalize({from: 'a@out', to: 'b@in2'})

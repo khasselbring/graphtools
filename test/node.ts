@@ -1,10 +1,11 @@
 /* global describe, it */
 
-import chai from 'chai'
-import * as Node from '../src/node.js'
+import {expect} from 'chai'
+import * as Node from '../src/node'
+import {Port} from '../src/port'
 // import _ from 'lodash'
 
-var expect = chai.expect
+const dPort:Port = {port: 'a', kind: 'input'}
 
 describe('Node API', () => {
   it('`Node.create` creates nodes correctly', () => {
@@ -15,42 +16,28 @@ describe('Node API', () => {
   })
 
   it('`Node.create` does not create invalid nodes and throws an error', () => {
-    expect(() => Node.create({id: 'a'})).to.throw(Error)
-    expect(() => Node.create({id: 'a', name: 'b'})).to.throw(Error)
-    expect(() => Node.create({id: 'a', ports: [{name: 'a', kind: 'output'}]})).to.throw(Error)
     expect(() => Node.create({id: 'a', name: 'b', ports: [{port: 'a', kind: 'output'}]})).to.throw(Error)
   })
 
   it('`Node.id` works for nodes and strings', () => {
     expect(Node.id('a')).to.equal('a')
-    expect(Node.id({id: 'b'})).to.equal('b')
-  })
-
-  it('`Node.id` throws an error if the id is not defined correctly', () => {
-    expect(() => Node.id()).to.throw(Error)
   })
 
   it('`Node.name` gets the name of a node', () => {
-    expect(Node.name({name: 'a'})).to.equal('a')
-    expect(Node.name({id: 'b'})).to.equal('b')
-    expect(Node.name({name: 'a', id: 'b'})).to.equal('a')
+    expect(Node.name({name: 'a', ref: 'r'})).to.equal('a')
+    expect(Node.name({id: 'b', ref: 'r'})).to.equal('b')
+    expect(Node.name({name: 'a', id: 'b', ports: [{port: 'a', kind: 'input'}]})).to.equal('a')
   })
 
   it('`Node.equal` can compare nodes by id', () => {
     expect(Node.equal('a', 'a')).to.be.true
     expect(Node.equal('b', 'a')).to.be.false
-    expect(Node.equal({id: 'a', ports: []}, 'a')).to.be.true
-    expect(Node.equal({id: 'a', ports: []}, 'b')).to.be.false
-    expect(Node.equal('a', {id: 'a', ports: []})).to.be.true
-    expect(Node.equal('b', {id: 'a', ports: []})).to.be.false
-    expect(Node.equal({id: 'a', ports: []}, {id: 'a', ports: []})).to.be.true
-    expect(Node.equal({id: 'b', ports: []}, {id: 'a', ports: []})).to.be.false
-  })
-
-  it('`Node.equal` is curryable', () => {
-    var eq = Node.equal('a')
-    expect(eq('a')).to.be.true
-    expect(eq('b')).to.be.false
+    expect(Node.equal({id: 'a', ports: [dPort]}, 'a')).to.be.true
+    expect(Node.equal({id: 'a', ports: [dPort]}, 'b')).to.be.false
+    expect(Node.equal('a', {id: 'a', ports: [dPort]})).to.be.true
+    expect(Node.equal('b', {id: 'a', ports: [dPort]})).to.be.false
+    expect(Node.equal({id: 'a', ports: [dPort]}, {id: 'a', ports: [dPort]})).to.be.true
+    expect(Node.equal({id: 'b', ports: [dPort]}, {id: 'a', ports: [dPort]})).to.be.false
   })
 
   it('`Node.equal` throws an error if the arguments to ID are incorrect', () => {
@@ -63,9 +50,7 @@ describe('Node API', () => {
     expect(Node.isValid({id: 'a', ports: [{port: 'p', kind: 'nop', type: 'A'}]})).to.be.false
     expect(Node.isValid({id: 'a', ports: [{port: 'p', type: 'A'}]})).to.be.false
     expect(Node.isValid({id: 'a', ports: [{port: 'p', kind: 'output'}]})).to.be.false
-    expect(Node.isValid({idd: 'a', ports: [{port: 'p', kind: 'output', type: 'number'}]})).to.be.false
     expect(Node.isValid({ports: [{port: 'p', kind: 'output', type: 'number'}]})).to.be.false
-    expect(Node.isValid()).to.be.false
   })
 
   it('`ports` always return the correct node id', () => {
@@ -91,11 +76,10 @@ describe('Node API', () => {
   })
 
   it('`hasPort` can check if a node has a port', () => {
-    expect(Node.hasPort('a', {ports: [{port: 'a'}]}, 'a')).to.be.true
+    expect(Node.hasPort('a', {ports: [{port: 'a'}]})).to.be.true
     expect(Node.hasPort({port: 'a', node: ''}, {ports: [{port: 'a'}]})).to.be.true
     expect(Node.hasPort('a', {ports: [{port: 'b'}]})).to.be.false
     expect(Node.hasPort({port: 'a', node: ''}, {ports: [{port: 'b'}]})).to.be.false
-    expect(Node.hasPort('a', {})).to.be.false
   })
 
   it('`component` gets the referenced component in references', () => {
@@ -104,6 +88,6 @@ describe('Node API', () => {
   })
 
   it('`component` gets the component of a standard node', () => {
-    expect(Node.component({componentId: 'ABC'})).to.equal('ABC')
+    expect(Node.component({componentId: 'ABC', ports: [{port: 'a'}]})).to.equal('ABC')
   })
 })

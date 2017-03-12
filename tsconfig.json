@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "allowJs": true
+  },
+  "types": [
+     "mocha", "chai", "lodash"
+  ],
+  "typeRoots": [
+    "./node_modules/@types"
+  ]
+}

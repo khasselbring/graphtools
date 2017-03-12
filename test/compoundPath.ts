@@ -1,10 +1,8 @@
 /* global describe, it */
 
-import chai from 'chai'
-import * as CompoundPath from '../src/compoundPath.js'
+import {expect} from 'chai'
+import * as CompoundPath from '../src/compoundPath'
 // import _ from 'lodash'
-
-var expect = chai.expect
 
 describe('Compound paths', () => {
   it('Can normalize paths correctly', () => {

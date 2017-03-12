@@ -1,10 +1,11 @@
-
 import flatten from 'lodash/fp/flatten'
 import chunk from 'lodash/fp/chunk'
 import curry from 'lodash/fp/curry'
 import last from 'lodash/fp/last'
 import {empty} from './basic'
 import {debug} from '../debug'
+import {Portgraph} from './graph'
+import {GraphAction, GraphCallback} from './graphaction'
 
 function functionName (fn, options, idx) {
   if (options && options.names && options.names[idx]) return options.names[idx]
@@ -28,24 +29,25 @@ function isOptionsObj (arg) {
  * return one. The functions must be composable.
  * @returns {Function} A function that takes an object that is fed into the first function in the arguments.
  */
-export const flow = function () {
-  var args = flatten(arguments)
+export function flow (...graphActions:(GraphAction|any)[]):GraphAction {
+  var fArgs = flatten(graphActions)
+  var args:GraphAction[]
   var lastArg = args[args.length - 1]
   var options
   if (isOptionsObj(lastArg)) {
     options = lastArg
-    args = args.slice(0, -1)
+    args = <GraphAction[]>args.slice(0, -1)
   }
   var flowName = options && options.name
-  return (graph) => {
+  return ((graph) => {
     if (!graph) {
       graph = empty()
     }
-    return [].reduce.call(args, (obj, fn, idx) => {
+    return [].reduce.call(args, (g:Portgraph, fn:GraphAction, idx:number):Portgraph => {
       try {
-        var newGraph = fn(obj.graph, (data, graph) => graph)
+        var newGraph = fn(g, (data, graph) => graph)
         if (options && options.debug) debug(newGraph)
-        return {graph: newGraph, store: obj.store}
+        return newGraph
       } catch (err) {
         var fnName = functionName(fn, options, idx)
         var fnDesc = functionDescription(fn, options, idx)
@@ -54,8 +56,8 @@ export const flow = function () {
           ((fnDesc) ? ' (Description: "' + fnDesc + '")' : '')
         throw err
       }
-    }, {graph, store: {}}).graph
-  }
+    }, graph)
+  })
 }
 
 /**
@@ -74,11 +76,11 @@ export const flow = function () {
  *      Graph.addEdge({from: Node.port('x', newNode), to: '@out'})(newGraph))
  * )(graph)
  */
-export const Let = (fn, cb) => {
+export function Let (fn:(GraphAction[]|GraphAction), cb:GraphCallback):GraphAction {
   return (graph) => {
     if (Array.isArray(fn)) {
       var res = []
-      const arrCb = (idx) => (data, cbGraph) => {
+      const arrCb:(number) => GraphCallback = (idx) => (data, cbGraph) => {
         res[idx] = data
         return cbGraph
       }
@@ -95,22 +97,22 @@ export const Let = (fn, cb) => {
  * @param cbs The callbacks array (possibly empty).
  * @returns The callback function for the callbacks array.
  */
-export function flowCallback (cbs) {
+export function flowCallback (cbs?:GraphCallback[]):GraphCallback {
   if (Array.isArray(cbs) && typeof (cbs[0]) === 'function') {
     return last(cbs.filter((cb) => typeof (cb) === 'function'))
   } else if (typeof (cbs) === 'function') {
     return cbs
   }
-  return curry((data, graph, ...cbs) => {
+  return (data, graph, ...cbs:GraphCallback[]) => {
     if (cbs && cbs.length > 0) return cbs[0](data, graph)
     return graph
-  })
+  }
 }
 
-export const debugFlow = function () {
-  var lastArg = arguments[arguments.length - 1]
+export const debugFlow = function (...graphActions:(GraphAction|any)[]) {
+  var lastArg = graphActions[graphActions.length - 1]
   if (isOptionsObj(lastArg)) {
-    return flow(...arguments.slice(0, -1), Object.assign(lastArg, {debug: true}))
+    return flow(...graphActions.slice(0, -1), Object.assign(lastArg, {debug: true}))
   }
   return flow(...arguments, {debug: true})
 }
@@ -118,7 +120,7 @@ export const debugFlow = function () {
 /* unsure how to describe it properly... until now ;)
    only sensible usage scenario seems to be the `distribute`
 */
-function parallel (fns) {
+function parallel (fns:GraphAction[]) {
   if (fns.length === 0) return flowCallback()
   return (graph) => fns[0](graph, parallel(fns.slice(1)))
 }

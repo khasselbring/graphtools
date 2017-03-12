@@ -13,7 +13,7 @@ import omit from 'lodash/fp/omit'
 import merge from 'lodash/fp/merge'
 import * as Node from '../node'
 import {equal as pathEqual, isRoot, relativeTo, join} from '../compoundPath'
-import {setPath as compoundSetPath} from '../compound'
+import {setPath as compoundSetPath, hasChildren} from '../compound'
 import * as changeSet from '../changeSet'
 import {flowCallback} from './flow'
 
@@ -136,7 +136,7 @@ const rePathRec = (basePath, graph) => {
   nodes(graph).forEach((n) => {
     var newPath = join(basePath, Node.id(n))
     n.path = newPath
-    if (Node.hasChildren(n)) {
+    if (hasChildren(n)) {
       rePathRec(newPath, n)
     }
   })
@@ -145,7 +145,7 @@ const rePathRec = (basePath, graph) => {
 
 function setPath (node, path) {
   var nodePath = join(path, Node.id(node))
-  if (Node.hasChildren(node)) {
+  if (hasChildren(node)) {
     return compoundSetPath(node, nodePath, setPath)
   }
   return merge(node, {path: nodePath})
@@ -159,7 +159,7 @@ export function addNodeInternal (node, graph, checkNode, ...cbs) {
   const cb = flowCallback(cbs)
   var newNode = setPath(Node.create(unID(node)), Node.path(graph))
   checkNode(graph, newNode)
-  if (Node.hasChildren(newNode)) {
+  if (hasChildren(newNode)) {
     newNode = set('edges', replaceEdgeIDs(newNode.edges, newNode.id, node.id), newNode)
   }
   return cb(newNode, changeSet.applyChangeSet(graph, changeSet.insertNode(newNode)))

@@ -16,28 +16,29 @@
  * Accessible via `require('@buggyorg/graphtools').Component`
  * @module Component */
 
-import curry from 'lodash/fp/curry'
-import omit from 'lodash/fp/omit'
-import zip from 'lodash/fp/zip'
-import fromPairs from 'lodash/fp/fromPairs'
-import merge from 'lodash/fp/merge'
-import _ from 'lodash'
+import {curry, omit, zip, fromPairs, merge} from 'lodash/fp'
+import * as _ from 'lodash'
 import * as Port from './port'
-import {children, isCompound} from './compound'
+import {Edge} from './edge'
+import {children, isCompound, Compound} from './compound'
 import {create, id as nodeID} from './node'
-import semver from 'semver'
+import * as semver from 'semver'
 import isEqual from 'lodash/fp/isEqual'
 
 const OUTPUT = 'output'
 const INPUT = 'input'
 
+interface Component extends Compound {
+  componentId: string
+}
+
 /**
  * Returns the unique identifier of a node
- * @params {Component} node The node
+ * @param {Component|string} node The node
  * @returns {string} The unique identifier of the node
  * @throws {Error} If the node value is invalid.
  */
-export function id (component) {
+export function id (component:Component|string) {
   if (typeof (component) === 'string') {
     return component
   } else if (component == null) {
@@ -49,24 +50,22 @@ export function id (component) {
 }
 
 /**
- * @function
- * @name equal
  * @description Tests whether two components are the same component. This tests only if their component IDs are
  * the same not if both components contain the same information.
  * @param {Component} comp1 One of the components to test.
  * @param {Component} comp2 The other one.
  * @returns {boolean} True if they have the same id, false otherwise.
  */
-export const equal = curry((comp1, comp2) => {
+export function equal (comp1:Component, comp2:Component) {
   return id(comp1) === id(comp2)
-})
+}
 
 /**
  * Gets all ports of the component.
  * @param {Component} comp The component.
  * @returns {Port[]} A list of ports.
  */
-export function ports (comp) {
+export function ports (comp:Component) {
   return comp.ports || []
 }
 
@@ -75,7 +74,7 @@ export function ports (comp) {
  * @param {Component} comp The node.
  * @returns {Port[]} A possibly empty list of output ports.
  */
-export function outputPorts (comp, ignoreCompounds = false) {
+export function outputPorts (comp:Component, ignoreCompounds = false) {
   if (!ignoreCompounds && !comp.atomic) {
     return comp.ports
   } else {
@@ -88,7 +87,7 @@ export function outputPorts (comp, ignoreCompounds = false) {
  * @param {Component} comp The component.
  * @returns {Port[]} A possibly empty list of input ports.
  */
-export function inputPorts (comp, ignoreCompounds = false) {
+export function inputPorts (comp:Component, ignoreCompounds = false) {
   if (!ignoreCompounds && !comp.atomic) {
     return comp.ports
   } else {
@@ -97,33 +96,29 @@ export function inputPorts (comp, ignoreCompounds = false) {
 }
 
 /**
- * @function
- * @name port
  * @description Returns the port data for a given port.
- * @param {Component} comp The component which has the port.
  * @param {String} name The name of the port.
+ * @param {Component} comp The component which has the port.
  * @returns {Port} The port data.
  * @throws {Error} If no port with the given name exists in this component an error is thrown.
  */
-export const port = curry((name, comp) => {
+export function port (name:string, comp:Component) {
   var port = _.find(comp.ports, (p) => Port.portName(p) === name)
   if (!port) {
     throw new Error('Cannot find port with name ' + name + ' in component ' + JSON.stringify(comp))
   }
   return port
-})
+}
 
 /**
- * @function
- * @name hasPort
  * @description Checks whether the component has the specific port.
  * @param {String} name The name of the port.
  * @param {Component} comp The component which has the port.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
-export const hasPort = curry((name, comp) => {
+export function hasPort (name:string, comp:Component) {
   return !!_.find(comp.ports, (p) => Port.portName(p) === name)
-})
+}
 
 /**
  * Checks whether a component is in a valid format, i.e. if it has an id field and at least one port.
@@ -150,8 +145,8 @@ export function assertValid (comp) {
   }
 }
 
-const mapEdgeIDs = curry((map, edge) => {
-  return merge(edge, {
+function mapEdgeIDs (map, edge:Edge) {
+  return <Edge>merge(edge, {
     from: {
       node: (map[edge.from.node]) ? map[edge.from.node] : edge.from.node
     },
@@ -159,7 +154,7 @@ const mapEdgeIDs = curry((map, edge) => {
       node: (map[edge.to.node]) ? map[edge.to.node] : edge.to.node
     }
   })
-})
+}
 
 /**
  * Create a node from a component.
@@ -167,25 +162,25 @@ const mapEdgeIDs = curry((map, edge) => {
  * @param {Component} comp The component that is the basis for the new node.
  * @returns {Node} A node with the given name representing the component.
  */
-export function createNode (reference, comp) {
+export function createNode (reference, comp:Component) {
   if (isCompound(comp)) {
     const newNodes = children(comp).map(omit('id')).map(create)
     const idMapping = fromPairs(zip(children(comp).map(nodeID), newNodes.map(nodeID)))
-    return _.merge({}, reference, comp, {
+    return <Compound>_.merge({}, reference, comp, {
       nodes: newNodes,
-      edges: (comp.edges || []).map(mapEdgeIDs(idMapping))
+      edges: (comp.edges || []).map((e) => mapEdgeIDs(idMapping, e))
     })
   }
-  return _.merge({}, reference, comp)
+  return <Node>_.merge({}, reference, comp)
 }
 
 /**
  * Tests if two components are isomorphic i.e. deep equal.
- * @param {Portgraph} graph1 One of the graphs.
- * @param {Portgraph} graph2 And the other graph to test.
- * @returns {Boolean} True if the components of the two graphs are isomorphic, false otherwise. Components
+ * @param {Component} graph1 One of the graphs.
+ * @param {Component} graph2 And the other graph to test.
+ * @returns {boolean} True if the components of the two graphs are isomorphic, false otherwise. Components
  * are isomorphic, if they are deep equal.
  */
-export function isomorph (graph1, graph2) {
+export function isomorph (graph1:Component, graph2:Component):boolean {
   return isEqual(graph1, graph2)
 }

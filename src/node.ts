@@ -2,17 +2,35 @@
  * Accessible via `require('@buggyorg/graphtools').Node`
  * @module Node */
 
-import curry from 'lodash/fp/curry'
-import merge from 'lodash/fp/merge'
-import find from 'lodash/fp/find'
-import has from 'lodash/fp/has'
-import every from 'lodash/fp/every'
-import zip from 'lodash/fp/zip'
+import {every, zip, has, find, merge, curry} from 'lodash/fp'
 import * as Port from './port'
-import cuid from 'cuid'
-import {node as pathNode, isCompoundPath, equal as pathEqual, parent} from './compoundPath'
+import cuid = require('cuid')
+import {node as pathNode, isCompoundPath, equal as pathEqual, parent, CompoundPath} from './compoundPath'
 
 const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'node_' + cnt++ })() : cuid
+
+export interface ReferenceNode {
+  ref: string
+  id?: string
+  name?: string
+  ports?: [Port.Port]
+  metaInformation?: any
+  settings?: any
+  path?: CompoundPath
+}
+
+export interface ConcreteNode {
+  id?: string
+  name?: string,
+  componentId?: string
+  path?: CompoundPath
+  atomic?: boolean
+  ports: [Port.Port]
+  metaInformation?: any
+  settings?: any
+}
+
+export type Node = ReferenceNode | ConcreteNode
 
 /**
  * Creates a normalized node object. It makes sure, that the node has all necessary information like an id
@@ -20,7 +38,7 @@ const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'node_
  * @param {Node} node A protypical node object.
  * @returns {Node} A complete node object
  */
-export function create (node) {
+export function create (node:Node) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
@@ -36,17 +54,17 @@ export function create (node) {
  * @param obj The object to test
  * @returns {boolean} True if the object is an id, false otherwise.
  */
-export function isID (str) {
+export function isID (str:string) {
   return typeof (str) === 'string' && (str[0] === '#')
 }
 
 /**
  * Returns the unique identifier of a node. The id is unique for the whole graph and cannot be assigned twice.
- * @params {Node} node The node
+ * @param {Node|string} node The node
  * @returns {string} The unique identifier of the node
  * @throws {Error} If the node value is invalid.
  */
-export function id (node) {
+export function id (node:Node|string) {
   if (typeof (node) === 'string') {
     return node
   } else if (node == null) {
@@ -59,18 +77,18 @@ export function id (node) {
  * Gets the name of a node. The name is a unique identifier in respect to the parent. Each graph
  * can have only one node with a specific name as its direct child. If a node has no name, the
  * id is the name of the node.
- * @params {Node} node The node
+ * @params {Node|string} node The node
  * @returns {string} The name of the node.
  */
-export function name (node) {
+export function name (node:Node|string|CompoundPath) {
   if (typeof (node) === 'string') {
     return node
-  } else if (node.name) {
-    return node.name
-  } else if (isCompoundPath(node)) {
-    return pathNode(node)[0]
+  } else if ((<any>node).name) {
+    return (<Node>node).name
+  } else if (isCompoundPath(<any>node)) {
+    return pathNode(<CompoundPath>node)[0]
   } else {
-    return node.id
+    return (<Node>node).id
   }
 }
 
@@ -79,7 +97,7 @@ export function name (node) {
  * @param {Node} node The node
  * @returns {boolean} True if it has a name, false otherwise.
  */
-export function hasName (node) {
+export function hasName (node:Node) {
   return !!node.name
 }
 
@@ -88,7 +106,7 @@ export function hasName (node) {
  * @param {Node} node The node
  * @returns {boolean} True if it has a path, false otherwise.
  */
-export function hasPath (node) {
+export function hasPath (node:Node) {
   return !!node.path
 }
 
@@ -97,44 +115,36 @@ export function hasPath (node) {
  * @param {Node} node The node
  * @returns {boolean} True if it has an id, false otherwise.
  */
-export function hasID (node) {
+export function hasID (node:Node) {
   return !!node.id
 }
 
-/**
- * Checks the node for children
- * @param {Node} node The node
- * @returns {boolean} True if it has children, false otherwise.
- */
-export function hasChildren (node) {
-  return !get('hideChildren', node) && Array.isArray(node.nodes)
-}
+type Nodeish = Node | string | Port.Port
 
 /**
- * @function
- * @name equal
  * @description Tests whether two nodes are the same node. This tests only if their IDs are
  * the same not if both nodes contain the same information.
  * @param {Node} node1 One of the nodes to test.
  * @param {Node} node2 The other one.
  * @returns {boolean} True if they have the same id, false otherwise.
  */
-export const equal = curry((node1, node2) => {
-  if (((isValid(node1) && (hasID(node1) || !isReference(node1))) || isID(node1)) &&
-      ((isValid(node2) && (hasID(node2) || !isReference(node2))) || isID(node2))) {
-    return id(node1) && id(node2) && id(node1) === id(node2)
+export function equal (node1:Nodeish, node2:Nodeish) {
+  if (((isValid(<any>node1) && (hasID(<Node>node1) || !isReference(<Node>node1))) || isID(<string>node1)) &&
+      ((isValid(<any>node2) && (hasID(<Node>node2) || !isReference(<Node>node2))) || isID(<string>node2))) {
+    return id(<Node>node1) && id(<Node>node2) && id(<Node>node1) === id(<Node>node2)
   } else if (Port.isPort(node1)) {
-    return equal(Port.node(node1), node2)
+    return equal(Port.node(<Port.Port>node1), node2)
   } else if (Port.isPort(node2)) {
-    return equal(node1, Port.node(node2))
-  } else if (hasPath(node1) && hasPath(node2)) {
-    return pathEqual(parent(node1), parent(node2)) && name(node1) === name(node2)
+    return equal(node1, Port.node(<Port.Port>node2))
+  } else if (hasPath(<Node>node1) && hasPath(<Node>node2)) {
+    return pathEqual(parent((<Node>node1).path), parent((<Node>node2).path))
+        && name(<Node>node1) === name(<Node>node2)
   } else {
-    return name(node1) === name(node2)
+    return name(<string>node1) === name(<string>node2)
   }
-})
+}
 
-export const isomorph = curry((node1, node2) => {
+export function isomorph (node1:Node, node2:Node) {
   if (!zip(ports(node1), ports(node2)).every(([p1, p2]) => Port.isomorph(p1, p2))) {
     return false
   }
@@ -143,18 +153,18 @@ export const isomorph = curry((node1, node2) => {
   } else {
     return !isAtomic(node2)
   }
-})
+}
 
 /**
  * Gets all ports of the node.
  * @param {Node} node The node.
  * @returns {Port[]} A list of ports.
  */
-export function ports (node) {
+export function ports (node:Node) {
   return (node.ports) ? node.ports.map((n) => merge(n, {node: node.id})) : []
 }
 
-export function setPort (node, port, update) {
+export function setPort (node:Node, port, update) {
   return merge(node, {ports: node.ports.map((p, id) => {
     if (typeof (port) === 'number' && id === port) {
       return merge(p, update)
@@ -169,8 +179,8 @@ export function setPort (node, port, update) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of output ports.
  */
-export function outputPorts (node, ignoreCompounds = true) {
-  if (!ignoreCompounds && !node.atomic) {
+export function outputPorts (node:Node, ignoreCompounds = true) {
+  if (!ignoreCompounds && !(<any>node).atomic) {
     return ports(node)
   } else {
     return ports(node).filter(Port.isOutputPort)
@@ -182,8 +192,8 @@ export function outputPorts (node, ignoreCompounds = true) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of input ports.
  */
-export function inputPorts (node, ignoreCompounds = true) {
-  if (!ignoreCompounds && !node.atomic) {
+export function inputPorts (node:Node, ignoreCompounds = true) {
+  if (!ignoreCompounds && !(<any>node).atomic) {
     return ports(node)
   } else {
     return ports(node).filter(Port.isInputPort)
@@ -191,17 +201,15 @@ export function inputPorts (node, ignoreCompounds = true) {
 }
 
 /**
- * @function
- * @name port
  * @description Returns the port data for a given node and port.
- * @param {String|Port} name The name of the port or a port object.
+ * @param {string|Port} name The name of the port or a port object.
  * @param {Node} node The node which has the port.
  * @returns {Port} The port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
-export const port = curry((name, node) => {
+export function port (name:string|Port.Port, node:Node) {
   if (Port.isPort(name)) {
-    return port(Port.portName(name), node)
+    return port(Port.portName(<Port.Port>name), node)
   }
   var curPort = find((p) => Port.portName(p) === name, node.ports)
   if (!curPort) {
@@ -209,18 +217,16 @@ export const port = curry((name, node) => {
   }
   curPort.node = node.id
   return curPort
-})
+}
 
 /**
- * @function
- * @name inputPort
  * @description Returns the input port data for a given node and port name / index.
  * @param {String|Port|Number} name The name of the input port, a port object or the index.
  * @param {Node} node The node which has the port.
  * @returns {Port} The input port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
-export const inputPort = curry((name, node) => {
+export function inputPort (name, node:Node) {
   if (Port.isPort(name)) {
     return inputPort(Port.portName(name), node)
   }
@@ -230,7 +236,7 @@ export const inputPort = curry((name, node) => {
     throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
   }
   return curPort
-})
+}
 
 /**
  * @function
@@ -241,7 +247,7 @@ export const inputPort = curry((name, node) => {
  * @returns {Port} The output port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
-export const outputPort = curry((name, node) => {
+export function outputPort (name, node:Node) {
   if (Port.isPort(name)) {
     return outputPort(Port.portName(name), node)
   }
@@ -251,62 +257,56 @@ export const outputPort = curry((name, node) => {
     throw new Error('Cannot find port with name ' + name + ' in node ' + JSON.stringify(node))
   }
   return curPort
-})
+}
 
 /**
  * Gets the path of a node
  * @param {Node} node The node
  * @returns {CompoundPath} The compound path of the node.
  */
-export function path (node) {
-  if (!node) return []
+export function path (node:Node):CompoundPath {
+  if (!node) return <CompoundPath>[]
   return node.path
 }
 
 /**
- * @function
- * @name hasPort
  * @description Checks whether the node has the specific port.
  * @param {String|Port} name The name of the port or a port object.
  * @param {Node} node The node which has the port.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
-export const hasPort = curry((name, node) => {
+export function hasPort (name, node:Node) {
   if (Port.isPort(name)) {
     return hasPort(Port.portName(name), node)
   }
   return !!find((p) => Port.portName(p) === name, node.ports)
-})
+}
 
 /**
- * @function
- * @name hasPort
  * @description Checks whether the node has the specific input port.
  * @param {String|Port} name The name of the port or a port object.
  * @param {Node} node The node which has the port.
  * @returns {Port} True if the port has an input port with the given name, false otherwise.
  */
-export const hasInputPort = curry((name, node) => {
+export function hasInputPort (name, node:Node) {
   if (Port.isPort(name)) {
     return hasInputPort(Port.portName(name), node)
   }
   return !!find((p) => Port.portName(p) === name, inputPorts(node))
-})
+}
 
 /**
- * @function
- * @name hasPort
  * @description Checks whether the node has the specific output port.
  * @param {String|Port} name The name of the port or a port object.
  * @param {Node} node The node which has the port.
  * @returns {Port} True if the port has an output port with the given name, false otherwise.
  */
-export const hasOutputPort = curry((name, node) => {
+export function hasOutputPort (name, node:Node) {
   if (Port.isPort(name)) {
     return hasOutputPort(Port.portName(name), node)
   }
   return !!find((p) => Port.portName(p) === name, outputPorts(node))
-})
+}
 
 
 /**
@@ -314,7 +314,7 @@ export const hasOutputPort = curry((name, node) => {
  * @param {Node} node The node.
  * @returns {boolean} True if the node is a reference, false otherwise.
  */
-export function isReference (node) {
+export function isReference (node:Node) {
   return has('ref', node)
 }
 
@@ -323,37 +323,35 @@ export function isReference (node) {
  * @param {Node} node The node.
  * @returns {string} The componentId of the node.
  */
-export function component (node) {
-  return isReference(node) ? node.ref : node.componentId
+export function component (node:Node) {
+  return isReference(node) ? (<ReferenceNode>node).ref : (<ConcreteNode>node).componentId
 }
 
 /**
- * @function
- * @name set
  * @description Set properties for the node
  * @param {object} value An object with keys and values that should be set for a node.
  * @returns {Node} A new node that has the new properties applied.
  */
-export const set = curry((value, node) => {
+export function set (value, node:Node):Node {
   return merge(node, {settings: merge(node.settings, value)})
-})
+}
 
 /**
- * @function
- * @name get
  * @description Get a property for a node
  * @param {String} key The property key.
  * @returns The value of the property. If the property is not defined it will return undefined.
  */
-export const get = curry((key, node) => (node.settings) ? node.settings[key] : node.settings)
+export function get (key, node:Node) {
+  return (node.settings) ? node.settings[key] : node.settings
+}
 
 /**
  * Checks whether a node is an atomic node.
  * @param {Node} node The node.
  * @returns {boolean} True if the node is an atomic node, false otherwise.
  */
-export function isAtomic (node) {
-  return !isReference(node) && node.atomic
+export function isAtomic (node:Node) {
+  return !isReference(node) && (<any>node).atomic
 }
 
 /**
@@ -361,13 +359,13 @@ export function isAtomic (node) {
  * @param {Node} node The node to test.
  * @returns {boolean} True if the node is valid, false otherwise.
  */
-export function isValid (node) {
-  return isReference(node) ||
+export function isValid (node:any):boolean {
+  return isReference(<Node>node) ||
     (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
     every(Port.isValid, ports(node)))
 }
 
-export function assertValid (node) {
+export function assertValid (node:Node) {
   if (typeof (node) !== 'object') {
     throw new Error('Node object must be an object but got: ' + typeof (node))
   } else if (!node.id) {

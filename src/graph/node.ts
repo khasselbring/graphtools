@@ -1,3 +1,5 @@
+/// <reference path="graph.ts" />
+/// <reference path="graphaction.ts" />
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
@@ -19,7 +21,7 @@ import {removeEdge, realizeEdgesForNode} from './edge'
  * @param {PortGraph} graph The graph.
  * @returns {Nodes[]} A list of nodes.
  */
-export const nodes = (graph) => {
+export const nodes = (graph :Portgraph) => {
   return graph.nodes || []
 }
 
@@ -28,7 +30,7 @@ export const nodes = (graph) => {
  * @name nodesBy
  * @description Returns a list of nodes on the root level selected by a given predicate.
  * @param {function|Location} predicate A function that filters nodes. Or alternatively you can use a location query.
- * @param {PortGraph} graph The graph.
+ * @param {Portgraph} graph The graph.
  * @returns {Nodes[]} A list of nodes.
  * @example <caption>Select by function</caption>
  * // all nodes that have the name select
@@ -47,7 +49,7 @@ export const nodesBy = curry((predicate, graph) => {
 /**
  * Get all nodes at all depths. It will go into every compound node / lambda node and return their nodes
  * and the nodes of their compound nodes, etc.
- * @param {PortGraph} graph The graph to work on
+ * @param {Portgraph} graph The graph to work on
  * @returns {Node[]} A list of nodes.
  */
 export {nodesDeep}
