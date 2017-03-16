@@ -9,6 +9,7 @@ import * as Node from '../node'
 import {successors, predecessor} from '../graph/connections'
 import * as CmpRewrite from './compound'
 import {createLambda, createPartial, createFunctionCall} from '../functional/lambda'
+import {GraphAction} from '../graph/graphaction'
 
 const letF = Graph.Let
 const distSeq = Graph.distributeSeq
@@ -23,7 +24,7 @@ const createContext = curry((compound, lambda, graph, ...cbs) => {
   }, graph)
 })
 
-function createLambdaNode (compound) {
+function createLambdaNode (compound:Node.Node):GraphAction {
   return (graph, ...cbs) => {
     const cb = Graph.flowCallback(cbs)
     return sequential([Graph.addNode(createLambda(compound)), createContext(compound), cb])(graph)
@@ -31,8 +32,6 @@ function createLambdaNode (compound) {
 }
 
 /**
- * @function
- * @name convertToLambda
  * @description
  * Create a lambda node that contains the given subset of nodes. It will not connect the inputs and
  * outputs use createCall for that.
@@ -55,14 +54,16 @@ function createLambdaNode (compound) {
  * @returns {Portgraph} A new graph that replaced the subset with a lambda node. If a callback is given, the callback
  * is applied to the graph before `convertToLambda` returns and the return value of that callback is returned.
  */
-export const convertToLambda = curry((subset, graph, ...cbs) => {
-  const cb = Graph.flowCallback(cbs)
-  return CmpRewrite.compoundify(subset, graph, (compound, compGraph) =>
-    Graph.flow(
-      letF(createLambdaNode(compound), cb), // create lambda node and pass information to callback
-      Graph.removeNode(compound) // remove the old compound node in the end
-    )(compGraph))
-})
+export function convertToLambda (subset:any[]):GraphAction {
+  return (graph, ...cbs) => {
+    const cb = Graph.flowCallback(cbs)
+    return CmpRewrite.compoundify(subset)(graph, (compound, compGraph) =>
+      Graph.flow(
+        letF(createLambdaNode(compound), cb), // create lambda node and pass information to callback
+        Graph.removeNode(compound) // remove the old compound node in the end
+      )(compGraph))
+  }
+}
 
 function createInputPartialsInternal (inputs, from) {
   return (graph, ...cbs) => {

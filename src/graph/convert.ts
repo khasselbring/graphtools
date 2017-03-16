@@ -5,6 +5,7 @@ import {nodesDeep} from './node'
 import {edgesDeep, checkEdge} from './edge'
 import {assertValid} from '../node'
 import {rePath} from './internal'
+import {Portgraph} from './graph'
 // import {empty} from './basic'
 // import {addNode, addNodeTuple} from './node'
 // import {addEdge} from './edge'
@@ -17,11 +18,11 @@ import {rePath} from './internal'
  * @param {object} jsonGraph The json representing the port graph.
  * @returns {PortGraph} The port graph with its functions.
  */
-export function fromJSON (jsonGraph) {
+export function fromJSON (jsonGraph):Portgraph {
   var graph = cloneDeep(jsonGraph)
   rePath(graph)
-  nodesDeep(graph).forEach((n) => assertValid(n))
-  edgesDeep(graph).forEach(checkEdge(graph))
+  nodesDeep(graph as Portgraph).forEach((n) => assertValid(n))
+  edgesDeep(graph as Portgraph).forEach((e) => checkEdge(graph, e))
   return merge({components: [], edges: [], nodes: []}, graph)
   // TODO: add checks back in again
   // var nodes = concat(jsonGraph.Nodes || [], (Array.isArray(jsonGraph.nodes)) ? jsonGraph.nodes : [])
@@ -49,7 +50,7 @@ export function fromJSON (jsonGraph) {
  * @param {PortGraph} graph The graph to convert
  * @returns {object} A JSON representation of the graph.
  */
-export function toJSON (graph) {
+export function toJSON (graph:Portgraph) {
   // var exportGraph = removeGraphInternals(graph)
   return cloneDeep(graph)
 }

@@ -8,16 +8,18 @@ import negate from 'lodash/fp/negate'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Port from './port'
+import {flowCallback} from './graph/flow'
 import {edgesDeep, removeEdge} from './graph/edge'
 import {pointsTo, isFrom, predecessor} from './graph/connections'
 import {nodes, node} from './graph/node'
 import {CompoundPath} from './compoundPath'
 import * as _ from 'lodash'
 import cuid = require('cuid')
+import {GraphAction} from './graph/graphaction'
 
 export interface Compound extends Node.ConcreteNode {
-  nodes: [Node]
-  edges: [any]
+  nodes: Node.Node[]
+  edges: Edge.Edge[]
   isRecursion: boolean
 }
 
@@ -60,7 +62,7 @@ export function id (node:Compound) {
  * @param {function} nodeSetPath A function that sets the path for a node.
  * @returns {Compound} The new compound with updated paths.
  */
-export function setPath (node:Compound, path:CompoundPath, nodeSetPath: (Node, CompoundPath) => Node) {
+export function setPath (node:Node.ConcreteNode, path:CompoundPath, nodeSetPath: (Node, CompoundPath) => Node) {
   return _.merge({}, node,
     {path},
     // I think `nodeSetPath` is only used due to the fear of importing ./node.js here and ./compound.js in ./node.js (cyclic reference...)
@@ -130,15 +132,18 @@ export function renamePort (port:Port.Port|string, newName:string, node:Compound
  * @returns {Node} The node without the given port. The componentId will be removed, as it is not
  * an implementation of the component anymore.
  */
-export function removePort (port:Port.Port|string, node:Compound) {
-  const portObj = getPort(port, node)
-  var portEdges = edgesDeep(node).filter((e) => pointsTo(portObj, node, e) || isFrom(portObj, node, e))
-  var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge, cmp), node)
-  return merge(omit(['ports', 'componentId'], newNode),
-    {ports: Node.ports(newNode).filter(negate((p) => Port.equal(portObj, p)))})
+export function removePort (port:Port.Port|string):GraphAction {
+  return (node, ...cbs) => {
+    const cb = flowCallback(cbs)
+    const portObj = getPort(port, node)
+    var portEdges = edgesDeep(node).filter((e) => pointsTo(portObj)(node, e) || isFrom(portObj)(node, e))
+    var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge)(cmp), node as Node.Node)
+    return cb(newNode, merge(omit(['ports', 'componentId'], newNode),
+      {ports: Node.ports(newNode).filter(negate((p) => Port.equal(portObj, p)))}))
+  }
 }
 
-const addPort = (port:string|Port.Port, kind:Port.PortKind, node:Compound):Compound => {
+const addPort = (port:string|Port.Port, kind:Port.PortKind, node:Node.Node):Node.Node => {
   if (hasPort(port, node)) {
     if (typeof (port) === 'string') {
       throw new Error('Cannot add already existing port ' + port + ' to node.')
@@ -164,8 +169,8 @@ const addPort = (port:string|Port.Port, kind:Port.PortKind, node:Compound):Compo
  * @param {Compound} node The node
  * @returns {boolean} True if it has children, false otherwise.
  */
-export function hasChildren (node:Compound) {
-  return !Node.get('hideChildren', node) && Array.isArray(node.nodes)
+export function hasChildren (node:Node.Node) {
+  return !Node.get('hideChildren', node) && (<any>node).nodes && Array.isArray((<Node.ConcreteNode>node).nodes)
 }
 
 /**
@@ -175,9 +180,12 @@ export function hasChildren (node:Compound) {
  * @returns {Compound} A new node with the given port.
  * @throws {Error} If the node already has a port with that name.
  */
-export function addInputPort (port:Port.Port|string, node:Compound) {
-  const portObj = getPort(port, node)
-  return addPort(portObj, 'input', node)
+export function addInputPort (port:Port.Port|string):GraphAction {
+  return (node, ...cbs) => {
+    const cb = flowCallback(cbs)
+    const portObj = getPort(port, node)
+    return cb(portObj, addPort(portObj, 'input', node))
+  }
 }
 
 /**
@@ -187,9 +195,12 @@ export function addInputPort (port:Port.Port|string, node:Compound) {
  * @returns {Compound} A new node with the given port.
  * @throws {Error} If the node already has a port with that name.
  */
-export function addOutputPort (port:Port.Port|string, node:Compound) {
-  const portObj = getPort(port, node)
-  return addPort(portObj, 'output', node)
+export function addOutputPort (port:Port.Port|string):GraphAction {
+  return (node, ...cbs) => {
+    const cb = flowCallback(cbs)
+    const portObj = getPort(port, node)
+    return cb(portObj, addPort(portObj, 'output', node))
+  }
 }
 
 function checkStructureEquality (compound1:Compound, compound2:Compound) {

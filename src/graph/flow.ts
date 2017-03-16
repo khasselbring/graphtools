@@ -5,6 +5,7 @@ import last from 'lodash/fp/last'
 import {empty} from './basic'
 import {debug} from '../debug'
 import {Portgraph} from './graph'
+import {Node} from '../node'
 import {GraphAction, GraphCallback} from './graphaction'
 
 function functionName (fn, options, idx) {
@@ -43,7 +44,7 @@ export function flow (...graphActions:(GraphAction|any)[]):GraphAction {
     if (!graph) {
       graph = empty()
     }
-    return [].reduce.call(args, (g:Portgraph, fn:GraphAction, idx:number):Portgraph => {
+    return [].reduce.call(args, (g:Node, fn:GraphAction, idx:number):Node => {
       try {
         var newGraph = fn(g, (data, graph) => graph)
         if (options && options.debug) debug(newGraph)
@@ -136,7 +137,7 @@ function parallel (fns:GraphAction[]) {
  * // and the graph (i.e. it calls `Graph.removeNode(newNode, newGraph)`)
  * sequential([Graph.addNode({...}), Graph.removeNode])(graph)
  */
-export function sequential (fns, opt = 0, cb = null) {
+export function sequential (fns:GraphAction[], opt:number = 0, cb?:GraphCallback) {
   if (fns.length === 0) return cb || flowCallback()
   if (typeof (fns[0]) !== 'function') throw new Error('[graphtools-sequential] Argument in sequence at position ' + (opt + 1) + ' is not a callable. Make sure to use curried functions.')
   return (...args) => {
@@ -166,8 +167,6 @@ export function sequential (fns, opt = 0, cb = null) {
 }
 
 /**
- * @function
- * @name distributeWith
  * @description
  * Distributes an argument over multiple Graph actions. After distributing it calls a reducer function.
  * @param {Reducer} reducer The reducer function that takes multiple graph actions and creates one action out of them.
@@ -182,18 +181,20 @@ export function sequential (fns, opt = 0, cb = null) {
  *    (newNode) => Graph.addEdge({from: Node.port('output', newNode), to: '@output'})
  * ])(graph)
  */
-export const distributeWith = curry((reducer, fns) => {
-  return (data, graph) => {
-    if (!fns.every((f) => typeof (f) === 'function')) {
-      throw new Error('[graphtools-distribute] Function ' + (fns.findIndex((f) => typeof (f) !== 'function') + 1) + ' is no function.')
+export function distributeWith<T extends Function> (reducer:(T) => Function) {
+  return (fns:T[]) => {
+    return (data, graph) => {
+      if (!fns.every((f) => typeof (f) === 'function')) {
+        throw new Error('[graphtools-distribute] Function ' + (fns.findIndex((f) => typeof (f) !== 'function') + 1) + ' is no function.')
+      }
+      const newFns = fns.map((f) => f(data))
+      if (!newFns.every((f) => typeof (f) === 'function')) {
+        throw new Error('[graphtools-distribute] Function ' + (newFns.findIndex((f) => typeof (f) !== 'function') + 1) + ' in distribute is not curried.')
+      }
+      return reducer(newFns)(graph)
     }
-    const newFns = fns.map((f) => f(data))
-    if (!newFns.every((f) => typeof (f) === 'function')) {
-      throw new Error('[graphtools-distribute] Function ' + (newFns.findIndex((f) => typeof (f) !== 'function') + 1) + ' in distribute is not curried.')
-    }
-    return reducer(newFns)(graph)
   }
-})
+}
 
 /**
  * @function
@@ -219,9 +220,8 @@ export const distributeSeq = distributeWith(sequential)
  * @deprecated
  * This function is deprecated. Use `flow` with and set the names via the optional parameter.
  */
-export const namedFlow = function () {
-  var lastArg = arguments[arguments.length - 1]
-  var args = arguments
+export const namedFlow = function (...args) {
+  var lastArg = args[args.length - 1]
   var options = {}
   if (isOptionsObj(lastArg)) {
     options = lastArg

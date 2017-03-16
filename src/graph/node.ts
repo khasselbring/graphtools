@@ -1,5 +1,3 @@
-/// <reference path="graph.ts" />
-/// <reference path="graphaction.ts" />
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
@@ -13,16 +11,16 @@ import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './in
 import {query, toString} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
+import {Portgraph} from './graph'
+import {GraphAction} from './graphaction'
 
 /**
- * @function
- * @name nodes
  * @description Returns a list of nodes on the root level.
  * @param {PortGraph} graph The graph.
  * @returns {Nodes[]} A list of nodes.
  */
-export const nodes = (graph :Portgraph) => {
-  return graph.nodes || []
+export function nodes (graph :Node.Node) {
+  return (<Node.ConcreteNode>graph).nodes || <Node.Node[]>[]
 }
 
 /**
@@ -85,7 +83,7 @@ export function nodeNames (graph) {
  * @returns {Node} The node in the graph
  * @throws {Error} If the queried node does not exist in the graph.
  */
-export const node = curry((loc, graph) => {
+export function node (loc, graph:Node.Node) {
   var node = nodeBy(query(loc, graph), graph)
   if (!node) {
     throw new Error(`Node: '${Node.id(loc) || JSON.stringify(loc)}' does not exist in the graph.`)
@@ -151,10 +149,10 @@ export function checkNode (graph, nodeToCheck) {
  */
 export const addNodeByPath = curry((parentPath, nodeData, graph, ...cbs) => {
   if (isRoot(parentPath)) {
-    return addNodeInternal(nodeData, graph, checkNode, ...cbs)
+    return addNodeInternal(nodeData, checkNode)(graph, ...cbs)
   } else {
     let parentGraph = node(parentPath, graph)
-    return replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, checkNode, ...cbs), graph)
+    return replaceNode(parentPath, addNodeInternal(nodeData, checkNode)(parentGraph, ...cbs), graph)
   }
 })
 
@@ -213,7 +211,7 @@ export const addNode = curry((node, graph, ...cbs) => {
   if (Node.isAtomic(graph)) {
     throw new Error('Cannot add Node to atomic node at: ' + graph.path)
   }
-  return addNodeInternal(node, graph, checkNode, ...cbs)
+  return addNodeInternal(node, checkNode)(graph, ...cbs)
 })
 
 export const addNodeWithID = curry((node, graph, ...cbs) => {
@@ -289,7 +287,7 @@ const removeNodeInternal = curry((query, deleteEdges, graph, ...cbs) => {
     var remEdgesGraph = graph
     if (deleteEdges) {
       var inc = incidents(path, graph)
-      remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge, curGraph), graph)
+      remEdgesGraph = inc.reduce((curGraph, edge) => removeEdge(edge)(curGraph), graph)
     }
     return cb(remNode, changeSet.applyChangeSet(remEdgesGraph, changeSet.removeNode(remNode.id)))
   }
@@ -341,7 +339,7 @@ export const replaceNode = curry((loc, newNode, graph) => {
         [removeNodeInternal(loc, false), addNodeByPath(nodeParentPath(loc, graph), newNode)],
         ([removedNode, insertedNode], graph) => mergeNodes(removedNode, insertedNode, graph)),
     rePath,
-    (Node.isReference(preNode) && !Node.isReference(newNode)) ? realizeEdgesForNode(loc) : (graph) => graph,
+    (Node.isReference(preNode) && !Node.isReference(newNode)) ? (graph) => realizeEdgesForNode(loc, graph) : (graph) => graph,
     {name: '[replaceNode] For location ' + toString(loc)}
   )(graph)
 })

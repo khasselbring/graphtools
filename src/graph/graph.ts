@@ -1,3 +1,6 @@
-import {Compound} from '../compound'
+import {ConcreteNode} from '../node'
+import {Component} from '../component'
 
-export type Portgraph = Compound
+export interface Portgraph extends ConcreteNode {
+  components: Component[]
+}

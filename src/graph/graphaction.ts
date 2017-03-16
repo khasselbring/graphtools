@@ -1,5 +1,5 @@
-import {Portgraph} from './graph'
+import {Node} from '../node'
 
-export type GraphCallback = (payload, g:Portgraph) => Portgraph
+export type GraphCallback = (payload, g:Node) => Node
 
-export type GraphAction = (graph: Portgraph, ...callback: GraphCallback[]) => Portgraph
+export type GraphAction = (graph: Node, ...callback: GraphCallback[]) => Node

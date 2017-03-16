@@ -7,41 +7,44 @@ import * as Edge from '../edge'
 import {edgesDeep} from './edge'
 import {query} from '../location'
 import {node, port, hasPort} from '../graph/node'
-import {kind} from '../port'
+import {Node} from '../node'
+import {kind, Port} from '../port'
+import {Portgraph} from './graph'
+import {Location} from '../location'
 
 /**
- * @function
- * @name pointsTo
  * @description Checks whether an edge points to a given target.
  * @param {Location} target The target the edge should point to. This can either be a node or a port.
  * @param {PortGraph} graph The graph
  * @param {Edge} edge The edge to check
  * @returns {boolean} True if the edge points to the target, false otherwise.
  */
-export const pointsTo = curry((target, graph, edge) => {
-  var q = query(target, graph)
-  if (typeof (edge.to) === 'string') {
-    return q(node(edge.to, graph))
+export function pointsTo (target) {
+  return (graph:Node, edge:Edge.Edge) => {
+    var q = query(target, graph)
+    if (typeof (edge.to) === 'string') {
+      return q(node(edge.to, graph))
+    }
+    return q(merge(edge.to, {additionalInfo: node(edge.to, graph)}))
   }
-  return q(merge(edge.to, {additionalInfo: node(edge.to, graph)}))
-})
+}
 
 /**
- * @function
- * @name isFrom
  * @description Checks whether an edge is from a given source.
  * @param {Location} target The source the edge should come from. This can either be a node or a port.
  * @param {PortGraph} graph The graph
  * @param {Edge} edge The edge to check
  * @returns {boolean} True if the edge comes from the source, false otherwise.
  */
-export const isFrom = curry((source, graph, edge) => {
-  var q = query(source, graph)
-  if (typeof (edge.from) === 'string') {
-    return q(node(edge.from, graph))
+export function isFrom (source) {
+  return (graph:Node, edge:Edge.Edge) => {
+    var q = query(source, graph)
+    if (typeof (edge.from) === 'string') {
+      return q(node(edge.from, graph))
+    }
+    return q(merge(edge.from, {additionalInfo: node(edge.from, graph)}))
   }
-  return q(merge(edge.from, {additionalInfo: node(edge.from, graph)}))
-})
+}
 
 /**
  * Checks whether the two nodes or ports are connected via an edge.
@@ -50,8 +53,8 @@ export const isFrom = curry((source, graph, edge) => {
  * @param {PortGraph} graph The graph in which we want to find the connection.
  * @returns {boolean} True if the graph has an edge going from "nodeFrom" to "nodeTo".
  */
-export function areConnected (nodeFrom, nodeTo, graph) {
-  return !!find(edgesDeep(graph), (e) => Edge.isFrom(nodeFrom, e, graph) && Edge.pointsTo(nodeTo, e, graph))
+export function areConnected (nodeFrom, nodeTo, graph:Node) {
+  return !!find(edgesDeep(graph), (e) => isFrom(nodeFrom)(graph, e) && pointsTo(nodeTo)(graph, e))
 }
 
 /**
@@ -64,7 +67,7 @@ export function areConnected (nodeFrom, nodeTo, graph) {
  * predecessors inside the compound.
  * @returns {Port[]} A list of ports with that are predecessors of `target`
  */
-export function predecessors (target, graph, goIntoCompounds = false) {
+export function predecessors (target, graph:Node, goIntoCompounds = false):Port[] {
   return map('from')(inIncidents(target, graph, goIntoCompounds))
 }
 
@@ -78,7 +81,7 @@ export function predecessors (target, graph, goIntoCompounds = false) {
  * a predecessor inside the compound.
  * @returns {Port} The preceeding port
  */
-export function predecessor (target, graph, goIntoCompounds = false) {
+export function predecessor (target, graph:Node, goIntoCompounds = false) {
   return predecessors(target, graph, goIntoCompounds)[0]
 }
 
@@ -91,8 +94,8 @@ export function predecessor (target, graph, goIntoCompounds = false) {
  * ingoing edges inside the compound.
  * @returns {Edge[]} An array of all ingoing (i.e. pointsTo(port)) incident edges.
  */
-export function inIncidents (target, graph, goIntoCompounds = false) {
-  return edgesDeep(graph).filter((e) => pointsTo(target, graph, e) &&
+export function inIncidents (target, graph:Node, goIntoCompounds = false) {
+  return edgesDeep(graph).filter((e) => pointsTo(target)(graph, e) &&
     (goIntoCompounds || hasPort(target, graph) || kind(port(e.to, graph)) === 'input'))
 }
 
@@ -105,7 +108,7 @@ export function inIncidents (target, graph, goIntoCompounds = false) {
  * ingoing edges inside the compound.
  * @returns {Edge} The ingoing incident edge.
  */
-export function inIncident (target, graph, goIntoCompounds = false) {
+export function inIncident (target, graph:Node, goIntoCompounds = false) {
   return inIncidents(target, graph, goIntoCompounds)[0]
 }
 
@@ -118,8 +121,8 @@ export function inIncident (target, graph, goIntoCompounds = false) {
  * outgoing edges inside the compound.
  * @returns {Edge[]} An array of all outgoing (i.e. isFrom(port)) incident edges.
  */
-export function outIncidents (source, graph, goIntoCompounds = false) {
-  return edgesDeep(graph).filter((e) => isFrom(source, graph, e) &&
+export function outIncidents (source, graph:Node, goIntoCompounds = false) {
+  return edgesDeep(graph).filter((e) => isFrom(source)(graph, e) &&
     (goIntoCompounds || hasPort(source, graph) || kind(port(e.from, graph)) === 'output'))
 }
 
@@ -132,22 +135,16 @@ export function outIncidents (source, graph, goIntoCompounds = false) {
  * successors inside the compound.
  * @returns {Port[]} A list of ports that succeed the node with their corresponding nodes.
  */
-export function successors (source, graph, goIntoCompounds = false) {
+export function successors (source, graph:Node, goIntoCompounds = false):Port[] {
   return map('to')(outIncidents(source, graph, goIntoCompounds))
 }
 
-function or (fn1, fn2) {
-  return (v) => fn1(v) || fn2(v)
-}
-
 /**
- * @function
- * @name incidents
  * @description All incident edges to the given input.
  * @param {Location} loc The node or port.
  * @param {PortGraph} graph The graph
  * @returns {Edge[]} An array of all incident edges to the given location.
  */
-export const incidents = curry((loc, graph) => {
-  return edgesDeep(graph).filter(or(isFrom(loc, graph), pointsTo(loc, graph)))
-})
+export function incidents (loc, graph:Node) {
+  return edgesDeep(graph).filter((e) => isFrom(loc)(graph, e) || pointsTo(loc)(graph, e))
+}

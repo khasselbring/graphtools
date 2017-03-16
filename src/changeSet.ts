@@ -10,12 +10,22 @@
  */
 
 import jq from 'json-query'
-import _ from 'lodash'
+import * as _ from 'lodash'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Component from './component'
+import * as Compound from './compound'
+import {Portgraph} from './graph/graph'
 
-const hasChildren = Component.hasChildren
+const hasChildren = Compound.hasChildren
+
+interface ChangeSet {
+  type: string
+  operation: string
+  query?: string
+  value?: any,
+  filter?: Function
+}
 
 /**
  * Creates a change set to update a node with a given value
@@ -24,7 +34,7 @@ const hasChildren = Component.hasChildren
  * E.g. `{recursive: true}` will update the field `recursive` in the node and sets it to `true`.
  * @returns {ChangeSet} A change set containing the operation.
  */
-export function updateNode (nodePath, mergeValue) {
+export function updateNode (nodePath:string, mergeValue):ChangeSet {
   return {type: 'changeSet', operation: 'mergePath', query: nodePath, value: mergeValue}
 }
 
@@ -33,11 +43,11 @@ export function updateNode (nodePath, mergeValue) {
  * @param {Object} value The new node.
  * @returns {ChangeSet} A change set containing the new node.
  */
-export function insertNode (value) {
+export function insertNode (value):ChangeSet {
   return {type: 'changeSet', operation: 'insert', query: 'nodes', value}
 }
 
-export function removeNode (id) {
+export function removeNode (id):ChangeSet {
   return {type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => Node.equal(n, id)}
 }
 
@@ -46,7 +56,7 @@ export function removeNode (id) {
  * @param {Object} value The new component.
  * @returns {ChangeSet} A change set containing the new component.
  */
-export function insertComponent (value) {
+export function insertComponent (value):ChangeSet {
   return {type: 'changeSet', operation: 'insert', query: 'components', value}
 }
 
@@ -57,32 +67,34 @@ export function insertComponent (value) {
  * E.g. `{isType: true}` will update the field `isType` in the component and sets it to `true`.
  * @returns {ChangeSet} A change set containing the operation.
  */
-export function updateComponent (compId, mergeValue) {
+export function updateComponent (compId, mergeValue):ChangeSet {
   return {type: 'changeSet', operation: 'mergeComponent', query: compId, value: mergeValue}
 }
 
-export function removeComponent (id) {
+export function removeComponent (id):ChangeSet {
   return {type: 'changeSet', operation: 'remove', query: 'components', filter: (n) => Component.equal(n, id)}
 }
 
-export function addMetaInformation (key, value) {
+export function addMetaInformation (key, value):ChangeSet {
   return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: _.set({}, key, value)}
 }
 
-export function setMetaInformation (meta) {
+export function setMetaInformation (meta):ChangeSet {
   return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: meta}
 }
 
+/*
 export function empty () {
   return {type: 'changeSet', opertaion: 'none'}
 }
+*/
 
 /**
  * Creates a change set that inserts a new edge into the edge list
  * @param {Object} newEdge The edge that should be inserted.
  * @returns {ChangeSet} A change set containing the insertion operation.
  */
-export function insertEdge (newEdge) {
+export function insertEdge (newEdge):ChangeSet {
   return {type: 'changeSet', operation: 'insert', query: 'edges', value: newEdge}
 }
 
@@ -91,7 +103,7 @@ export function insertEdge (newEdge) {
  * @param {Object} newEdge The edge that should be inserted.
  * @returns {ChangeSet} A change set containing the insertion operation.
  */
-export function updateEdge (edge, mergeEdge) {
+export function updateEdge (edge, mergeEdge):ChangeSet {
   return {type: 'changeSet', operation: 'mergeEdge', query: edge, value: mergeEdge}
 }
 
@@ -100,7 +112,7 @@ export function updateEdge (edge, mergeEdge) {
  * @param {Object} edge The edge to remove.
  * @returns {ChangeSet} The change set containing the deletion operation.
  */
-export function removeEdge (edge) {
+export function removeEdge (edge):ChangeSet {
   return {type: 'changeSet', operation: 'remove', query: 'edges', filter: _.partial(Edge.equal, edge)}
 }
 
@@ -111,7 +123,7 @@ export function removeEdge (edge) {
  * @returns {ChangeSet[]} An array of change sets that inserts the edges between the nodes. The change set will generate |stations| - 1 edges.
  */
 export function createConnection (stations, extraValue = {}) {
-  return _.reduce(stations, (acc, cur) => {
+  return stations.reduce((acc, cur) => {
     if (!acc) {
       return {last: cur, edges: []}
     } else {
@@ -179,7 +191,7 @@ const getReferences = (graph, changeSet) => {
   return refs.references
 }
 
-const applyMergeByPath = (graph, path, value) => {
+const applyMergeByPath = (graph:Node.ConcreteNode, path, value) => {
   var idx = _.findIndex(graph.nodes, (n) => Node.equal(path[0], n))
   if (path.length === 1) {
     if (idx > -1) {
@@ -188,18 +200,18 @@ const applyMergeByPath = (graph, path, value) => {
     }
   } else {
     if (idx > -1 && (hasChildren(graph.nodes[idx]))) {
-      applyMergeByPath(graph.nodes[idx], path.slice(1), value)
+      applyMergeByPath(graph.nodes[idx] as Node.ConcreteNode, path.slice(1), value)
       return // in place method no return value
     }
   }
 }
 
-const applyMergeByComponent = (graph, cId, value) => {
+const applyMergeByComponent = (graph:Portgraph, cId, value) => {
   var idx = _.findIndex(graph.components, (c) => Component.id(c) === cId)
   return _.merge(graph.components[idx], value)
 }
 
-const applyMergeByEdge = (graph, edge, value) => {
+const applyMergeByEdge = (graph:Node.Node, edge, value) => {
   var idx = _.findIndex(graph.edges, (e) => Edge.equal(edge, e))
   return _.merge(graph.edges[idx], value)
 }
@@ -211,7 +223,7 @@ const applyMergeByEdge = (graph, edge, value) => {
  * @returns {Graphlib} A new graph with the applied change set graph.
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
-export function applyChangeSet (graph, changeSet) {
+export function applyChangeSet (graph:Node.Node, changeSet:ChangeSet) {
   var newGraph = _.cloneDeep(graph)
   return applyChangeSetInplace(newGraph, changeSet)
 }
@@ -223,9 +235,9 @@ export function applyChangeSet (graph, changeSet) {
  * @returns {Graphlib} A new graph with the applied change set graph.
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
-export function applyChangeSets (graph, changeSets) {
+export function applyChangeSets (graph:Portgraph, changeSets:ChangeSet[]) {
   var newGraph = _.cloneDeep(graph)
-  _.each(changeSets, (c) => applyChangeSetInplace(newGraph, c))
+  changeSets.forEach((c) => applyChangeSetInplace(newGraph, c))
   return newGraph
 }
 
@@ -236,16 +248,16 @@ export function applyChangeSets (graph, changeSets) {
  * @returns {Graphlib} The changed graph. Currently the changes are all made inplace so the return value is equal to the input graph.
  * @throws {Error} If the change set is no valid change set it throws an error.
  */
-export function applyChangeSetInplace (graph, changeSet) {
+export function applyChangeSetInplace (graph:Node.Node, changeSet:ChangeSet) {
   if (!isChangeSet(changeSet)) {
     throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
   }
   if (changeSet.operation === 'mergePath') {
-    applyMergeByPath(graph, changeSet.query, changeSet.value)
+    applyMergeByPath(graph as Node.ConcreteNode, changeSet.query, changeSet.value)
     return graph
   }
   if (changeSet.operation === 'mergeComponent') {
-    applyMergeByComponent(graph, changeSet.query, changeSet.value)
+    applyMergeByComponent(graph as Portgraph, changeSet.query, changeSet.value)
     return graph
   }
   if (changeSet.operation === 'mergeEdge') {

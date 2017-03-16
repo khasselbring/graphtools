@@ -8,13 +8,14 @@ import * as _ from 'lodash'
 import * as Port from './port'
 import * as Node from './node'
 
-interface DataflowEdge {
+export interface DataflowEdge {
   from: Port.Port
   to: Port.Port
   layer: 'dataflow'
   innerCompoundOutput?: boolean
   innerCompoundInput?: boolean
   type?: any
+  parent?: string[]
 }
 
 interface EdgeQuery {
@@ -25,19 +26,20 @@ interface EdgeQuery {
   innerCompoundInput?: boolean
 }
 
-interface NodeEdge {
-  from: Node.Node
-  to: Node.Node
+export interface NodeEdge {
+  from: string
+  to: string
   layer: string
   innerCompoundOutput?: boolean
   innerCompoundInput?: boolean
   type?: any
+  parent?: string[]
 }
 
-type ConcreteEdge = NodeEdge | DataflowEdge
-export type Edge = ConcreteEdge | EdgeQuery
+export type Edge = NodeEdge | DataflowEdge | (NodeEdge & DataflowEdge)
+export type BasicEdge = Edge | EdgeQuery
 
-function normalizeStructure (edge:Edge):ConcreteEdge {
+function normalizeStructure (edge:BasicEdge):Edge {
   if (!_.has(edge, 'from') || !_.has(edge, 'to')) {
     throw new Error('The edge format is not valid. You need to have a from and to value in.\n\n' + JSON.stringify(edge, null, 2) + '\n')
   }
@@ -90,7 +92,7 @@ function normalizeStructure (edge:Edge):ConcreteEdge {
  * @returns {Edge} The normalized form of the edge.
  * @throws {Error} An error is thrown if the edge is not in a consistent format.
  */
-export function normalize (edge:Edge):ConcreteEdge {
+export function normalize (edge:BasicEdge):Edge {
   var newEdge = normalizeStructure(edge)
   if (newEdge.layer === 'dataflow') {
     if (Port.node((<DataflowEdge>newEdge).from).length === 0) {
@@ -103,15 +105,15 @@ export function normalize (edge:Edge):ConcreteEdge {
   return newEdge
 }
 
-export function isEdgeToParent (edge:ConcreteEdge) {
+export function isEdgeToParent (edge:Edge) {
   return edge.innerCompoundInput
 }
 
-export function isInnerEdge (edge:ConcreteEdge) {
+export function isInnerEdge (edge:Edge) {
   return !edge.innerCompoundInput && !edge.innerCompoundOutput
 }
 
-export function isEdgeFromParent (edge:ConcreteEdge) {
+export function isEdgeFromParent (edge:Edge) {
   return edge.innerCompoundOutput
 }
 
@@ -121,7 +123,7 @@ export function isEdgeFromParent (edge:ConcreteEdge) {
  * @param {Edge} edge2 The second edge for the comparison.
  * @returns {boolean} True if the edges are equal (i.e. they connect the same ports), false otherwise.
  */
-export function equal (edge1:ConcreteEdge, edge2:ConcreteEdge) {
+export function equal (edge1:Edge, edge2:Edge) {
   if (edge1.layer === 'dataflow' && edge2.layer === 'dataflow') {
     const dFlowEdge1 = edge1 as DataflowEdge
     const dFlowEdge2 = edge2 as DataflowEdge
@@ -148,7 +150,7 @@ export function equal (edge1:ConcreteEdge, edge2:ConcreteEdge) {
  * @returns {Type|undefined} Either a real type, a typename or `undefined`. Some edges do not have type information. Usually non-dataflow edges like
  * recursion indicators. Those will yield `undefined`.
  */
-export function type (edge:ConcreteEdge) {
+export function type (edge:Edge) {
   return edge.type
 }
 
@@ -158,7 +160,7 @@ export function type (edge:ConcreteEdge) {
  * @param {Edge} edge The edge that should get the type.
  * @returns {Edge} A new edge that has a field for the type.
  */
-export function setType (type, edge:ConcreteEdge):ConcreteEdge {
+export function setType (type, edge:Edge):Edge {
   if (isBetweenPorts(edge)) {
     return merge(edge, {
       type,
@@ -186,7 +188,7 @@ export function isValid (edge):boolean {
  * @param {Edge} edge The edge to test
  * @returns {Boolean} True if the edge connects two ports, false otherwise.
  */
-export function isBetweenPorts (edge:ConcreteEdge):boolean {
+export function isBetweenPorts (edge:Edge):boolean {
   return typeof (edge) === 'object' &&
     Port.isValid(Object.assign({type: '-', kind: 'input'}, <any>edge.from)) &&
     Port.isValid(Object.assign({type: '-', kind: 'output'}, <any>edge.to))
@@ -197,6 +199,6 @@ export function isBetweenPorts (edge:ConcreteEdge):boolean {
  * @param {Edge} edge The edge to test
  * @returns {Boolean} True if the edge connects two nodes, false otherwise (e.g. if it is an edge between ports).
  */
-export function isBetweenNodes (edge:ConcreteEdge):boolean {
+export function isBetweenNodes (edge:Edge):boolean {
   return isValid(edge) && !isBetweenPorts(edge)
 }

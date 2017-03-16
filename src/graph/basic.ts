@@ -8,6 +8,8 @@ import isEqual from 'lodash/fp/isEqual'
 import {create} from '../compound'
 import {setMetaKey} from './meta.js'
 import {packageVersion} from '../internals'
+import {Portgraph} from './graph'
+import {Node} from '../node'
 
 /**
  * Creates a new graph that has the exact same nodes and edges.
@@ -24,14 +26,16 @@ export function clone (graph: Portgraph) {
  * @param {Portgraph} graph2 The other the graph to compare.
  * @returns {boolean} True if both graphs are structually equal, false otherwise.
  */
-export const equal = (graph1: Portgraph, graph2: Portgraph) => {
+export const equal = (graph1: Node, graph2: Node) => {
   return isEqual(graph1, graph2)
 }
+
+export const compound = create
 
 /**
  * Returns a new empty graph.
  * @returns {Portgraph} A new empty port graph.
  */
 export function empty () {
-  return setMetaKey('version', packageVersion(), create())
+  return setMetaKey('version', packageVersion())(create())
 }

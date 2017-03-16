@@ -12,7 +12,7 @@
 import curry from 'lodash/fp/curry'
 import * as _ from 'lodash'
 
-export type CompoundPath = [string]
+export type CompoundPath = string[]
 
 /**
  * Converts a compound path into its string representation. The seperate parts are divided by a '»'.
@@ -63,8 +63,8 @@ export function normalize (path :string|CompoundPath) {
  * @param {CompoundPath} rest The postfix of the new path.
  * @returns {CompoundPath} The new path in the form `<base>»<rest>`.
  */
-export function join (base :CompoundPath, rest :CompoundPath) {
-  if (!base) return rest
+export function join (base :CompoundPath, rest :CompoundPath|string) {
+  if (!base) return normalize(rest)
   return _.concat(normalize(base), normalize(rest))
 }
 

@@ -19,7 +19,7 @@
 import {curry, omit, zip, fromPairs, merge} from 'lodash/fp'
 import * as _ from 'lodash'
 import * as Port from './port'
-import {Edge} from './edge'
+import {Edge, NodeEdge, DataflowEdge} from './edge'
 import {children, isCompound, Compound} from './compound'
 import {create, id as nodeID} from './node'
 import * as semver from 'semver'
@@ -28,7 +28,7 @@ import isEqual from 'lodash/fp/isEqual'
 const OUTPUT = 'output'
 const INPUT = 'input'
 
-interface Component extends Compound {
+export interface Component extends Compound {
   componentId: string
 }
 
@@ -146,14 +146,23 @@ export function assertValid (comp) {
 }
 
 function mapEdgeIDs (map, edge:Edge) {
-  return <Edge>merge(edge, {
-    from: {
-      node: (map[edge.from.node]) ? map[edge.from.node] : edge.from.node
-    },
-    to: {
-      node: (map[edge.to.node]) ? map[edge.to.node] : edge.to.node
-    }
-  })
+  if (edge.layer === 'dataflow') {
+    const dEdge = edge as DataflowEdge
+    return <Edge>merge(edge, {
+      from: {
+        node: (map[dEdge.from.node]) ? map[dEdge.from.node] : dEdge.from.node
+      },
+      to: {
+        node: (map[dEdge.to.node]) ? map[dEdge.to.node] : dEdge.to.node
+      }
+    })
+  } else {
+    const nEdge = edge as NodeEdge
+    return <Edge>merge(nEdge, {
+      from: (map[nEdge.from]) ? map[nEdge.from] : edge.from,
+      to: (map[nEdge.to]) ? map[nEdge.to] : edge.to
+    })
+  }
 }
 
 /**

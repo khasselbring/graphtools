@@ -26,13 +26,13 @@ const nonConnected = (graph) => {
  * @return {Node[]} A sorting of the nodes given as an array of nodes.
  * @throws {Error} If the graph has loops.
  */
-export function topologicalSort (graph) {
+export function topologicalSort (graph:Node.Node):Node.Node[] {
   if (Node.inputPorts(graph).length > 0) {
     return topologicalSort(
       Graph.flow(Node.inputPorts(graph).map((p) => Compound.removePort(p)))(graph))
   }
   if (Graph.nodes(graph).length === 0) {
-    return []
+    return <Node.Node[]>[]
   }
   var nonConn = nonConnected(graph)
   if (nonConn.length === 0) {

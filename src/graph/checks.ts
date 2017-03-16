@@ -2,6 +2,7 @@
 import * as Graph from '../graph'
 import * as Path from '../compoundPath'
 import * as Node from '../node'
+import {Portgraph} from './graph'
 
 /**
  * Checks whether the locations have the same parent.
@@ -9,7 +10,7 @@ import * as Node from '../node'
  * @param {Portgraph} graph The graph
  * @returns {Boolean} True if they have the same parents, false otherwise.
  */
-function sameParentsNodes (nodes) {
+function sameParentsNodes (nodes:Node.Node[]) {
   const compParent = Path.parent(Node.path(nodes[0]))
   return nodes.every((n) => Path.equal(Path.parent(Node.path(n)), compParent))
 }
@@ -20,6 +21,6 @@ function sameParentsNodes (nodes) {
  * @param {Portgraph} graph The graph
  * @returns {Boolean} True if they have the same parents, false otherwise.
  */
-export function sameParents (locations, graph) {
+export function sameParents (locations:any[], graph:Node.Node) {
   return sameParentsNodes(locations.map((l) => Graph.node(l, graph)))
 }

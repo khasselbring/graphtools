@@ -5,6 +5,7 @@
 import {every, zip, has, find, merge, curry} from 'lodash/fp'
 import * as Port from './port'
 import cuid = require('cuid')
+import {Edge} from './edge'
 import {node as pathNode, isCompoundPath, equal as pathEqual, parent, CompoundPath} from './compoundPath'
 
 const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'node_' + cnt++ })() : cuid
@@ -28,6 +29,8 @@ export interface ConcreteNode {
   ports: [Port.Port]
   metaInformation?: any
   settings?: any
+  nodes?: Node[]
+  edges?: Edge[]
 }
 
 export type Node = ReferenceNode | ConcreteNode
