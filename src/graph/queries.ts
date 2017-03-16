@@ -11,7 +11,7 @@ import {Compound} from '../compound'
  * @param {PortGraph} graph The graph.
  * @returns {References[]} A list of all defined reference nodes in the graph.
  */
-export function references (graph:Portgraph):Node[] {
+export function references (graph:Node):Node[] {
   return nodesDeepBy(isReference, graph)
 }
 
@@ -20,8 +20,8 @@ export function references (graph:Portgraph):Node[] {
  * @param {PortGraph} graph The graph.
  * @returns {References[]} A list of all defined compound nodes in the graph.
  */
-export function compounds (graph:Portgraph):Compound[] {
-  return nodesDeepBy(isCompound, graph)
+export function compounds (graph:Node):Compound[] {
+  return nodesDeepBy(isCompound, graph) as Compound[]
 }
 
 /**
@@ -29,6 +29,6 @@ export function compounds (graph:Portgraph):Compound[] {
  * @param {PortGraph} graph The graph.
  * @returns {References[]} A list of all defined atomic nodes in the graph.
  */
-export function atomics (graph:Portgraph):Node[] {
+export function atomics (graph:Node):Node[] {
   return nodesDeepBy(isAtomic, graph)
 }

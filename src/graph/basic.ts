@@ -3,10 +3,9 @@
  * @overview Includes basic graph functions like creating a graph or cloning it.
  */
 
-import cloneObj from 'lodash/fp/clone'
-import isEqual from 'lodash/fp/isEqual'
+import {clone as cloneObj, isEqual} from 'lodash/fp'
 import {create} from '../compound'
-import {setMetaKey} from './meta.js'
+import {setMetaKey} from './meta'
 import {packageVersion} from '../internals'
 import {Portgraph} from './graph'
 import {Node} from '../node'
@@ -36,6 +35,6 @@ export const compound = create
  * Returns a new empty graph.
  * @returns {Portgraph} A new empty port graph.
  */
-export function empty () {
-  return setMetaKey('version', packageVersion())(create())
+export function empty ():Portgraph {
+  return Object.assign({components: []}, setMetaKey('version', packageVersion())(create())) as Portgraph
 }

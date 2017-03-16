@@ -9,7 +9,6 @@
  * okay to omit the `»`, i.e. `»A` is the same as `A`.
  * @module CompoundPath */
 
-import curry from 'lodash/fp/curry'
 import * as _ from 'lodash'
 
 export type CompoundPath = string[]

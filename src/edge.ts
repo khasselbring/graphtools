@@ -2,8 +2,7 @@
  * Accessible via `require('@buggyorg/graphtools').Edge`
  * @module Edge */
 
-import curry from 'lodash/fp/curry'
-import merge from 'lodash/fp/merge'
+import {curry, merge} from 'lodash/fp'
 import * as _ from 'lodash'
 import * as Port from './port'
 import * as Node from './node'

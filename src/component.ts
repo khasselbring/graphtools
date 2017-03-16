@@ -21,7 +21,7 @@ import * as _ from 'lodash'
 import * as Port from './port'
 import {Edge, NodeEdge, DataflowEdge} from './edge'
 import {children, isCompound, Compound} from './compound'
-import {create, id as nodeID} from './node'
+import {create, id as nodeID, Node} from './node'
 import * as semver from 'semver'
 import isEqual from 'lodash/fp/isEqual'
 

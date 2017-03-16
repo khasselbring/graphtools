@@ -17,17 +17,7 @@ describe('Basic graph functions', () => {
     expect(semver.valid((<any>Graph.meta(graph)).version)).to.be.ok
   })
 
-  it.skip('clones a graph', () => {
-    var graph = Graph.empty()
-    graph.arr = []
-    var newGraph = Graph.clone(graph)
-    newGraph.arr.push(1)
-    expect(graph.arr).to.have.length(0)
-    expect(newGraph.arr).to.have.length(1)
-    expect.fail('strange test...')
-  })
-
-  it('imports a graph from json', () => {
+  it.only('imports a graph from json', () => {
     var graphJSON = {
       id: '#id',
       nodes: [{id: '#a', ports: [{port: 'b', kind: 'output', type: 'a'}]}, {id: '#b', ports: [{port: 'b', kind: 'input', type: 'c'}]}],

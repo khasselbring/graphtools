@@ -1,12 +1,5 @@
 
-import find from 'lodash/fp/find'
-import curry from 'lodash/fp/curry'
-import merge from 'lodash/fp/merge'
-import map from 'lodash/fp/map'
-import flatten from 'lodash/fp/flatten'
-import compact from 'lodash/fp/compact'
-import groupBy from 'lodash/fp/groupBy'
-import toPairs from 'lodash/fp/toPairs'
+import {find, curry, merge, map, flatten, compact, groupBy, toPairs} from 'lodash/fp'
 import * as Port from '../port'
 import * as Node from '../node'
 import * as Edge from '../edge'
@@ -47,8 +40,8 @@ export function edgesDeep (graph:Node.Node):Edge.Edge[] {
 export function edges (graph:Portgraph) {
   return ((<Node.ConcreteNode>graph).edges || <Edge.Edge[]>[])
     .map((edge) =>
-      (edge.layer === 'dataflow' && hasPort(edge.from, graph))
-        ? Edge.setType(Port.type(port(edge.from, graph)), edge)
+      (edge.layer === 'dataflow' && hasPort(edge.from as Port.Port, graph))
+        ? Edge.setType(Port.type(port(edge.from as Port.Port, graph)), edge)
         : edge)
 }
 
@@ -175,7 +168,7 @@ function addEdgeToCompound (edge:Edge.Edge, graph:Node.Node):Node.Node {
   } else {
     var comp = node(parent, graph)
     var newComp = changeSet.applyChangeSet(comp, cs)
-    return replaceNode(parent, newComp, graph)
+    return replaceNode(parent, newComp)(graph)
   }
 }
 
@@ -223,7 +216,7 @@ export function removeEdge (edge:Edge.Edge) {
     } else {
       var comp = node(parent, graph)
       var newComp = changeSet.applyChangeSet(comp, cs)
-      return cb(normEdge, replaceNode(parent, newComp, graph))
+      return cb(normEdge, replaceNode(parent, newComp)(graph))
     }
   }) as GraphAction
 }
@@ -332,5 +325,5 @@ export function realizeEdgesForNode (loc:Location, graph:Portgraph) {
   const cs = edges.map((e) => [e.parent, changeSet.updateEdge(e, realizeEdge(e, nodeElem))])
   return toPairs(groupBy((a) => a[0], cs))
     .map((v) => [v[0], v[1].map((i) => i[1])])
-    .reduce((gr, c) => replaceNode(c[0], changeSet.applyChangeSets(node(c[0], gr), c[1]), gr), graph)
+    .reduce((gr, c) => replaceNode(c[0], changeSet.applyChangeSets(node(c[0], gr) as Portgraph, c[1]))(gr), graph)
 }

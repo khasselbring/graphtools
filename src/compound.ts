@@ -1,10 +1,6 @@
 /** @module Compound */
 
-import omit from 'lodash/fp/omit'
-import merge from 'lodash/fp/merge'
-import curry from 'lodash/fp/curry'
-import negate from 'lodash/fp/negate'
-// import {isReference, id as nodeID, hasPort, inputPorts, outputPorts, ports, component} from './node'
+import {omit, merge, curry, negate} from 'lodash/fp'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Port from './port'
@@ -62,7 +58,7 @@ export function id (node:Compound) {
  * @param {function} nodeSetPath A function that sets the path for a node.
  * @returns {Compound} The new compound with updated paths.
  */
-export function setPath (node:Node.ConcreteNode, path:CompoundPath, nodeSetPath: (Node, CompoundPath) => Node) {
+export function setPath (node:Node.ConcreteNode, path:CompoundPath, nodeSetPath: (Node, CompoundPath) => Node.Node) {
   return _.merge({}, node,
     {path},
     // I think `nodeSetPath` is only used due to the fear of importing ./node.js here and ./compound.js in ./node.js (cyclic reference...)

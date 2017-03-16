@@ -16,7 +16,7 @@ import {predecessors} from './graph/connections'
  */
 export function graphLayerToString (compound:Node) {
   return 'digraph {\n' + nodes(compound).reduce((str, n) =>
-    str + '\n' + predecessors(n, compound).map((p) => '"' + node(p, compound).componentId + '" -> "' + component(n) + '"').join('\n')
+    str + '\n' + predecessors(n, compound).map((p) => '"' + component(node(p, compound))+ '" -> "' + component(n) + '"').join('\n')
     , '') + '\n}'
 }
 

@@ -1,6 +1,6 @@
 
 import * as changeSet from '../changeSet'
-import curry from 'lodash/fp/curry'
+import {curry} from 'lodash/fp'
 import {Node} from '../node'
 import {GraphAction} from './graphaction'
 import {flowCallback} from './flow'

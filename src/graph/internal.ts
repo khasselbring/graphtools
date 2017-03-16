@@ -5,12 +5,7 @@
  * If you know what you are doing you can include them via `import * as GraphInternals from '@buggyorg/graphtools/graph/internal'`.
  */
 
-import curry from 'lodash/fp/curry'
-import flatten from 'lodash/fp/flatten'
-import pick from 'lodash/fp/pick'
-import set from 'lodash/fp/set'
-import omit from 'lodash/fp/omit'
-import merge from 'lodash/fp/merge'
+import {curry, flatten, pick, set, omit, merge} from 'lodash/fp'
 import * as Node from '../node'
 import {equal as pathEqual, isRoot, relativeTo, join, CompoundPath} from '../compoundPath'
 import {setPath as compoundSetPath, hasChildren} from '../compound'
@@ -113,14 +108,16 @@ function replaceEdgeIDs (edges: Edge[], id:string, replaceId:string) {
  * @param {Callback} [cb] A callback function that is called with the newly inserted node.
  * @returns {PortGraph} The new graph with the merged nodes.
  */
-export const mergeNodes = curry((oldNode, newNode, graph, ...cbs) => {
-  const cb = flowCallback(cbs)
-  var path = idToPath(newNode.id, graph)
-  var mergeGraph = changeSet.applyChangeSet(graph,
-    changeSet.updateNode(relativeTo(path, graph.path), merge(
-      pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id)})))
-  return cb(nodeByPath(path, graph), mergeGraph)
-})
+export function mergeNodes (oldNode, newNode):GraphAction {
+  return (graph, ...cbs) => {
+    const cb = flowCallback(cbs)
+    var path = idToPath(newNode.id, graph)
+    var mergeGraph = changeSet.applyChangeSet(graph,
+      changeSet.updateNode(relativeTo(path, graph.path), merge(
+        pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id)})))
+    return cb(nodeByPath(path, graph), mergeGraph)
+  }
+}
 
 /**
  * Updates all pathes in the graph.

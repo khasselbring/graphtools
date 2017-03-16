@@ -1,9 +1,7 @@
-import find from 'lodash/fp/find'
-import curry from 'lodash/fp/curry'
-import omit from 'lodash/fp/omit'
+import {find, curry, omit} from 'lodash/fp'
 import * as Component from '../component'
 import * as changeSet from '../changeSet'
-import {ConcreteNode} from '../node'
+import {ConcreteNode, id} from '../node'
 import {Portgraph} from './graph'
 import {GraphAction} from './graphaction'
 import {flowCallback} from './flow'
@@ -69,7 +67,11 @@ function checkComponent (graph:Portgraph, comp) {
  * @returns {GraphAction} The graph action that adds the component
  */
 export function addComponent (comp):GraphAction {
-  return (graph, ...cbs) => {
+  return (inGraph, ...cbs) => {
+    if (!(<any>inGraph).components) {
+      throw new Error('Adding components to non root element is not possible. Tried adding components to: ' + id(inGraph))
+    }
+    const graph = inGraph as Portgraph
     const cb = flowCallback(cbs)
     if (hasComponent(comp, graph)) {
       throw new Error('Cannot add already existing component: ' + Component.id(comp))
@@ -98,13 +100,17 @@ export function removeComponent (comp):GraphAction {
  * @param {PortGraph} graph The graph
  */
 export function updateComponent (comp, merge):GraphAction {
-  return (graph, ...cbs) => {
+  return (inGraph, ...cbs) => {
+    if (!(<any>inGraph).components) {
+      throw new Error('Adding components to non root element is not possible. Tried adding components to: ' + id(inGraph))
+    }
+    const graph = inGraph as Portgraph
     const cb = flowCallback(cbs)
     if (!hasComponent(comp, graph)) {
       throw new Error('Cannot update non existing component: "' + Component.id(comp) + '"')
     }
     const newGraph = changeSet.applyChangeSet(graph,
-      changeSet.updateComponent(Component.id(comp), omit('componentId', merge)))
+      changeSet.updateComponent(Component.id(comp), omit('componentId', merge))) as Portgraph
     const upComp = component(comp, newGraph)
     return cb(upComp, newGraph)
   }

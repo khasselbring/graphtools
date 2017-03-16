@@ -211,7 +211,7 @@ const applyMergeByComponent = (graph:Portgraph, cId, value) => {
   return _.merge(graph.components[idx], value)
 }
 
-const applyMergeByEdge = (graph:Node.Node, edge, value) => {
+const applyMergeByEdge = (graph:Node.ConcreteNode, edge, value) => {
   var idx = _.findIndex(graph.edges, (e) => Edge.equal(edge, e))
   return _.merge(graph.edges[idx], value)
 }
@@ -261,7 +261,7 @@ export function applyChangeSetInplace (graph:Node.Node, changeSet:ChangeSet) {
     return graph
   }
   if (changeSet.operation === 'mergeEdge') {
-    applyMergeByEdge(graph, changeSet.query, changeSet.value)
+    applyMergeByEdge(graph as Node.ConcreteNode, changeSet.query, changeSet.value)
     return graph
   }
   var refs = getReferences(graph, changeSet)

@@ -1,7 +1,4 @@
-import flatten from 'lodash/fp/flatten'
-import chunk from 'lodash/fp/chunk'
-import curry from 'lodash/fp/curry'
-import last from 'lodash/fp/last'
+import {flatten, chunk, curry, last} from 'lodash/fp'
 import {empty} from './basic'
 import {debug} from '../debug'
 import {Portgraph} from './graph'
@@ -137,7 +134,7 @@ function parallel (fns:GraphAction[]) {
  * // and the graph (i.e. it calls `Graph.removeNode(newNode, newGraph)`)
  * sequential([Graph.addNode({...}), Graph.removeNode])(graph)
  */
-export function sequential (fns:GraphAction[], opt:number = 0, cb?:GraphCallback) {
+export function sequential (fns:Function[], opt:number = 0, cb?:GraphCallback) {
   if (fns.length === 0) return cb || flowCallback()
   if (typeof (fns[0]) !== 'function') throw new Error('[graphtools-sequential] Argument in sequence at position ' + (opt + 1) + ' is not a callable. Make sure to use curried functions.')
   return (...args) => {

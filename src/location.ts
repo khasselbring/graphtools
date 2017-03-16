@@ -6,8 +6,7 @@
  * - port object.
  */
 
-import curry from 'lodash/fp/curry'
-import merge from 'lodash/fp/merge'
+import {curry, merge} from 'lodash/fp'
 import {nodeByPath, idToPath, nodes} from './graph/internal'
 import {Portgraph} from './graph/graph'
 import {isPort, Port} from './port'
@@ -181,7 +180,7 @@ export function location (loc:any, graph:Node):Location {
     return fullLocation(fromString(loc), graph)
   } else if (Array.isArray(loc)) {
     return fullLocation(<PathLocation>{type: 'location', locType: 'node', path: loc}, graph)
-  } else if (isPortLocation(loc)) {
+  } else if (isPort(loc)) {
     const portLoc = loc as PortLocation
     var locObj = location(portLoc.node, graph)
     var merged = (locObj.type === 'query')

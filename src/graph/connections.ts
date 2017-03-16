@@ -1,8 +1,5 @@
 
-import find from 'lodash/fp/find'
-import map from 'lodash/fp/map'
-import curry from 'lodash/fp/curry'
-import merge from 'lodash/fp/merge'
+import {find, map, curry, merge} from 'lodash/fp'
 import * as Edge from '../edge'
 import {edgesDeep} from './edge'
 import {query} from '../location'
@@ -96,7 +93,7 @@ export function predecessor (target, graph:Node, goIntoCompounds = false) {
  */
 export function inIncidents (target, graph:Node, goIntoCompounds = false) {
   return edgesDeep(graph).filter((e) => pointsTo(target)(graph, e) &&
-    (goIntoCompounds || hasPort(target, graph) || kind(port(e.to, graph)) === 'input'))
+    (goIntoCompounds || hasPort(target, graph) || kind(port(e.to as Port, graph)) === 'input'))
 }
 
 /**
@@ -123,7 +120,7 @@ export function inIncident (target, graph:Node, goIntoCompounds = false) {
  */
 export function outIncidents (source, graph:Node, goIntoCompounds = false) {
   return edgesDeep(graph).filter((e) => isFrom(source)(graph, e) &&
-    (goIntoCompounds || hasPort(source, graph) || kind(port(e.from, graph)) === 'output'))
+    (goIntoCompounds || hasPort(source, graph) || kind(port(e.from as Port, graph)) === 'output'))
 }
 
 /**

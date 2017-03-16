@@ -1,6 +1,5 @@
 
-import cloneDeep from 'lodash/fp/cloneDeep'
-import merge from 'lodash/fp/merge'
+import {cloneDeep, merge} from 'lodash/fp'
 import {nodesDeep} from './node'
 import {edgesDeep, checkEdge} from './edge'
 import {assertValid} from '../node'

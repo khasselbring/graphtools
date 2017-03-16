@@ -5,8 +5,7 @@
  * The port format is a unique identifier for the port and its node unlike the port name.
  * @module Port */
 
-import curry from 'lodash/fp/curry'
-import merge from 'lodash/fp/merge'
+import {curry, merge} from 'lodash/fp'
 import * as _ from 'lodash'
 
 

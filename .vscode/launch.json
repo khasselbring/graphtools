@@ -19,6 +19,22 @@
       "console": "internalConsole",
       "sourceMaps": true,
       "smartStep": true
+    },
+    {
+      "name": "Mocha Single",
+      "type": "node",
+      "request": "launch",
+      "protocol": "inspector",
+      "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+      "cwd": "${workspaceRoot}",
+      "args": ["test/graph/basic.ts", "--require", "ts-node/register"],
+      "env": {
+        "NODE_ENV": "development",
+        "NODE_IDS": "yes"
+      },
+      "console": "internalConsole",
+      "sourceMaps": true,
+      "smartStep": true
     }
   ]
 }
