@@ -1,30 +1,24 @@
 /** @module Compound */
 
-import {omit, merge, curry, negate} from 'lodash/fp'
+import { omit, merge, curry, negate } from 'lodash/fp'
 import * as Node from './node'
 import * as Edge from './edge'
 import * as Port from './port'
-import {flowCallback} from './graph/flow'
-import {edgesDeep, removeEdge} from './graph/edge'
-import {pointsTo, isFrom, predecessor} from './graph/connections'
-import {nodes, node} from './graph/node'
-import {CompoundPath} from './compoundPath'
+import { flowCallback } from './graph/flow'
+import { edgesDeep, removeEdge } from './graph/edge'
+import { pointsTo, isFrom, predecessor } from './graph/connections'
+import { nodes, node } from './graph/node'
+import { CompoundPath } from './compoundPath'
 import * as _ from 'lodash'
 import cuid = require('cuid')
-import {GraphAction} from './graph/graphaction'
-
-export interface Compound extends Node.ConcreteNode {
-  nodes: Node.Node[]
-  edges: Edge.Edge[]
-  isRecursion: boolean
-}
+import { GraphAction } from './graph/graphaction'
 
 /**
  * Checks whether a node is a compound node.
  * @param {Node} node The node.
  * @returns {boolean} True if the node is a compound node, false otherwise.
  */
-export function isCompound (node:Node.Node) {
+export function isCompound(node: Node.Node) {
   return !Node.isReference(node) && !(<any>node).atomic && !!(<any>node).nodes && !!(<any>node).edges
 }
 
@@ -35,9 +29,9 @@ export function isCompound (node:Node.Node) {
  * @params {Node} node The node that should be tested
  * @returns {boolean} True if it is a recursion node, false otherwise.
  */
-export function isRecursion (node:Node.Node) {
+export function isRecursion(node: Node.Node) {
   // might change in the future...
-  return isCompound(node) && (<Compound>node).isRecursion
+  return isCompound(node) && (<Node.Compound>node).isRecursion
 }
 
 /**
@@ -45,7 +39,7 @@ export function isRecursion (node:Node.Node) {
  * @param {Compound} node The compound node
  * @returns {String} The id of the compound.
  */
-export function id (node:Compound) {
+export function id(node: Node.Compound) {
   if (node.id) {
     return Node.id(node)
   } else return null
@@ -58,12 +52,12 @@ export function id (node:Compound) {
  * @param {function} nodeSetPath A function that sets the path for a node.
  * @returns {Compound} The new compound with updated paths.
  */
-export function setPath (node:Node.ConcreteNode, path:CompoundPath, nodeSetPath: (Node, CompoundPath) => Node.Node) {
+export function setPath(node: Node.Compound, path: CompoundPath, nodeSetPath: (Node, CompoundPath) => Node.Node) {
   return _.merge({}, node,
-    {path},
+    { path },
     // I think `nodeSetPath` is only used due to the fear of importing ./node.js here and ./compound.js in ./node.js (cyclic reference...)
-    {nodes: node.nodes.map((n) => nodeSetPath(n, path))},
-    {edges: (node.edges || [])}
+    { nodes: node.nodes.map((n) => nodeSetPath(n, path)) },
+    { edges: (node.edges || []) }
   )
 }
 
@@ -74,8 +68,7 @@ const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'comp_
  * @params {Node} node An optional node template that contains the name and ports of the compound.
  * @returns {Compound} The compound representing the given node.
  */
-export function create (node?:any):Compound {
-  node = node || {}
+export function create(node?: Node.Node): Node.Compound {
   return _.merge({
     nodes: [],
     metaInformation: {},
@@ -84,8 +77,9 @@ export function create (node?:any):Compound {
     path: [],
     ports: [],
     atomic: false,
-    id: '#' + newID()
-  }, node)
+    id: '#' + newID(),
+    isRecursion: false
+  }, node || {})
 }
 
 /**
@@ -101,8 +95,8 @@ export const inputPorts = Node.inputPorts
 export const outputPorts = Node.outputPorts
 export const component = Node.component
 
-const getPort = (portOrString, node:Node.Node):Port.Port =>
-  (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : merge({node: node.id}, portOrString)
+const getPort = (portOrString, node: Node.Node): Port.Port =>
+  (typeof (portOrString) === 'string') ? Port.create(node, portOrString, null) : merge({ node: node.id }, portOrString)
 
 /**
  * @description Rename a port and return the new node.
@@ -112,13 +106,15 @@ const getPort = (portOrString, node:Node.Node):Port.Port =>
  * @returns {Compound} The node with the renamed port. The componentId will be removed, as it is not
  * an implementation of the component anymore.
  */
-export function renamePort (port:Port.Port|string, newName:string, node:Compound):Compound {
+export function renamePort(port: Port.Port | string, newName: string, node: Node.Compound): Node.Compound {
   const portObj = getPort(port, node)
-  return omit('componentId', merge(node, {ports: node.ports.map((p) => {
-    if (Port.equal(portObj, p)) {
-      return merge(p, {port: newName})
-    } else return p
-  })}))
+  return omit('componentId', merge(node, {
+    ports: node.ports.map((p) => {
+      if (Port.equal(portObj, p)) {
+        return merge(p, { port: newName })
+      } else return p
+    })
+  }))
 }
 
 /**
@@ -128,18 +124,18 @@ export function renamePort (port:Port.Port|string, newName:string, node:Compound
  * @returns {Node} The node without the given port. The componentId will be removed, as it is not
  * an implementation of the component anymore.
  */
-export function removePort (port:Port.Port|string):GraphAction {
+export function removePort(port: Port.Port | string): GraphAction {
   return (node, ...cbs) => {
     const cb = flowCallback(cbs)
     const portObj = getPort(port, node)
     var portEdges = edgesDeep(node).filter((e) => pointsTo(portObj)(node, e) || isFrom(portObj)(node, e))
     var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge)(cmp), node as Node.Node)
     return cb(newNode, merge(omit(['ports', 'componentId'], newNode),
-      {ports: Node.ports(newNode).filter(negate((p) => Port.equal(portObj, p)))}))
+      { ports: Node.ports(newNode).filter(negate((p) => Port.equal(portObj, p))) }))
   }
 }
 
-const addPort = (port:string|Port.Port, kind:Port.PortKind, node:Node.Node):Node.Node => {
+export function addPort (port: string | Port.Port, kind: Port.PortKind, node: Node.Node): Node.Node {
   if (hasPort(port, node)) {
     if (typeof (port) === 'string') {
       throw new Error('Cannot add already existing port ' + port + ' to node.')
@@ -149,14 +145,14 @@ const addPort = (port:string|Port.Port, kind:Port.PortKind, node:Node.Node):Node
   }
   if (typeof (port) === 'string') {
     return omit('componentId',
-      merge(node, {ports: node.ports.concat([Port.create(node.id, port, kind)])}))
+      merge(node, { ports: node.ports.concat([Port.create(node.id, port, kind)]) }))
   }
   if (port.type) {
     return omit('componentId',
-      merge(node, {ports: node.ports.concat([Port.create(node.id, port.port, kind, port.type)])}))
+      merge(node, { ports: node.ports.concat([Port.create(node.id, port.port, kind, port.type)]) }))
   } else {
     return omit('componentId',
-      merge(node, {ports: node.ports.concat([Port.create(node.id, port.port, kind)])}))
+      merge(node, { ports: node.ports.concat([Port.create(node.id, port.port, kind)]) }))
   }
 }
 
@@ -166,7 +162,7 @@ const addPort = (port:string|Port.Port, kind:Port.PortKind, node:Node.Node):Node
  * @returns {boolean} True if it has children, false otherwise.
  */
 export function hasChildren (node:Node.Node) {
-  return !Node.get('hideChildren', node) && (<any>node).nodes && Array.isArray((<Node.ConcreteNode>node).nodes)
+  return !Node.get('hideChildren', node) && (<any>node).nodes && Array.isArray((<Node.ParentNode>node).nodes)
 }
 
 /**
@@ -176,7 +172,7 @@ export function hasChildren (node:Node.Node) {
  * @returns {Compound} A new node with the given port.
  * @throws {Error} If the node already has a port with that name.
  */
-export function addInputPort (port:Port.Port|string):GraphAction {
+export function addInputPort(port: Port.Port | string): GraphAction {
   return (node, ...cbs) => {
     const cb = flowCallback(cbs)
     const portObj = getPort(port, node)
@@ -191,7 +187,7 @@ export function addInputPort (port:Port.Port|string):GraphAction {
  * @returns {Compound} A new node with the given port.
  * @throws {Error} If the node already has a port with that name.
  */
-export function addOutputPort (port:Port.Port|string):GraphAction {
+export function addOutputPort(port: Port.Port | string): GraphAction {
   return (node, ...cbs) => {
     const cb = flowCallback(cbs)
     const portObj = getPort(port, node)
@@ -199,7 +195,7 @@ export function addOutputPort (port:Port.Port|string):GraphAction {
   }
 }
 
-function checkStructureEquality (compound1:Compound, compound2:Compound) {
+function checkStructureEquality(compound1: Node.Compound, compound2: Node.Compound) {
   if (!Node.inputPorts(compound1).every((p) => Node.hasInputPort(p, compound2))) {
     return false
   }
@@ -238,7 +234,7 @@ function checkStructureEquality (compound1:Compound, compound2:Compound) {
  * @param {Portgraph} graph2 The other one of the graphs
  * @returns {Boolean} True if the graphs are stucturally equal, false otherwise.
  */
-export function isomorph (graph1, graph2) {
+export function isomorph(graph1, graph2) {
   if (!isCompound(graph1) === isCompound(graph2)) return false
   if (isCompound(graph1)) {
     if (!checkStructureEquality(graph1, graph2)) return false

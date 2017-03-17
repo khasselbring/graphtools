@@ -5,16 +5,16 @@
  * If you know what you are doing you can include them via `import * as GraphInternals from '@buggyorg/graphtools/graph/internal'`.
  */
 
-import {curry, flatten, pick, set, omit, merge} from 'lodash/fp'
+import { curry, flatten, pick, set, omit, merge } from 'lodash/fp'
 import * as Node from '../node'
-import {equal as pathEqual, isRoot, relativeTo, join, CompoundPath} from '../compoundPath'
-import {setPath as compoundSetPath, hasChildren} from '../compound'
+import { equal as pathEqual, isRoot, relativeTo, join, CompoundPath } from '../compoundPath'
+import { setPath as compoundSetPath, hasChildren } from '../compound'
 import * as changeSet from '../changeSet'
-import {Portgraph} from './graph'
-import {GraphAction} from './graphaction'
-import {flowCallback} from './flow'
-import {Port} from '../port'
-import {Edge, DataflowEdge, NodeEdge} from '../edge'
+import { Portgraph } from './graph'
+import { GraphAction } from './graphaction'
+import { flowCallback } from './flow'
+import { Port } from '../port'
+import { Edge, DataflowEdge, NodeEdge } from '../edge'
 
 /**
  * @description Returns a list of nodes on the root level.
@@ -22,15 +22,15 @@ import {Edge, DataflowEdge, NodeEdge} from '../edge'
  * @param {function} [predicate] An optional function that filters nodes. If no predicate function is given, all nodes are returned.
  * @returns {Nodes[]} A list of nodes.
  */
-export function nodes (graph:Node.Node) {
-  return (<any>graph).nodes ? (<Node.ConcreteNode>graph).nodes : <Node.Node[]>[]
+export function nodes(graph: Node.Node) {
+  return (<Node.ParentNode>graph).nodes ? (<Node.ParentNode>graph).nodes : []
 }
 
-function nodesDeepRec (graph:Node.Node, parents:Node.Node[]):Node.Node[] {
+function nodesDeepRec(graph: Node.Node, parents: Node.Node[]): Node.Node[] {
   return flatten(parents.map(nodesDeepInternal))
 }
 
-function nodesDeepInternal (graph:Node.Node) {
+function nodesDeepInternal(graph: Node.Node) {
   return nodes(graph)
     .concat(nodesDeepRec(graph, nodes(graph)))
 }
@@ -41,7 +41,7 @@ function nodesDeepInternal (graph:Node.Node) {
  * @param {PortGraph} graph The graph to work on
  * @returns {Node[]} A list of nodes.
  */
-export function nodesDeep (graph:Node.Node) {
+export function nodesDeep(graph: Node.Node) {
   return nodesDeepInternal(graph).concat([graph])
 }
 
@@ -51,11 +51,11 @@ export function nodesDeep (graph:Node.Node) {
  * @param {PortGraph} graph The graph
  * @returns {Node|undefined} The node or undefined if the path does not exist.
  */
-export function nodeByPath (path:CompoundPath, graph:Node.Node) {
+export function nodeByPath(path: CompoundPath, graph: Node.Node) {
   if (!path) return
   if (isRoot(path)) return graph
   return nodeBy((n) => pathEqual(path, n.path), graph)
-//  return nodeByPathRec(graph, path, path)
+  //  return nodeByPathRec(graph, path, path)
 }
 
 /**
@@ -64,7 +64,7 @@ export function nodeByPath (path:CompoundPath, graph:Node.Node) {
  * @param {PortGraph} graph The graph
  * @returns {Node|undefined} The first node that matches the predicate.
  */
-export function nodeBy (fn:(node: Node.Node) => boolean, graph:Node.Node) {
+export function nodeBy(fn: (node: Node.Node) => boolean, graph: Node.Node) {
   return nodesDeep(graph).filter(fn)[0]
 }
 
@@ -75,17 +75,17 @@ export function nodeBy (fn:(node: Node.Node) => boolean, graph:Node.Node) {
  * @param {PortGraph} graph The graph to search in
  * @returns {CompoundPath|null} The path to the node with the given ID.
  */
-export function idToPath (id:string, graph:Node.Node) {
+export function idToPath(id: string, graph: Node.Node) {
   // return graph.__internals.idMap[id] // speed up search by creating a idMap cache
   return nodesDeep(graph).find((n) => n.id === id).path
 }
 
-function replacePortIDs (port:Port, id:string, replaceId:string) {
+function replacePortIDs(port: Port, id: string, replaceId: string) {
   if (port.node === replaceId) return set('node', id, port) as Port
   else return port
 }
 
-function replaceEdgeIDs (edges: Edge[], id:string, replaceId:string) {
+function replaceEdgeIDs(edges: Edge[], id: string, replaceId: string) {
   return edges.map((edge) => {
     if (edge.layer === 'dataflow') {
       const dEdge = edge as DataflowEdge
@@ -108,13 +108,13 @@ function replaceEdgeIDs (edges: Edge[], id:string, replaceId:string) {
  * @param {Callback} [cb] A callback function that is called with the newly inserted node.
  * @returns {PortGraph} The new graph with the merged nodes.
  */
-export function mergeNodes (oldNode, newNode):GraphAction {
+export function mergeNodes(oldNode, newNode): GraphAction {
   return (graph, ...cbs) => {
     const cb = flowCallback(cbs)
     var path = idToPath(newNode.id, graph)
     var mergeGraph = changeSet.applyChangeSet(graph,
       changeSet.updateNode(relativeTo(path, graph.path), merge(
-        pick(['id', 'name', 'path'], oldNode), {edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id)})))
+        pick(['id', 'name', 'path'], oldNode), { edges: replaceEdgeIDs(newNode.edges || [], oldNode.id, newNode.id) })))
     return cb(nodeByPath(path, graph), mergeGraph)
   }
 }
@@ -129,7 +129,7 @@ export const rePath = (graph) => {
   return rePathRec(graph.path, graph)
 }
 
-function rePathRec (basePath:CompoundPath, graph:Node.Node) {
+function rePathRec(basePath: CompoundPath, graph: Node.Node) {
   nodes(graph).forEach((n) => {
     var newPath = join(basePath, Node.id(n))
     n.path = newPath
@@ -140,20 +140,20 @@ function rePathRec (basePath:CompoundPath, graph:Node.Node) {
   return graph
 }
 
-function setPath (node:Node.Node, path:CompoundPath) {
+function setPath(node: Node.Node, path: CompoundPath) {
   var nodePath = join(path, Node.id(node))
   if (hasChildren(node)) {
     return compoundSetPath(node as Node.ConcreteNode, nodePath, setPath)
   }
-  return merge(node, {path: nodePath})
+  return merge(node, { path: nodePath })
 }
 
-export const unID = (node:Node.Node) => {
+export const unID = (node: Node.Node) => {
   return omit(['id', 'path'], node)
 }
 
-export function addNodeInternal (node:Node.Node, checkNode:(graph: Portgraph, node:Node.Node) => void) {
-  return <GraphAction>((graph:Portgraph, ...cbs) => {
+export function addNodeInternal(node: Node.Node, checkNode: (graph: Portgraph, node: Node.Node) => void) {
+  return <GraphAction>((graph: Portgraph, ...cbs) => {
     const cb = flowCallback(cbs)
     var newNode = setPath(Node.create(unID(node)), Node.path(graph))
     checkNode(graph, newNode)

@@ -66,7 +66,7 @@ function checkComponent (graph:Portgraph, comp) {
  * @param {Component} comp The component object that should be added.
  * @returns {GraphAction} The graph action that adds the component
  */
-export function addComponent (comp):GraphAction {
+export function addComponent (comp: Component.Component):GraphAction {
   return (inGraph, ...cbs) => {
     if (!(<any>inGraph).components) {
       throw new Error('Adding components to non root element is not possible. Tried adding components to: ' + id(inGraph))

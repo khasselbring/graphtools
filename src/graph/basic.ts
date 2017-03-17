@@ -1,4 +1,3 @@
-/// <reference path="graph.ts" />
 /**
  * @overview Includes basic graph functions like creating a graph or cloning it.
  */

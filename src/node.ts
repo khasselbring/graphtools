@@ -2,11 +2,11 @@
  * Accessible via `require('@buggyorg/graphtools').Node`
  * @module Node */
 
-import {every, zip, has, find, merge, curry} from 'lodash/fp'
+import { every, zip, has, find, merge, curry } from 'lodash/fp'
 import * as Port from './port'
 import cuid = require('cuid')
-import {Edge} from './edge'
-import {node as pathNode, isCompoundPath, equal as pathEqual, parent, CompoundPath} from './compoundPath'
+import { Edge } from './edge'
+import { node as pathNode, isCompoundPath, equal as pathEqual, parent, CompoundPath } from './compoundPath'
 
 const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'node_' + cnt++ })() : cuid
 
@@ -14,7 +14,7 @@ export interface ReferenceNode {
   ref: string
   id?: string
   name?: string
-  ports?: [Port.Port]
+  ports?: Port.Port[]
   metaInformation?: any
   settings?: any
   path?: CompoundPath
@@ -26,14 +26,38 @@ export interface ConcreteNode {
   componentId?: string
   path?: CompoundPath
   atomic?: boolean
-  ports: [Port.Port]
+  ports: Port.Port[]
   metaInformation?: any
   settings?: any
-  nodes?: Node[]
-  edges?: Edge[]
+}
+
+export interface AtomicNode extends ConcreteNode {
+  atomic: true
+}
+
+export interface Compound extends ConcreteNode {
+  nodes: Node[]
+  edges: Edge[]
+  isRecursion: boolean
+}
+
+export interface LambdaNode extends AtomicNode {
+  nodes: Node[]
 }
 
 export type Node = ReferenceNode | ConcreteNode
+
+/**
+ * A node that contains nodes.
+ */
+export type ParentNode = Node & { nodes: Node[] }
+
+/**
+ * A node without an ID.
+ */
+export type ProtoNode = Node & {
+  id?: null
+}
 
 /**
  * Creates a normalized node object. It makes sure, that the node has all necessary information like an id
@@ -41,11 +65,11 @@ export type Node = ReferenceNode | ConcreteNode
  * @param {Node} node A protypical node object.
  * @returns {Node} A complete node object
  */
-export function create (node:Node) {
+export function create(node: ProtoNode) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = merge(node, {id: '#' + newID(), settings: merge({}, node.settings), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, { id: '#' + newID(), settings: merge({}, node.settings), ports: (node.ports) ? node.ports.map(Port.normalize) : [] })
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
@@ -57,7 +81,7 @@ export function create (node:Node) {
  * @param obj The object to test
  * @returns {boolean} True if the object is an id, false otherwise.
  */
-export function isID (str:string) {
+export function isID(str: string) {
   return typeof (str) === 'string' && (str[0] === '#')
 }
 
@@ -67,7 +91,7 @@ export function isID (str:string) {
  * @returns {string} The unique identifier of the node
  * @throws {Error} If the node value is invalid.
  */
-export function id (node:Node|string) {
+export function id(node: Node | string) {
   if (typeof (node) === 'string') {
     return node
   } else if (node == null) {
@@ -83,7 +107,7 @@ export function id (node:Node|string) {
  * @params {Node|string} node The node
  * @returns {string} The name of the node.
  */
-export function name (node:Node|string|CompoundPath) {
+export function name(node: Node | string | CompoundPath) {
   if (typeof (node) === 'string') {
     return node
   } else if ((<any>node).name) {
@@ -100,7 +124,7 @@ export function name (node:Node|string|CompoundPath) {
  * @param {Node} node The node
  * @returns {boolean} True if it has a name, false otherwise.
  */
-export function hasName (node:Node) {
+export function hasName(node: Node) {
   return !!node.name
 }
 
@@ -109,7 +133,7 @@ export function hasName (node:Node) {
  * @param {Node} node The node
  * @returns {boolean} True if it has a path, false otherwise.
  */
-export function hasPath (node:Node) {
+export function hasPath(node: Node) {
   return !!node.path
 }
 
@@ -118,7 +142,7 @@ export function hasPath (node:Node) {
  * @param {Node} node The node
  * @returns {boolean} True if it has an id, false otherwise.
  */
-export function hasID (node:Node) {
+export function hasID(node: Node) {
   return !!node.id
 }
 
@@ -131,9 +155,9 @@ type Nodeish = Node | string | Port.Port
  * @param {Node} node2 The other one.
  * @returns {boolean} True if they have the same id, false otherwise.
  */
-export function equal (node1:Nodeish, node2:Nodeish) {
+export function equal(node1: Nodeish, node2: Nodeish) {
   if (((isValid(<any>node1) && (hasID(<Node>node1) || !isReference(<Node>node1))) || isID(<string>node1)) &&
-      ((isValid(<any>node2) && (hasID(<Node>node2) || !isReference(<Node>node2))) || isID(<string>node2))) {
+    ((isValid(<any>node2) && (hasID(<Node>node2) || !isReference(<Node>node2))) || isID(<string>node2))) {
     return id(<Node>node1) && id(<Node>node2) && id(<Node>node1) === id(<Node>node2)
   } else if (Port.isPort(node1)) {
     return equal(Port.node(<Port.Port>node1), node2)
@@ -141,13 +165,13 @@ export function equal (node1:Nodeish, node2:Nodeish) {
     return equal(node1, Port.node(<Port.Port>node2))
   } else if (hasPath(<Node>node1) && hasPath(<Node>node2)) {
     return pathEqual(parent((<Node>node1).path), parent((<Node>node2).path))
-        && name(<Node>node1) === name(<Node>node2)
+      && name(<Node>node1) === name(<Node>node2)
   } else {
     return name(<string>node1) === name(<string>node2)
   }
 }
 
-export function isomorph (node1:Node, node2:Node) {
+export function isomorph(node1: Node, node2: Node) {
   if (!zip(ports(node1), ports(node2)).every(([p1, p2]) => Port.isomorph(p1, p2))) {
     return false
   }
@@ -163,18 +187,20 @@ export function isomorph (node1:Node, node2:Node) {
  * @param {Node} node The node.
  * @returns {Port[]} A list of ports.
  */
-export function ports (node:Node) {
-  return (node.ports) ? node.ports.map((n) => merge(n, {node: node.id})) : []
+export function ports(node: Node) {
+  return (node.ports) ? node.ports.map((n) => merge(n, { node: node.id })) : []
 }
 
-export function setPort (node:Node, port, update) {
-  return merge(node, {ports: node.ports.map((p, id) => {
-    if (typeof (port) === 'number' && id === port) {
-      return merge(p, update)
-    } else if (typeof (port) === 'string' && Port.portName(p) === port) {
-      return merge(p, update)
-    } return p
-  })})
+export function setPort(node: Node, port, update) {
+  return merge(node, {
+    ports: node.ports.map((p, id) => {
+      if (typeof (port) === 'number' && id === port) {
+        return merge(p, update)
+      } else if (typeof (port) === 'string' && Port.portName(p) === port) {
+        return merge(p, update)
+      } return p
+    })
+  })
 }
 
 /**
@@ -182,7 +208,7 @@ export function setPort (node:Node, port, update) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of output ports.
  */
-export function outputPorts (node:Node, ignoreCompounds = true) {
+export function outputPorts(node: Node, ignoreCompounds = true) {
   if (!ignoreCompounds && !(<any>node).atomic) {
     return ports(node)
   } else {
@@ -195,7 +221,7 @@ export function outputPorts (node:Node, ignoreCompounds = true) {
  * @param {Node} node The node.
  * @returns {Port[]} A possibly empty list of input ports.
  */
-export function inputPorts (node:Node, ignoreCompounds = true) {
+export function inputPorts(node: Node, ignoreCompounds = true) {
   if (!ignoreCompounds && !(<any>node).atomic) {
     return ports(node)
   } else {
@@ -210,7 +236,7 @@ export function inputPorts (node:Node, ignoreCompounds = true) {
  * @returns {Port} The port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
-export function port (name:string|Port.Port, node:Node) {
+export function port(name: string | Port.Port, node: Node) {
   if (Port.isPort(name)) {
     return port(Port.portName(<Port.Port>name), node)
   }
@@ -229,7 +255,7 @@ export function port (name:string|Port.Port, node:Node) {
  * @returns {Port} The input port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
-export function inputPort (name, node:Node) {
+export function inputPort(name, node: Node) {
   if (Port.isPort(name)) {
     return inputPort(Port.portName(name), node)
   }
@@ -250,7 +276,7 @@ export function inputPort (name, node:Node) {
  * @returns {Port} The output port data.
  * @throws {Error} If no port with the given name exists in this node an error is thrown.
  */
-export function outputPort (name, node:Node) {
+export function outputPort(name, node: Node) {
   if (Port.isPort(name)) {
     return outputPort(Port.portName(name), node)
   }
@@ -267,7 +293,7 @@ export function outputPort (name, node:Node) {
  * @param {Node} node The node
  * @returns {CompoundPath} The compound path of the node.
  */
-export function path (node:Node):CompoundPath {
+export function path(node: Node): CompoundPath {
   if (!node) return <CompoundPath>[]
   return node.path
 }
@@ -278,7 +304,7 @@ export function path (node:Node):CompoundPath {
  * @param {Node} node The node which has the port.
  * @returns {Port} True if the port has a port with the given name, false otherwise.
  */
-export function hasPort (name, node:Node) {
+export function hasPort(name, node: Node) {
   if (Port.isPort(name)) {
     return hasPort(Port.portName(name), node)
   }
@@ -291,7 +317,7 @@ export function hasPort (name, node:Node) {
  * @param {Node} node The node which has the port.
  * @returns {Port} True if the port has an input port with the given name, false otherwise.
  */
-export function hasInputPort (name, node:Node) {
+export function hasInputPort(name, node: Node) {
   if (Port.isPort(name)) {
     return hasInputPort(Port.portName(name), node)
   }
@@ -304,7 +330,7 @@ export function hasInputPort (name, node:Node) {
  * @param {Node} node The node which has the port.
  * @returns {Port} True if the port has an output port with the given name, false otherwise.
  */
-export function hasOutputPort (name, node:Node) {
+export function hasOutputPort(name, node: Node) {
   if (Port.isPort(name)) {
     return hasOutputPort(Port.portName(name), node)
   }
@@ -317,7 +343,7 @@ export function hasOutputPort (name, node:Node) {
  * @param {Node} node The node.
  * @returns {boolean} True if the node is a reference, false otherwise.
  */
-export function isReference (node:Node) {
+export function isReference(node: Node) {
   return has('ref', node)
 }
 
@@ -326,7 +352,7 @@ export function isReference (node:Node) {
  * @param {Node} node The node.
  * @returns {string} The componentId of the node.
  */
-export function component (node:Node) {
+export function component(node: Node) {
   return isReference(node) ? (<ReferenceNode>node).ref : (<ConcreteNode>node).componentId
 }
 
@@ -335,8 +361,8 @@ export function component (node:Node) {
  * @param {object} value An object with keys and values that should be set for a node.
  * @returns {Node} A new node that has the new properties applied.
  */
-export function set (value, node:Node):Node {
-  return merge(node, {settings: merge(node.settings, value)})
+export function set(value, node: Node): Node {
+  return merge(node, { settings: merge(node.settings, value) })
 }
 
 /**
@@ -344,7 +370,7 @@ export function set (value, node:Node):Node {
  * @param {String} key The property key.
  * @returns The value of the property. If the property is not defined it will return undefined.
  */
-export function get (key, node:Node) {
+export function get(key, node: Node) {
   return (node.settings) ? node.settings[key] : node.settings
 }
 
@@ -353,7 +379,7 @@ export function get (key, node:Node) {
  * @param {Node} node The node.
  * @returns {boolean} True if the node is an atomic node, false otherwise.
  */
-export function isAtomic (node:Node) {
+export function isAtomic(node: Node) {
   return !isReference(node) && (<any>node).atomic
 }
 
@@ -362,13 +388,13 @@ export function isAtomic (node:Node) {
  * @param {Node} node The node to test.
  * @returns {boolean} True if the node is valid, false otherwise.
  */
-export function isValid (node:any):boolean {
+export function isValid(node: any): boolean {
   return isReference(<Node>node) ||
     (typeof (node) === 'object' && typeof (node.id) === 'string' && node.id.length > 0 &&
-    every(Port.isValid, ports(node)))
+      every(Port.isValid, ports(node)))
 }
 
-export function assertValid (node:Node) {
+export function assertValid(node: any): Node {
   if (typeof (node) !== 'object') {
     throw new Error('Node object must be an object but got: ' + typeof (node))
   } else if (!node.id) {
@@ -377,4 +403,5 @@ export function assertValid (node:Node) {
     throw new Error('Node must have an ID with non zero length.')
   }
   ports(node).forEach(Port.assertValid)
+  return <Node>node
 }
