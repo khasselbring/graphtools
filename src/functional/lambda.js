@@ -29,6 +29,14 @@ function lambdaType (impl) {
   }
 }
 
+export function typeArguments (type) {
+  return type.data[0].data
+}
+
+export function typeReturns (type) {
+  return type.data[1].data
+}
+
 export function implementation (node) {
   if (isValid(node)) {
     return node.nodes[0]
