@@ -21,9 +21,11 @@ export function type (node) {
 
 function lambdaType (impl) {
   return {
-    type: 'function',
-    arguments: implementationArguments(impl),
-    returnValues: implementationReturnValues(impl)
+    name: 'Function',
+    data: [
+      {name: 'arguments', data: implementationArguments(impl)},
+      {name: 'returnValues', data: implementationReturnValues(impl)}
+    ]
   }
 }
 
@@ -76,7 +78,7 @@ export function lambdaArguments (node) {
 
 function implementationArguments (impl) {
   return Node.inputPorts(impl)
-    .map((p) => ({name: p.port, type: p.type}))
+    .map((p) => (p.type))
 }
 
 export function returnValues (node) {
@@ -85,7 +87,7 @@ export function returnValues (node) {
 
 function implementationReturnValues (impl) {
   return Node.outputPorts(impl)
-    .map((p) => ({name: p.port, type: p.type}))
+    .map((p) => (p.type))
 }
 
 export function isValid (node) {
