@@ -93,5 +93,11 @@ describe('Basic graph functions', () => {
       const repGraph = Graph.replacePort(Graph.port('a@a', graph), {kind: 'input'}, graph)
       expect(Port.kind(Graph.port('a@a', repGraph))).to.equal('input')
     })
+
+    it('can replace a port of a node with a complex type', () => {
+      const graph = Graph.addNode({name: 'a', ports: [{port: 'a', kind: 'output', type: { data: ['a', 'b'] }}]}, Graph.empty())
+      const repGraph = Graph.replacePort(Graph.port('a@a', graph), {type: {data: ['A']}}, graph)
+      expect(Port.type(Graph.port('a@a', repGraph)).data).to.eql(['A'])
+    })
   })
 })

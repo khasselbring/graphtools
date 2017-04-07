@@ -1,6 +1,7 @@
 
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
+import omit from 'lodash/fp/omit'
 import {isRoot, rest as pathRest, base as pathBase, parent as pathParent, relativeTo, equal} from '../compoundPath'
 import {normalize as normalizePort, portName} from '../port'
 import * as Node from '../node'
@@ -384,10 +385,10 @@ export const parent = curry((loc, graph) => {
  */
 export function replacePort (oldPort, newPort, graph) {
   const nodeObj = node(oldPort, graph)
-  const newNode = merge(nodeObj, {ports: Node.ports(nodeObj)
+  const newNode = merge(omit('ports', nodeObj), {ports: Node.ports(nodeObj)
     .map((port) =>
       (portName(port) === portName(oldPort))
-      ? newPort
+      ? Object.assign({}, port, newPort)
       : port)
   })
   return replaceNode(nodeObj, newNode, graph)
