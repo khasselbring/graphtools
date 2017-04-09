@@ -66,11 +66,15 @@ export function removeComponent (id) {
 }
 
 export function addMetaInformation (key, value) {
-  return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: _.set({}, key, value)}
+  return {type: 'changeSet', operation: 'setKey', query: 'metaInformation', key, value}
 }
 
 export function setMetaInformation (meta) {
   return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: meta}
+}
+
+export function removeMetaInformation (key) {
+  return {type: 'changeSet', operation: 'removeKey', query: 'metaInformation', key}
 }
 
 export function empty () {
@@ -171,6 +175,21 @@ const applySet = (refs, value) => {
   _.each(refs, (r) => _.merge(r, value))
 }
 
+const applySetKey = (refs, key, value) => {
+  _.each(refs, (r) => {
+    const v = _.get(r, key)
+    if (typeof (v) === 'object' && typeof (value) === 'object') {
+      _.set(r, key, _.merge(_.get(r, key), value))
+    } else {
+      _.set(r, key, value)
+    }
+  })
+}
+
+const applyRemoveKey = (refs, key) => {
+  _.each(refs, (r) => _.unset(r, key))
+}
+
 const getReferences = (graph, changeSet) => {
   var refs = jq(changeSet.query, {data: graph})
   if (refs.length === 0) {
@@ -263,8 +282,14 @@ export function applyChangeSetInplace (graph, changeSet) {
     case 'remove':
       applyRemove(refs, changeSet.filter)
       break
+    case 'removeKey':
+      applyRemoveKey(refs, changeSet.key)
+      break
     case 'set':
       applySet(refs, changeSet.value)
+      break
+    case 'setKey':
+      applySetKey(refs, changeSet.key, changeSet.value)
       break
   }
   return graph

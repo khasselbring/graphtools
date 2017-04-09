@@ -24,7 +24,7 @@ export function create (node) {
   if (node.id) {
     throw new Error('You cannot explicitly assign an id for a node. Use the name field for node addressing')
   }
-  var newNode = merge(node, {id: '#' + newID(), settings: merge({}, node.settings), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
+  var newNode = merge(node, {id: '#' + newID(), metaInformation: {}, settings: merge({}, node.settings), ports: (node.ports) ? node.ports.map(Port.normalize) : []})
   if (!isReference(newNode) && !isValid(newNode)) {
     throw new Error('Cannot create invalid node: ' + JSON.stringify(node))
   }
