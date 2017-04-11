@@ -4,6 +4,7 @@ import chai from 'chai'
 import * as Graph from '../../src/graph'
 import * as Algorithms from '../../src/algorithm/algorithms'
 import * as Node from '../../src/node'
+import fs from 'fs'
 
 const expect = chai.expect
 
@@ -110,6 +111,13 @@ describe('Graph Algorithms', () => {
       )()
       const lcas = Algorithms.lowestCommonAncestors(['b@in1', 'c1'], graph).map(Node.name)
       expect(lcas).to.include('c1')
+    })
+
+    it('» Handles recursive nodes', () => {
+      const graph = Graph.fromJSON(JSON.parse(fs.readFileSync('test/fixtures/fac.json')))
+      const ifNode = Graph.node('/if', graph)
+      const lcas = Algorithms.lowestCommonAncestors([Node.port('inTrue', ifNode), Node.port('inFalse', ifNode)], graph)
+      expect(lcas).to.have.length(1)
     })
   })
 })

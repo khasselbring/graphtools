@@ -92,7 +92,7 @@ export function predecessor (target, graph, goIntoCompounds = false) {
  * @returns {Edge[]} An array of all ingoing (i.e. pointsTo(port)) incident edges.
  */
 export function inIncidents (target, graph, goIntoCompounds = false) {
-  return edgesDeep(graph).filter((e) => pointsTo(target, graph, e) &&
+  return edgesDeep(graph).filter((e) => Edge.isBetweenPorts(e) && pointsTo(target, graph, e) &&
     (goIntoCompounds || hasPort(target, graph) || kind(port(e.to, graph)) === 'input'))
 }
 
@@ -119,7 +119,7 @@ export function inIncident (target, graph, goIntoCompounds = false) {
  * @returns {Edge[]} An array of all outgoing (i.e. isFrom(port)) incident edges.
  */
 export function outIncidents (source, graph, goIntoCompounds = false) {
-  return edgesDeep(graph).filter((e) => isFrom(source, graph, e) &&
+  return edgesDeep(graph).filter((e) => Edge.isBetweenPorts(e) && isFrom(source, graph, e) &&
     (goIntoCompounds || hasPort(source, graph) || kind(port(e.from, graph)) === 'output'))
 }
 
