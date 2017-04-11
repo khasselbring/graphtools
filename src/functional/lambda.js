@@ -56,7 +56,7 @@ export function createLambda (implementation, node) {
   var lambda = Node.create(merge({
     componentId: 'functional/lambda',
     atomic: true,
-    nodes: [merge(ref, {path: [ref.id]})],
+    nodes: [merge(omit('path', ref), {path: [ref.id]})],
     path: [],
     edges: [],
     ports: [{port: 'fn', kind: 'output', type: lambdaType(implementation)}]

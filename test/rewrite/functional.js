@@ -2,8 +2,9 @@
 
 import chai from 'chai'
 import * as Graph from '../../src/graph'
+import * as Node from '../../src/node'
 import * as Functional from '../../src/rewrite/functional'
-import {debug} from '../../src/debug'
+import fs from 'fs'
 
 var expect = chai.expect
 
@@ -32,7 +33,6 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        debug(graph)
         const fn = Functional.replaceByCall(['b', 'a'], graph)
         expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
         expect(Graph.hasNode('/functional/call', fn)).to.be.true
@@ -46,7 +46,6 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        debug(graph)
         const fn = Functional.replaceByCall(['b'], graph)
         expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
         expect(Graph.hasNode('/functional/call', fn)).to.be.true
@@ -114,6 +113,14 @@ describe('Rewrite basic API', () => {
         const thunkG = Graph.Let([Functional.replaceByThunk(['a'])], ([a], graph) => graph)(graph)
         expect(Graph.hasNode('/functional/lambda', thunkG)).to.be.true
         expect(Graph.hasNode('a', thunkG)).to.be.false
+      })
+
+      it('» Creating thunks inside a recursive node', () => {
+        const graph = Graph.fromJSON(JSON.parse(fs.readFileSync('test/fixtures/fac.json')))
+        const ifNode = Graph.node('/if', graph)
+        const constPred = Graph.predecessor(Node.port('inTrue', ifNode), graph)
+        const thunkG = Graph.Let([Functional.replaceByThunk([constPred])], ([a], graph) => graph)(graph)
+        expect(thunkG).to.be.ok
       })
     })
   })

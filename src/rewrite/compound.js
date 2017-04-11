@@ -314,9 +314,11 @@ export const compoundify = curry((nodes, graph, ...cbs) => {
   }
   // const parent = Graph.parent(nodeObjs[0], graph)
   const compId = 'compoundify-' + cuid()
+  const parent = Graph.parent(nodes[0], graph)
   return Graph.flow(
-    Graph.Let(Graph.addNode(Graph.compound({componentId: compId})), (newNode, curGraph) =>
-      Graph.Let(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) =>
-        cb(upNode, upGraph))(curGraph))
+    Graph.Let(Graph.addNodeIn(parent, Graph.compound({componentId: compId})), (newNode, curGraph) => {
+      return Graph.Let(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) =>
+        cb(upNode, upGraph))(curGraph)
+    })
   )(graph)
 })

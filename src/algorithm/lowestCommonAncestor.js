@@ -55,5 +55,9 @@ export const lowestCommonAncestors = curry((locations, graph) => {
   const commonAncestors = locationAncestors.reduce(intersection, allNodes)
   const nonCommon = difference(allNodes, commonAncestors)
   const commonGraph = Graph.flow([...nonCommon].map((n) => Graph.removeNode(n)))(graph)
-  return Graph.nodes(commonGraph).filter(hasOnlyOutEdgesToParent(commonGraph))
+  const lcas = Graph.nodes(commonGraph)
+    .filter((n) => Graph.sameParents([n.id, locations[0]], graph))
+    .filter(hasOnlyOutEdgesToParent(commonGraph))
+  if (lcas.length === 0) return [Graph.parent(locations[0], graph)]
+  return lcas
 })

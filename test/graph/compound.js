@@ -55,16 +55,34 @@ describe('Basic graph functions', () => {
       expect(Graph.hasNode(['a', 'b'], graph)).to.be.false
     })
 
-    it('adds nodes in compounds', () => {
-      var impl = Graph.addNode(
-        {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
-        Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
-      var graph = Graph.flow(
-        Graph.addNode(impl),
-        Graph.addNodeIn('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
-      )()
-      expect(Graph.hasNode(['b', 'a'], graph)).to.be.true
-      expect(Graph.hasNode(['b', 'c'], graph)).to.be.true
+    describe('.addNodeIn', () => {
+      it('adds nodes in compounds', () => {
+        var impl = Graph.addNode(
+          {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+          Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+        var graph = Graph.flow(
+          Graph.addNode(impl),
+          Graph.addNodeIn('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true})
+        )()
+        expect(Graph.hasNode(['b', 'a'], graph)).to.be.true
+        expect(Graph.hasNode(['b', 'c'], graph)).to.be.true
+      })
+
+      it('callback returns root graph', () => {
+        var impl = Graph.addNode(
+          {name: 'a', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true},
+          Graph.compound({name: 'b', ports: [{port: 'out', kind: 'output', type: 'string'}]}))
+        var graph = Graph.flow(
+          Graph.addNode(impl),
+        )()
+        const newGraph = Graph.addNodeIn('b', {name: 'c', ports: [{port: 'in', kind: 'input', type: 'number'}], atomic: true}, graph,
+          (n, g) => {
+            expect(g.id).to.equal(graph.id)
+            return g
+          })
+        expect(Graph.hasNode('b', newGraph)).to.be.true
+        expect(Graph.hasNode('»b»c', newGraph)).to.be.true
+      })
     })
 
     it('gets nodes deep including compound nodes', () => {

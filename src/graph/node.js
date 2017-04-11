@@ -149,12 +149,16 @@ export function checkNode (graph, nodeToCheck) {
  * @returns {PortGraph} A new graph that contains the node at the specific path.
  */
 export const addNodeByPath = curry((parentPath, nodeData, graph, ...cbs) => {
+  const cb = flowCallback(cbs)
+  var newNode
+  var newGraph
   if (isRoot(parentPath)) {
-    return addNodeInternal(nodeData, graph, checkNode, ...cbs)
+    newGraph = addNodeInternal(nodeData, graph, checkNode, (n, g) => { newNode = n; return g })
   } else {
     let parentGraph = node(parentPath, graph)
-    return replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, checkNode, ...cbs), graph)
+    newGraph = replaceNode(parentPath, addNodeInternal(nodeData, parentGraph, checkNode, (n, g) => { newNode = n; return g }), graph)
   }
+  return cb(newNode, newGraph)
 })
 
 /**

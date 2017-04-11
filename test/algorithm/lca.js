@@ -28,7 +28,7 @@ describe('Graph Algorithms', () => {
         Graph.addEdge({from: 'a1@out', to: 'b@in1'}),
         Graph.addEdge({from: 'a2@out', to: 'b@in2'})
       )()
-      expect(Algorithms.lowestCommonAncestors(['b@in1', 'b@in2'], graph).map(Node.name)).to.eql([])
+      expect(Algorithms.lowestCommonAncestors(['b@in1', 'b@in2'], graph).map(Node.name)).to.eql([graph.id])
     })
 
     it('» Identifies in between nodes', () => {
@@ -118,6 +118,7 @@ describe('Graph Algorithms', () => {
       const ifNode = Graph.node('/if', graph)
       const lcas = Algorithms.lowestCommonAncestors([Node.port('inTrue', ifNode), Node.port('inFalse', ifNode)], graph)
       expect(lcas).to.have.length(1)
+      expect(lcas[0].componentId).to.equal('fac')
     })
   })
 })
