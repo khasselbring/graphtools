@@ -14,19 +14,20 @@ const letF = Graph.Let
 const distSeq = Graph.distributeSeq
 const sequential = Graph.sequential
 
-const createContext = curry((compound, lambda, graph, ...cbs) => {
+const createContext = curry((compound, parent, lambda, graph, ...cbs) => {
   const cb = Graph.flowCallback(cbs)
   return cb({
     inputs: Node.inputPorts(compound).map((input) => [input, predecessor(input, graph)]),
     outputs: Node.outputPorts(compound).map((output) => [output, successors(output, graph)]),
-    lambda
+    lambda,
+    parent
   }, graph)
 })
 
-function createLambdaNode (compound) {
+function createLambdaNode (compound, parent) {
   return (graph, ...cbs) => {
     const cb = Graph.flowCallback(cbs)
-    return sequential([Graph.addNode(createLambda(compound)), createContext(compound), cb])(graph)
+    return sequential([Graph.addNodeIn(parent, createLambda(compound)), createContext(compound, parent), cb])(graph)
   }
 }
 
@@ -57,22 +58,23 @@ function createLambdaNode (compound) {
  */
 export const convertToLambda = curry((subset, graph, ...cbs) => {
   const cb = Graph.flowCallback(cbs)
+  const parent = Graph.parent(subset[0], graph)
   return CmpRewrite.compoundify(subset, graph, (compound, compGraph) =>
     Graph.flow(
-      letF(createLambdaNode(compound), cb), // create lambda node and pass information to callback
+      letF(createLambdaNode(compound, parent), cb), // create lambda node and pass information to callback
       Graph.removeNode(compound) // remove the old compound node in the end
     )(compGraph))
 })
 
-function createInputPartialsInternal (inputs, from) {
+function createInputPartialsInternal (inputs, parent, from) {
   return (graph, ...cbs) => {
     const cb = Graph.flowCallback(cbs)
     if (inputs.length > 0) {
-      return Graph.addNode(createPartial(), graph, (newPartial, graph) =>
+      return Graph.addNodeIn(parent, createPartial(), graph, (newPartial, graph) =>
         Graph.flow(
           Graph.addEdge({from: Node.port('fn', from), to: Node.port('inFn', newPartial)}),
           Graph.addEdge({from: inputs[0][1], to: Node.port('value', newPartial)}),
-          letF(createInputPartialsInternal(inputs.slice(1), newPartial), cb)
+          letF(createInputPartialsInternal(inputs.slice(1), parent, newPartial), cb)
         )(graph))
     }
     return cb(from, graph)
@@ -80,7 +82,7 @@ function createInputPartialsInternal (inputs, from) {
 }
 
 export const createInputPartials = curry((context, graph, ...cbs) => {
-  return createInputPartialsInternal(context.inputs, context.lambda)(graph, ...cbs)
+  return createInputPartialsInternal(context.inputs, context.parent, context.lambda)(graph, ...cbs)
 })
 
 const createCall = ([context, last], graph) =>

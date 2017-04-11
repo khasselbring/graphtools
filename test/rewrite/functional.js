@@ -4,6 +4,7 @@ import chai from 'chai'
 import * as Graph from '../../src/graph'
 import * as Node from '../../src/node'
 import * as Functional from '../../src/rewrite/functional'
+import * as Algorithm from '../../src/algorithm'
 import fs from 'fs'
 
 var expect = chai.expect
@@ -119,7 +120,16 @@ describe('Rewrite basic API', () => {
         const graph = Graph.fromJSON(JSON.parse(fs.readFileSync('test/fixtures/fac.json')))
         const ifNode = Graph.node('/if', graph)
         const constPred = Graph.predecessor(Node.port('inTrue', ifNode), graph)
-        const thunkG = Graph.Let([Functional.replaceByThunk([constPred])], ([a], graph) => graph)(graph)
+        const thunkG = Graph.Let(Functional.replaceByThunk([constPred]), (a, graph) => graph)(graph)
+        expect(thunkG).to.be.ok
+      })
+
+      it('» Creating thunks inside a recursive node for ancestors', function () {
+        this.timeout(10000)
+        const graph = Graph.fromJSON(JSON.parse(fs.readFileSync('test/fixtures/fac.json')))
+        const ifNode = Graph.node('/if', graph)
+        const subset = Algorithm.predecessorsUpTo(Node.port('inFalse', ifNode), Graph.node('/fac', graph), graph)
+        const thunkG = Graph.Let(Functional.replaceByThunk(subset), (a, graph) => graph)(graph)
         expect(thunkG).to.be.ok
       })
     })

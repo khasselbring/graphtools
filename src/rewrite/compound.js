@@ -19,7 +19,7 @@ import * as Node from '../node'
 import * as Path from '../compoundPath'
 import * as Port from '../port'
 import {mergeNodes} from '../graph/internal'
-import {topologicalSort} from '../algorithm/algorithms'
+import {topologicalSort} from '../algorithm'
 import cuid from 'cuid'
 
 /**
