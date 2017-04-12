@@ -5,6 +5,7 @@ import * as changeSet from '../../src/changeSet'
 import * as Graph from '../../src/graph'
 import * as Node from '../../src/node'
 import * as Port from '../../src/port'
+import fs from 'fs'
 
 var expect = chai.expect
 
@@ -98,6 +99,15 @@ describe('Basic graph functions', () => {
       const graph = Graph.addNode({name: 'a', ports: [{port: 'a', kind: 'output', type: { data: ['a', 'b'] }}]}, Graph.empty())
       const repGraph = Graph.replacePort(Graph.port('a@a', graph), {type: {data: ['A']}}, graph)
       expect(Port.type(Graph.port('a@a', repGraph)).data).to.eql(['A'])
+    })
+
+    describe('.replacePort', () => {
+      it('can replace in deep regions', () => {
+        const graph = Graph.fromJSON(JSON.parse(fs.readFileSync('test/fixtures/fac_thunked.json')))
+        const constant = Graph.nodesDeepBy((n) => n.path.length === 4, graph)[0]
+        const newGraph = Graph.replaceNode(constant, Object.assign({x: 1}, constant), graph)
+        expect(newGraph).to.be.ok
+      })
     })
   })
 })

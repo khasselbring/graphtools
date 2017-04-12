@@ -326,7 +326,7 @@ function nodeParentPath (path, graph) {
   /* if (isCompoundPath(path)) {
     return pathParent(path)
   } else { */
-  return pathParent(node(path, graph).path)
+  return relativeTo(pathParent(node(path, graph).path), graph.path)
   // }
 }
 
