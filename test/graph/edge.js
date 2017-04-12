@@ -162,7 +162,7 @@ describe('Basic graph functions', () => {
         Graph.addNode({name: 'bb', componentId: 'BBB', ports: [{port: 'inBB', kind: 'input', type: 'a'}]}),
         Graph.addNode({name: 'aa', componentId: 'AAA', ports: [{port: 'outAA', kind: 'output', type: 'a'}]})
       )()
-      var newGraph = Graph.addEdge({from: 'a@outA', to: 'b@inB'}, 
+      var newGraph = Graph.addEdge({from: 'a@outA', to: 'b@inB'},
                      Graph.addEdge({from: 'aa@outAA', to: 'bb@inBB'}, graph))
       // ref
       expect(Graph.hasEdge({from: '/AA', to: '/BB'}, graph)).to.be.false

@@ -85,7 +85,11 @@ export function nodeNames (graph) {
  * @throws {Error} If the queried node does not exist in the graph.
  */
 export const node = curry((loc, graph) => {
-  var node = nodeBy(query(loc, graph), graph)
+  try {
+    var node = nodeBy(query(loc, graph), graph)
+  } catch (err) {
+    throw new Error(`Node: '${Node.id(loc) || JSON.stringify(loc)}' does not exist in the graph.`)
+  }
   if (!node) {
     throw new Error(`Node: '${Node.id(loc) || JSON.stringify(loc)}' does not exist in the graph.`)
   }

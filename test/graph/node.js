@@ -24,11 +24,11 @@ describe('Basic graph functions', () => {
 
     it('supports a predicate function for node selection', () => {
       var graph = changeSet.applyChangeSets(Graph.empty(), [
-        changeSet.insertNode({id: 'a0'}),
-        changeSet.insertNode({id: 'b1'}),
-        changeSet.insertNode({id: 'a1'})
+        changeSet.insertNode({id: '#a0'}),
+        changeSet.insertNode({id: '#b1'}),
+        changeSet.insertNode({id: '#a1'})
       ])
-      expect(Graph.nodesBy((n) => n.id.indexOf('a') === 0, graph)).to.have.length(2)
+      expect(Graph.nodesBy((n) => n.id.indexOf('#a') === 0, graph)).to.have.length(2)
     })
 
     it('supports query based node selection', () => {
