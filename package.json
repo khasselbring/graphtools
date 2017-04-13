@@ -5,10 +5,10 @@
   "main": "lib/api.js",
   "scripts": {
     "test": "nyc mocha --recursive --compilers js:babel-register -R min --timeout 4000 && standard src/**/*.js",
-    "build": "babel src -d lib",
+    "build": "rm -rf lib && babel src -d lib",
     "doc": "jsdoc -c .jsdoc.json && cp -r doc jsdoc/@buggyorg/graphtools/`node -e \"console.log(require('./package.json').version)\"`",
     "publish-docs": "npm run doc && (git diff --exit-code > /dev/null || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1))  && (git diff --cached --exit-code  > /dev/null  || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1)) && git add -f jsdoc/* && git commit -m '(doc) New documentation.' && git subtree split --prefix jsdoc/@buggyorg/graphtools/`node -e \"console.log(require('./package.json').version)\"` -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages && git reset HEAD~1",
-    "prepublish": "babel src -d lib",
+    "prepublish": "rm -rf lib && babel src -d lib",
     "report": "nyc report",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
@@ -52,6 +52,6 @@
     "semver": "^5.2.0",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
-    "standard": "^6.0.8"
+    "standard": "^10.0.1"
   }
 }
