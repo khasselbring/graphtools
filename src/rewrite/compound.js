@@ -34,7 +34,8 @@ import cuid from 'cuid'
  * @returns {PortGraph} A new port graph that includes the predecessor of the port in the compound.
  * @throws {Error} If the predecessor has more than one successor.
  */
-export const includePredecessor = curry((port, graph) => {
+export const includePredecessor = curry((port, graph, ...cbs) => {
+  const cb = Graph.flowCallback(cbs)
   var pred = predecessor(port, graph)
   var portNode = Graph.node(port, graph)
   var predNode = Graph.node(pred, graph)
@@ -74,7 +75,7 @@ export const includePredecessor = curry((port, graph) => {
         Graph.addEdge({from: newCompound.id + '@' + p.port, to: p}))),
     {name: '[includePredecessor] Replacing compound node with new compound.'}
   )(graph)
-  return newGraph
+  return cb(newCompound, newGraph)
 })
 
 /**
@@ -317,8 +318,9 @@ export const compoundify = curry((nodes, graph, ...cbs) => {
   const parent = Graph.parent(nodes[0], graph)
   return Graph.flow(
     Graph.Let(Graph.addNodeIn(parent, Graph.compound({componentId: compId})), (newNode, curGraph) => {
-      return Graph.Let(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) =>
-        cb(upNode, upGraph))(curGraph)
+      return Graph.Let(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) => {
+        return cb(upNode, upGraph)
+      })(curGraph)
     })
   )(graph)
 })

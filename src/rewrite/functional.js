@@ -14,20 +14,25 @@ const letF = Graph.Let
 const distSeq = Graph.distributeSeq
 const sequential = Graph.sequential
 
-const createContext = curry((compound, parent, lambda, graph, ...cbs) => {
-  const cb = Graph.flowCallback(cbs)
-  return cb({
+const createContext = (compound, parent, graph) => {
+  return {
     inputs: Node.inputPorts(compound).map((input) => [input, predecessor(input, graph)]),
     outputs: Node.outputPorts(compound).map((output) => [output, successors(output, graph)]),
-    lambda,
     parent
-  }, graph)
-})
+  }
+}
 
-function createLambdaNode (compound, parent) {
+function extendContext (context) {
+  return (lambda, graph, ...cbs) => {
+    const cb = Graph.flowCallback(cbs)
+    return cb(Object.assign({lambda}, context), graph)
+  }
+}
+
+function createLambdaNode (compound, parent, context) {
   return (graph, ...cbs) => {
     const cb = Graph.flowCallback(cbs)
-    return sequential([Graph.addNodeIn(parent, createLambda(compound)), createContext(compound, parent), cb])(graph)
+    return sequential([Graph.addNodeIn(parent, createLambda(compound)), extendContext(context), cb])(graph)
   }
 }
 
@@ -59,11 +64,13 @@ function createLambdaNode (compound, parent) {
 export const convertToLambda = curry((subset, graph, ...cbs) => {
   const cb = Graph.flowCallback(cbs)
   const parent = Graph.parent(subset[0], graph)
-  return CmpRewrite.compoundify(subset, graph, (compound, compGraph) =>
-    Graph.flow(
-      letF(createLambdaNode(compound, parent), cb), // create lambda node and pass information to callback
-      Graph.removeNode(compound) // remove the old compound node in the end
-    )(compGraph))
+  return CmpRewrite.compoundify(subset, graph, (compound, compGraph) => {
+    const context = createContext(compound, parent, compGraph)
+    return Graph.flow(
+      Graph.removeNode(compound), // remove the old compound node in the end
+      letF(createLambdaNode(compound, parent, context), cb) // create lambda node and pass information to callback
+    )(compGraph)
+  })
 })
 
 function createInputPartialsInternal (inputs, parent, from) {

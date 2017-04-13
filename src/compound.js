@@ -110,7 +110,7 @@ const getPort = (portOrString, node) =>
 export const renamePort = curry((port, newName, node) => {
   port = getPort(port, node)
   return omit('componentId', merge(node, {ports: node.ports.map((p) => {
-    if (Port.equal(port, p)) {
+    if (port.port === p.port) {
       return merge(p, {port: newName})
     } else return p
   })}))
@@ -129,7 +129,7 @@ export const removePort = curry((port, node) => {
   var portEdges = edgesDeep(node).filter((e) => pointsTo(port, node, e) || isFrom(port, node, e))
   var newNode = portEdges.reduce((cmp, edge) => removeEdge(edge, cmp), node)
   return merge(omit(['ports', 'componentId'], newNode),
-    {ports: Node.ports(newNode).filter(negate((p) => Port.equal(port, p)))})
+    {ports: Node.ports(newNode).filter((p) => port.port !== p.port)})
 })
 
 const addPort = (port, kind, node) => {

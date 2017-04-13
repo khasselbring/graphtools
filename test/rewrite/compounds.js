@@ -184,6 +184,17 @@ describe('Rewrite basic API', () => {
         var inc = includePredecessor('c@inC1', graph)
         expect(Node.inputPorts(Graph.node('c', inc))).to.have.length(1)
       })
+
+      it('can include the fac node in the untypified fac example', function () {
+        this.timeout(15000)
+        const graph = Graph.fromFile('test/fixtures/fac_no_types.json')
+        const multNode = Graph.node('/math/multiply', graph)
+        compoundify([multNode], graph, (comp, resGraph) => {
+          return includePredecessor(Node.inputPorts(comp)[1], resGraph, (newComp, graph) => {
+            expect(Node.inputPorts(newComp)).to.have.length(2)
+          })
+        })
+      })
     })
 
     describe('Excluding inner nodes', () => {
@@ -361,6 +372,21 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
         expect(() => compoundify(['a', 'c'], graph)).to.throw(Error)
+      })
+
+      it('Can handle untypified factorial example', function () {
+        this.timeout(15000)
+        const graph = Graph.fromFile('test/fixtures/fac_no_types.json')
+        const addNode = Graph.node('/math/add', graph)
+        const nodes = [
+          addNode,
+          Graph.node('/math/multiply', graph),
+          Graph.successors(addNode, graph)[0],
+          Graph.predecessor(Node.port('summand2', addNode), graph)
+        ]
+        compoundify(nodes, graph, (comp, resGraph) => {
+          expect(Node.inputPorts(comp)).to.have.length(2)
+        })
       })
     })
   })

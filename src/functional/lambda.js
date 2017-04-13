@@ -6,7 +6,7 @@ import merge from 'lodash/fp/merge'
 import omit from 'lodash/fp/omit'
 import pick from 'lodash/fp/pick'
 import * as Node from '../node'
-import {replaceNode} from '../graph/node'
+import { replaceNode } from '../graph/node'
 
 /**
  * Returns the type of a lambda node.
@@ -100,7 +100,7 @@ function implementationReturnValues (impl) {
 
 export function isValid (node) {
   return !!(node.componentId === 'functional/lambda' && node.nodes.length === 1 &&
-    (!node.edges || node.edges.length === 0))
+  (!node.edges || node.edges.length === 0))
 }
 
 export function assertValid (node) {
@@ -128,9 +128,52 @@ export function createPartial () {
   return {
     componentId: 'functional/partial',
     ports: [
-      {port: 'inFn', kind: 'input', type: 'function'},
-      {port: 'value', kind: 'input', type: 'generic'},
-      {port: 'fn', kind: 'output', type: 'function'}
+      {
+        'port': 'inFn',
+        'kind': 'input',
+        'type': {
+          'name': 'Function',
+          'data': [
+            {
+              'name': 'arguments',
+              'data': [
+                'first',
+                '...rest'
+              ]
+            },
+            {
+              'name': 'returnValues',
+              'data': [
+                'outType'
+              ]
+            }
+          ]
+        }
+      },
+      {
+        'port': 'value',
+        'kind': 'input',
+        'type': 'first'
+      },
+      {
+        'port': 'fn',
+        'kind': 'output',
+        'type': {
+          'name': 'Function',
+          'data': [
+            {
+              'name': 'arguments',
+              'data': 'rest'
+            },
+            {
+              'name': 'returnValues',
+              'data': [
+                'outType'
+              ]
+            }
+          ]
+        }
+      }
     ],
     atomic: true
   }
