@@ -5,6 +5,7 @@ import {nodesDeep} from './node'
 import {edgesDeep, checkEdge} from './edge'
 import {assertValid} from '../node'
 import {rePath} from './internal'
+import fs from 'fs'
 // import {empty} from './basic'
 // import {addNode, addNodeTuple} from './node'
 // import {addEdge} from './edge'
@@ -13,7 +14,7 @@ import {rePath} from './internal'
 // import {mergeNodes} from './internal'
 
 /**
- * Adds the API to the JSON document to work with the graph.
+ * Load a graph encoded as a JSON document
  * @param {object} jsonGraph The json representing the port graph.
  * @returns {PortGraph} The port graph with its functions.
  */
@@ -42,6 +43,26 @@ export function fromJSON (jsonGraph) {
   // graph.ports = jsonGraph.ports || []
   // // add parents ? optimizations!!
   // return graph
+}
+
+/**
+ * Load a graph encoded as a string
+ * @param {String} graphStr The string representing a json document for the port graph.
+ * @returns {PortGraph} The port graph.
+ * @throws {Error} If the string does not represent a valid JSON document.
+ */
+export function fromString (graphStr) {
+  return fromJSON(JSON.parse(graphStr))
+}
+
+/**
+ * Load a graph from a JSON file
+ * @param {String} path The JSON file representing the port graph.
+ * @returns {PortGraph} The port graph.
+ * @throws {Error} If the file does not represent a valid JSON document.
+ */
+export function fromFile (path) {
+  return fromString(fs.readFileSync(path, 'utf8'))
 }
 
 /**
