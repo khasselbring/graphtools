@@ -58,11 +58,14 @@ export {nodesDeep}
  * @name nodesDeepBy
  * @description Get all nodes at all depths that fulfill the given predicate. It will go into every compound node
  * and return their nodes and the nodes of their compound nodes, etc.
- * @param {function} predicate A function that filters nodes.
+ * @param {function|Location} predicate A function that filters nodes. Or alternatively you can use a location query.
  * @param {PortGraph} graph The graph to work on
  * @returns {Node[]} A list of nodes that fulfill the predicate.
  */
 export const nodesDeepBy = curry((predicate, graph) => {
+  if (typeof (predicate) !== 'function') {
+    return nodesDeep(graph).filter(query(predicate, graph))
+  }
   return nodesDeep(graph).filter(predicate)
 })
 
