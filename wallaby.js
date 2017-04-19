@@ -16,6 +16,8 @@ module.exports = (wallaby) => {
       }
     },
 
+    testFramework: 'mocha',
+
     compilers: {
       '**/*.js': wallaby.compilers.babel()
     }

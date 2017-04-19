@@ -20,7 +20,6 @@ const ifNode = (data) =>
     atomic: true
   }, data)
 
-
 describe('Rewrite basic API', () => {
   describe('» Compound', () => {
     describe('Including predecessors', () => {
@@ -195,6 +194,28 @@ describe('Rewrite basic API', () => {
           })
         })
       })
+
+      it('makes port names unique', () => {
+        const cmpd = Graph.flow(
+          Graph.addNode({name: 'N', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}),
+          Graph.addEdge({from: '@in', to: 'N@in'}),
+          Graph.addEdge({from: 'N@out', to: '@out'})
+        )(Graph.compound({name: 'C', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'in2', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}))
+
+        const graph = Graph.flow(
+          Graph.addNode({name: 'pred1', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}),
+          Graph.addNode({name: 'pred2', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}),
+          Graph.addNode(cmpd),
+          Graph.addEdge({from: 'pred1@out', to: 'pred2@in'}),
+          Graph.addEdge({from: 'pred2@out', to: 'C@in2'})
+        )()
+
+        const pGraph = includePredecessor('C@in2', graph)
+        expect(pGraph).to.be.ok
+        expect(Graph.edges(pGraph)).to.have.length(1)
+        expect(Graph.successors('pred1', pGraph)).to.have.length(1)
+        expect(Graph.predecessors('C', pGraph)).to.have.length(1)
+      })
     })
 
     describe('Excluding inner nodes', () => {
@@ -342,6 +363,34 @@ describe('Rewrite basic API', () => {
         const cmpd = compoundify(['b', 'a', 'c', 'd'], graph)
         expect(Graph.nodes(cmpd)).to.have.length(1)
         expect(Graph.nodes(Graph.nodes(cmpd)[0])).to.have.length(4)
+      })
+
+      it('can compoundify compound nodes', () => {
+        const cmpd = Graph.flow(
+          Graph.addNode({name: 'N', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}),
+          Graph.addEdge({from: '@in', to: 'N@in'}),
+          Graph.addEdge({from: 'N@out', to: '@out'})
+        )(Graph.compound({name: 'C', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}))
+        const graph = Graph.flow(
+          Graph.addNode(cmpd)
+        )()
+        const cmpdGraph = compoundify(['C'], graph)
+        expect(cmpdGraph).to.be.ok
+        expect(Graph.nodes(cmpdGraph)).to.have.length(1)
+        expect(Graph.nodesDeep(cmpdGraph)).to.have.length(4)
+
+        const graph2 = Graph.flow(
+          Graph.addNode({name: 'pred1', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}),
+          Graph.addNode({name: 'pred2', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}),
+          Graph.addNode({name: 'succ1', ports: [{port: 'in', kind: 'input', type: 'g'}, {port: 'out', kind: 'output', type: 'g'}]}),
+          Graph.addNode(cmpd),
+          Graph.addEdge({from: 'pred1@out', to: 'pred2@in'}),
+          Graph.addEdge({from: 'pred2@out', to: 'C@in'}),
+          Graph.addEdge({from: 'C@out', to: 'succ1@in'})
+        )()
+        const cmpdGraph2 = compoundify(['pred2', 'C'], graph2)
+        expect(cmpdGraph2).to.be.ok
+        expect(Graph.nodes(cmpdGraph2)).to.have.length(3)
       })
 
       it('» Can handle testing multiple blocked nodes', () => {

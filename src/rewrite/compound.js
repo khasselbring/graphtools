@@ -43,6 +43,9 @@ export const includePredecessor = curry((port, graph, ...cbs) => {
     throw new Error('Cannot include the predecessor of port: ' + JSON.stringify(port) + ' as it has multiple successors.')
   }
   */
+  const uniqify = (port) => {
+    return Object.assign({}, port, {port: port.port + port.node})
+  }
   var preInPorts = inIncidents(pred.node, graph)
   var affectedPorts = uniqBy((pair) => pair.compoundPort,
     flatten(Node.outputPorts(predNode).map((p) => successors(p, graph).map((s) => ({predecessorPort: p, compoundPort: s})))))
@@ -56,10 +59,10 @@ export const includePredecessor = curry((port, graph, ...cbs) => {
     affectedPorts.map((p) => Compound.removePort(p.compoundPort)),
     // set the id of the included predecessor to the id of the predecessor
     // add all input ports of predecessor
-    preInPorts.map((edge) => Compound.addInputPort(edge.to)),
+    preInPorts.map((edge) => Compound.addInputPort(uniqify(edge.to))),
     additionalPorts.map((p) => Compound.addOutputPort(p)),
     preInPorts.map((edge) =>
-        Graph.addEdge({from: '@' + edge.to.port, to: predNode.id + '@' + edge.to.port})),
+        Graph.addEdge({from: '@' + uniqify(edge.to).port, to: predNode.id + '@' + edge.to.port})),
     postInPorts.map((obj) => Graph.flow(obj.outEdges.map((edge) => Graph.addEdge({from: obj.predecessorPort, to: edge.to})))),
     additionalPorts.map((p) => Graph.addEdge({from: predecessor(p, graph), to: '@' + p.port})),
     {name: 'Adding predecessor at port ' + JSON.stringify(Port.portName(port)) + ' to compound.'}
@@ -70,7 +73,7 @@ export const includePredecessor = curry((port, graph, ...cbs) => {
       Graph.replaceNode(port, newCompound)
     ]
     .concat(preInPorts.map((edge) =>
-        Graph.addEdge({from: edge.from, to: compound.id + '@' + edge.to.port})))
+        Graph.addEdge({from: edge.from, to: compound.id + '@' + uniqify(edge.to).port})))
     .concat(additionalPorts.map((p) =>
         Graph.addEdge({from: newCompound.id + '@' + p.port, to: p}))),
     {name: '[includePredecessor] Replacing compound node with new compound.'}
