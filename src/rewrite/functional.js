@@ -42,6 +42,7 @@ function createLambdaNode (compound, parent, context) {
  * @description
  * Create a lambda node that contains the given subset of nodes. It will not connect the inputs and
  * outputs use createCall for that.
+ * @param {Location} parent The parent of the subset.
  * @param {Array<Location>} subset A subset of nodes in the graph that should be included in the lambda node.
  * @param {Portgraph} graph The graph
  * @param {Callback} [cb] A callback that is called after the lambda node is created. The context
@@ -61,10 +62,9 @@ function createLambdaNode (compound, parent, context) {
  * @returns {Portgraph} A new graph that replaced the subset with a lambda node. If a callback is given, the callback
  * is applied to the graph before `convertToLambda` returns and the return value of that callback is returned.
  */
-export const convertToLambda = curry((subset, graph, ...cbs) => {
+export const convertToLambda = curry((parent, subset, graph, ...cbs) => {
   const cb = Graph.flowCallback(cbs)
-  const parent = Graph.parent(subset[0], graph)
-  return CmpRewrite.compoundify(subset, graph, (compound, compGraph) => {
+  return CmpRewrite.compoundify(parent, subset, graph, (compound, compGraph) => {
     const context = createContext(compound, parent, compGraph)
     return Graph.flow(
       Graph.removeNode(compound), // remove the old compound node in the end
@@ -110,8 +110,8 @@ const createCall = ([context, last], graph) =>
  * @returns {Portgraph} A new graph in which the subset was replaced by a call to a lambda
  * function.
  */
-export const replaceByCall = curry((subset, graph) =>
-  replaceByThunk(subset, graph, createCall))
+export const replaceByCall = curry((parent, subset, graph) =>
+  replaceByThunk(parent, subset, graph, createCall))
 
 const ternaryPack = (fn) =>
   curry((a, b, graph) => {
@@ -124,6 +124,7 @@ const ternaryPack = (fn) =>
  * lambda function and thus their outputs will not be connected. If you want to connect
  * the outputs after the call use replaceByCall. Information about the successors is accessible
  * via the context-callback.
+ * @param {Location} parent The parent of the subset.
  * @param {Array<Location>} subset A subset of locations identifying nodes which will be replaced by
  * a lambda call.
  * @param {Portgraph} graph The graph
@@ -154,5 +155,5 @@ const ternaryPack = (fn) =>
  *   console.log(flatten(context.outputs.map((o) => o[1])))
  * }))
  */
-export const replaceByThunk = curry((subset, graph, ...cbs) =>
-  convertToLambda(subset, graph, distSeq([createInputPartials, ternaryPack(Graph.flowCallback(cbs))])))
+export const replaceByThunk = curry((parent, subset, graph, ...cbs) =>
+  convertToLambda(parent, subset, graph, distSeq([createInputPartials, ternaryPack(Graph.flowCallback(cbs))])))

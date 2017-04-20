@@ -158,7 +158,7 @@ function sameParent (node1, node2) {
   return Path.equal(Path.parent(Node.path(node1)), Path.parent(Node.path(node2)))
 }
 
-const sameParents = Graph.sameParents
+const childrenOf = Graph.childrenOf
 
 /**
  * Find alls critical nodes for compoundify. The critical nodes are those, that are in the
@@ -297,17 +297,19 @@ function moveSubsetIntoCompound (subset, cmpdId) {
  * @name compoundify
  * @description
  * Takes a list of nodes and tries to combine them in one compound.
+ * @param {Location} parent The parent of the nodes
  * @param {Array<Location>} nodes An array of node locations (ids, node objects.. etc.) that should be included in the compound
  * @param {Portgraph} graph The graph
  * @returns {Portgraph} A new graph in which the list of nodes is combined inside one compound.
  * @throws {Error} If it is not possible to combine the nodes in one compound.
 */
-export const compoundify = curry((nodes, graph, ...cbs) => {
+export const compoundify = curry((parent, nodes, graph, ...cbs) => {
   const cb = Graph.flowCallback(cbs)
-  if (nodes.length < 1) return graph
+  const fn = cb
+  if (nodes.length < 1) return fn([], graph)
   const nodeObjs = nodes.map((n) => Graph.node(n, graph))
-  if (!sameParents(nodeObjs, graph)) {
-    throw new Error('Cannot compoundify nodes, the have different parents. (' + JSON.stringify(nodes) + ')')
+  if (!childrenOf(parent, nodeObjs, graph)) {
+    throw new Error('Cannot compoundify nodes, the are not children of ' + JSON.stringify(parent) + '\nNodes: (' + JSON.stringify(nodes) + ')')
   }
 
   const topo = topologicalSort(Graph.parent(nodeObjs[0], graph))
@@ -318,7 +320,6 @@ export const compoundify = curry((nodes, graph, ...cbs) => {
   }
   // const parent = Graph.parent(nodeObjs[0], graph)
   const compId = 'compoundify-' + cuid()
-  const parent = Graph.parent(nodes[0], graph)
   return Graph.flow(
     Graph.Let(Graph.addNodeIn(parent, Graph.compound({componentId: compId})), (newNode, curGraph) => {
       return Graph.Let(moveSubsetIntoCompound(nodeObjs, newNode), (upNode, upGraph) => {

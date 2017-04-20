@@ -20,7 +20,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        const fn = Functional.convertToLambda(['b', 'a'], graph)
+        const fn = Functional.convertToLambda(graph, ['b', 'a'], graph)
         expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
       })
     })
@@ -34,7 +34,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        const fn = Functional.replaceByCall(['b', 'a'], graph)
+        const fn = Functional.replaceByCall(graph, ['b', 'a'], graph)
         expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
         expect(Graph.hasNode('/functional/call', fn)).to.be.true
       })
@@ -47,7 +47,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        const fn = Functional.replaceByCall(['b'], graph)
+        const fn = Functional.replaceByCall(graph, ['b'], graph)
         expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
         expect(Graph.hasNode('/functional/call', fn)).to.be.true
         expect(Graph.hasNode('/functional/partial', fn)).to.be.true
@@ -63,7 +63,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a2@out', to: 'b@in2'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        const fn = Functional.replaceByCall(['b'], graph)
+        const fn = Functional.replaceByCall(graph, ['b'], graph)
         expect(Graph.hasNode('/functional/lambda', fn)).to.be.true
         expect(Graph.hasNode('/functional/call', fn)).to.be.true
         expect(Graph.hasNode('/functional/partial', fn)).to.be.true
@@ -95,7 +95,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'cond@out', to: 'if@cond'})
         )()
 
-        const thunkG = Functional.replaceByThunk(['a'], graph)
+        const thunkG = Functional.replaceByThunk(graph, ['a'], graph)
         expect(Graph.hasNode('/functional/lambda', thunkG)).to.be.true
         expect(Graph.hasNode('a', thunkG)).to.be.false
       })
@@ -111,7 +111,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'cond@out', to: 'if@cond'})
         )()
 
-        const thunkG = Graph.Let([Functional.replaceByThunk(['a'])], ([a], graph) => graph)(graph)
+        const thunkG = Graph.Let([Functional.replaceByThunk(graph, ['a'])], ([a], graph) => graph)(graph)
         expect(Graph.hasNode('/functional/lambda', thunkG)).to.be.true
         expect(Graph.hasNode('a', thunkG)).to.be.false
       })
@@ -120,7 +120,7 @@ describe('Rewrite basic API', () => {
         const graph = Graph.fromJSON(JSON.parse(fs.readFileSync('test/fixtures/fac.json')))
         const ifNode = Graph.node('/if', graph)
         const constPred = Graph.predecessor(Node.port('inTrue', ifNode), graph)
-        const thunkG = Graph.Let(Functional.replaceByThunk([constPred]), (a, graph) => graph)(graph)
+        const thunkG = Graph.Let(Functional.replaceByThunk('/fac', [constPred]), (a, graph) => graph)(graph)
         expect(thunkG).to.be.ok
       })
 
@@ -129,8 +129,36 @@ describe('Rewrite basic API', () => {
         const graph = Graph.fromJSON(JSON.parse(fs.readFileSync('test/fixtures/fac.json')))
         const ifNode = Graph.node('/if', graph)
         const subset = Algorithm.predecessorsUpTo(Node.port('inFalse', ifNode), Graph.node('/fac', graph), graph)
-        const thunkG = Graph.Let(Functional.replaceByThunk(subset), (a, graph) => graph)(graph)
+        const thunkG = Graph.Let(Functional.replaceByThunk('/fac', subset), (a, graph) => graph)(graph)
         expect(thunkG).to.be.ok
+      })
+
+      describe('» Cons example', () => {
+        it('» Can handle the cons example', function () {
+          this.timeout(15000)
+          const graph = Graph.fromFile('test/fixtures/cons.json')
+          const ifNode = Graph.node(Graph.predecessor(Node.outputPorts(Graph.node('/min', graph))[0], graph), graph)
+          const subset = Algorithm.predecessorsUpTo(Node.port('inTrue', ifNode), Graph.node('/min', graph), graph)
+          const tGraph = Functional.replaceByThunk('/min', subset, graph, (lambda, graph) => {
+            expect(lambda).to.be.an('array')
+            expect(lambda).to.have.length(2)
+            return graph
+          })
+          expect(tGraph).to.be.an('object')
+        })
+
+        it('» Can handle the cons example [minList » if]', function () {
+          this.timeout(15000)
+          const graph = Graph.fromFile('test/fixtures/cons.json')
+          const ifNode = Graph.node(Graph.predecessor(Node.outputPorts(Graph.node('/minList', graph))[0], graph), graph)
+          const subset = Algorithm.predecessorsUpTo(Node.port('inTrue', ifNode), Graph.node('/minList', graph), graph)
+          const tGraph = Graph.Let(Functional.replaceByThunk('/minList', subset), (lambda, graph) => {
+            expect(lambda).to.be.an('array')
+            expect(lambda).to.have.length(2)
+            return graph
+          })(graph)
+          expect(tGraph).to.be.an('object')
+        })
       })
     })
   })

@@ -188,7 +188,7 @@ describe('Rewrite basic API', () => {
         this.timeout(15000)
         const graph = Graph.fromFile('test/fixtures/fac_no_types.json')
         const multNode = Graph.node('/math/multiply', graph)
-        compoundify([multNode], graph, (comp, resGraph) => {
+        compoundify('/fac', [multNode], graph, (comp, resGraph) => {
           return includePredecessor(Node.inputPorts(comp)[1], resGraph, (newComp, graph) => {
             expect(Node.inputPorts(newComp)).to.have.length(2)
           })
@@ -330,7 +330,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        const cmpd = compoundify(['b'], graph)
+        const cmpd = compoundify(graph, ['b'], graph)
         expect(Graph.successors('a', cmpd)).to.have.length(1)
         expect(Graph.node(Graph.successors('a', cmpd)[0], cmpd).atomic).to.be.false
         expect(Graph.predecessors('c', cmpd)).to.have.length(1)
@@ -345,7 +345,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        const cmpd = compoundify(['b', 'a', 'c'], graph)
+        const cmpd = compoundify(graph, ['b', 'a', 'c'], graph)
         expect(Graph.nodes(cmpd)).to.have.length(1)
         expect(Graph.nodes(Graph.nodes(cmpd)[0])).to.have.length(3)
       })
@@ -360,7 +360,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'b@out', to: 'c@in'}),
           Graph.addEdge({from: 'b@out', to: 'd@in'})
         )()
-        const cmpd = compoundify(['b', 'a', 'c', 'd'], graph)
+        const cmpd = compoundify(graph, ['b', 'a', 'c', 'd'], graph)
         expect(Graph.nodes(cmpd)).to.have.length(1)
         expect(Graph.nodes(Graph.nodes(cmpd)[0])).to.have.length(4)
       })
@@ -374,7 +374,7 @@ describe('Rewrite basic API', () => {
         const graph = Graph.flow(
           Graph.addNode(cmpd)
         )()
-        const cmpdGraph = compoundify(['C'], graph)
+        const cmpdGraph = compoundify(graph, ['C'], graph)
         expect(cmpdGraph).to.be.ok
         expect(Graph.nodes(cmpdGraph)).to.have.length(1)
         expect(Graph.nodesDeep(cmpdGraph)).to.have.length(4)
@@ -388,7 +388,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'pred2@out', to: 'C@in'}),
           Graph.addEdge({from: 'C@out', to: 'succ1@in'})
         )()
-        const cmpdGraph2 = compoundify(['pred2', 'C'], graph2)
+        const cmpdGraph2 = compoundify(graph2, ['pred2', 'C'], graph2)
         expect(cmpdGraph2).to.be.ok
         expect(Graph.nodes(cmpdGraph2)).to.have.length(3)
       })
@@ -406,7 +406,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'if@out', to: '@out'})
         )(Graph.compound({ports: [{port: 'cond', kind: 'input', type: 'Bool'}, {port: 'out', kind: 'output', type: 'generic'}]}))
 
-        const rewGraph = compoundify(['a', 'a1'], graph)
+        const rewGraph = compoundify(graph, ['a', 'a1'], graph)
         expect(Graph.nodes(rewGraph)).to.have.length(3)
         expect(Graph.hasNode('a', rewGraph)).to.not.be.true
         expect(Graph.hasNode('a1', rewGraph)).to.not.be.true
@@ -420,7 +420,7 @@ describe('Rewrite basic API', () => {
           Graph.addEdge({from: 'a@out', to: 'b@in'}),
           Graph.addEdge({from: 'b@out', to: 'c@in'})
         )()
-        expect(() => compoundify(['a', 'c'], graph)).to.throw(Error)
+        expect(() => compoundify(graph, ['a', 'c'], graph)).to.throw(Error)
       })
 
       it('Can handle untypified factorial example', function () {
@@ -433,7 +433,7 @@ describe('Rewrite basic API', () => {
           Graph.successors(addNode, graph)[0],
           Graph.predecessor(Node.port('summand2', addNode), graph)
         ]
-        compoundify(nodes, graph, (comp, resGraph) => {
+        compoundify('/fac', nodes, graph, (comp, resGraph) => {
           expect(Node.inputPorts(comp)).to.have.length(2)
         })
       })

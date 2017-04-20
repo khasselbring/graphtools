@@ -71,5 +71,12 @@ describe('Graph Algorithms', () => {
       expect(Algorithms.topologicalSort(graph).map(Node.component)).to.eql(['thread'])
       expect(Algorithms.topologicalSort(Graph.node('/thread', graph)).map(Node.component)).to.eql(['std/const', 'print'])
     })
+
+    it('Can process deep layers in graphs', () => {
+      const graph = Graph.fromFile('./test/fixtures/minList.json')
+      const comps = Graph.compounds(graph)
+      const s = Algorithms.topologicalSort(comps[2])
+      expect(s).to.have.length(4)
+    })
   })
 })
