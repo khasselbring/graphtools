@@ -7,9 +7,7 @@ module.exports = (wallaby) => {
     ],
     tests: [
       {pattern: 'test/**/*.js', load: true}
-      // {pattern: 'test/rewrite/functional.js', load: true},
-      // {pattern: 'test/rewrite/compounds.js', load: true}
-      // {pattern: 'test/algorithm/topologicalSort.js', load: true}
+      // {pattern: 'test/rewrite/functional.js', load: true}
     ],
     env: {
       type: 'node',
