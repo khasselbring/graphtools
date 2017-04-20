@@ -30,5 +30,12 @@ describe('Basic graph functions', () => {
         expect(Graph.node(pred2, graph).componentId).to.equal('math/multiply')
       })
     })
+
+    describe('.areConnected', () => {
+      it('finds connected nodes', () => {
+        const graph = Graph.fromFile('test/fixtures/fac.json', 'utf8')
+        expect(Graph.areConnected('/numToStr', '/print', graph)).to.be.true
+      })
+    })
   })
 })
