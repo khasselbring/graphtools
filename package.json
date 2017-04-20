@@ -9,6 +9,7 @@
     "doc": "jsdoc -c .jsdoc.json && cp -r doc jsdoc/@buggyorg/graphtools/`node -e \"console.log(require('./package.json').version)\"`",
     "publish-docs": "npm run doc && (git diff --exit-code > /dev/null || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1))  && (git diff --cached --exit-code  > /dev/null  || (echo 'No clean head. Please commit or stash before pushing docs.' && exit 1)) && git add -f jsdoc/* && git commit -m '(doc) New documentation.' && git subtree split --prefix jsdoc/@buggyorg/graphtools/`node -e \"console.log(require('./package.json').version)\"` -b gh-pages && git push -f origin gh-pages:gh-pages && git branch -D gh-pages && git reset HEAD~1",
     "prepublish": "rm -rf lib && babel src -d lib",
+    "postpublish": "npm run publish-docs",
     "report": "nyc report",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
