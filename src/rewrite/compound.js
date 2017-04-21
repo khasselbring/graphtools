@@ -27,7 +27,6 @@ function uniquePortName (port) {
   return port.port + port.node
 }
 
-
 const uniqify = (port) => {
   const t = (port.type[0].toLowerCase() === port.type[0]) ? port.type + port.node : port.type
   // const t = port.type
