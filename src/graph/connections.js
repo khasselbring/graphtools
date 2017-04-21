@@ -59,13 +59,15 @@ export function areConnected (nodeFrom, nodeTo, graph) {
  * predecessor for every port but this function always returns a list.
  * @param {Location} target The target to which the predecessors point.
  * @param {PortGraph} graph The graph.
- * @param {Boolean} [goIntoCompounds] Optional argument that activates looking for edges inside compounds.
+ * @param {Object} [config] Optional config object
+ * @param {String[]} [config.layers=['dataflow']] Filter the edge based on the selected layers
+ * @param {Boolean} [config.goIntoCompounds=false] Optional argument that activates looking for edges inside compounds.
  * If you specify a node as the location it will not go inside the node (if it is a compound) and look for
  * predecessors inside the compound.
  * @returns {Port[]} A list of ports with that are predecessors of `target`
  */
-export function predecessors (target, graph, goIntoCompounds = false) {
-  return map('from')(inIncidents(target, graph, goIntoCompounds))
+export function predecessors (target, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
+  return map('from')(inIncidents(target, graph, config))
 }
 
 /**
@@ -73,67 +75,77 @@ export function predecessors (target, graph, goIntoCompounds = false) {
  * predecessor for every port.
  * @param {Location} target The target to which the predecessors points.
  * @param {PortGraph} graph The graph.
- * @param {Boolean} [goIntoCompounds] Optional argument that activates looking for edges inside compounds.
+ * @param {Object} [config] Optional config object
+ * @param {String[]} [config.layers=['dataflow']] Filter the edge based on the selected layers
+ * @param {Boolean} [config.goIntoCompounds=false] Optional argument that activates looking for edges inside compounds.
  * If you specify a node as the location it will not go inside the node (if it is a compound) and look for
  * a predecessor inside the compound.
  * @returns {Port} The preceeding port
  */
-export function predecessor (target, graph, goIntoCompounds = false) {
-  return predecessors(target, graph, goIntoCompounds)[0]
+export function predecessor (target, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
+  return predecessors(target, graph, config)[0]
 }
 
 /**
  * Gets all ingoing incident edges to a port
  * @param {Location} target The port to which the edges are incident. This is the target node or port of each edge.
  * @param {PortGraph} graph The graph
- * @param {Boolean} [goIntoCompounds] Optional argument that activates looking for edges inside compounds.
+ * @param {Object} [config] Optional config object
+ * @param {String[]} [config.layers=['dataflow']] Filter the edge based on the selected layers
+ * @param {Boolean} [config.goIntoCompounds=false] Optional argument that activates looking for edges inside compounds.
  * If you specify a node as the location it will not go inside the node (if it is a compound) and look for
  * ingoing edges inside the compound.
  * @returns {Edge[]} An array of all ingoing (i.e. pointsTo(port)) incident edges.
  */
-export function inIncidents (target, graph, goIntoCompounds = false) {
+export function inIncidents (target, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
   return edgesDeep(graph).filter((e) => Edge.isBetweenPorts(e) && pointsTo(target, graph, e) &&
-    (goIntoCompounds || hasPort(target, graph) || kind(port(e.to, graph)) === 'input'))
+    (config.goIntoCompounds || hasPort(target, graph) || kind(port(e.to, graph)) === 'input'))
 }
 
 /**
  * Gets the ingoing incident edge to a port. Each port can only have one ingoing edge.
  * @param {Location} target The node or port to which the edge is incident. This is the target node or port of the edge.
  * @param {PortGraph} graph The graph
- * @param {Boolean} [goIntoCompounds] Optional argument that activates looking for edges inside compounds.
+ * @param {Object} [config] Optional config object
+ * @param {String[]} [config.layers=['dataflow']] Filter the edge based on the selected layers
+ * @param {Boolean} [config.goIntoCompounds=false] Optional argument that activates looking for edges inside compounds.
  * If you specify a node as the location it will not go inside the node (if it is a compound) and look for
  * ingoing edges inside the compound.
  * @returns {Edge} The ingoing incident edge.
  */
-export function inIncident (target, graph, goIntoCompounds = false) {
-  return inIncidents(target, graph, goIntoCompounds)[0]
+export function inIncident (target, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
+  return inIncidents(target, graph, config)[0]
 }
 
 /**
  * Gets all outgoing incident edges to a port. The given port or node is the source of each edge.
  * @param {Location} source The port from which the edge comes. This is the source node or port of the edge.
  * @param {PortGraph} graph The graph
- * @param {Boolean} [goIntoCompounds] Optional argument that activates looking for edges inside compounds.
+ * @param {Object} [config] Optional config object
+ * @param {String[]} [config.layers=['dataflow']] Filter the edge based on the selected layers
+ * @param {Boolean} [config.goIntoCompounds=false] Optional argument that activates looking for edges inside compounds.
  * If you specify a node as the location it will not go inside the node (if it is a compound) and look for
  * outgoing edges inside the compound.
  * @returns {Edge[]} An array of all outgoing (i.e. isFrom(port)) incident edges.
  */
-export function outIncidents (source, graph, goIntoCompounds = false) {
+export function outIncidents (source, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
   return edgesDeep(graph).filter((e) => Edge.isBetweenPorts(e) && isFrom(source, graph, e) &&
-    (goIntoCompounds || hasPort(source, graph) || kind(port(e.from, graph)) === 'output'))
+    (config.goIntoCompounds || hasPort(source, graph) || kind(port(e.from, graph)) === 'output'))
 }
 
 /**
  * Get the successors of one node in the graph, optionally for a specific port.
  * @param {Location} source The source from which to follow the edges.
  * @param {PortGraph} graph The graph.
- * @param {Boolean} [goIntoCompounds] Optional argument that activates looking for edges inside compounds.
+ * @param {Object} [config] Optional config object
+ * @param {String[]} [config.layers=['dataflow']] Filter the edge based on the selected layers
+ * @param {Boolean} [config.goIntoCompounds=false] Optional argument that activates looking for edges inside compounds.
  * If you specify a node as the location it will not go inside the node (if it is a compound) and look for
  * successors inside the compound.
  * @returns {Port[]} A list of ports that succeed the node with their corresponding nodes.
  */
-export function successors (source, graph, goIntoCompounds = false) {
-  return map('to')(outIncidents(source, graph, goIntoCompounds))
+export function successors (source, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
+  return map('to')(outIncidents(source, graph, config))
 }
 
 function or (fn1, fn2) {

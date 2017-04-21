@@ -206,8 +206,8 @@ describe('Basic graph functions', () => {
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c@in', to: '»c»a@in'})
       )()
-      expect(Graph.successors('c', graph, true)).to.have.length(1)
-      expect(Graph.node(Graph.successors('c', graph, true)[0], graph).name).to.equal('a')
+      expect(Graph.successors('c', graph, {goIntoCompounds: true})).to.have.length(1)
+      expect(Graph.node(Graph.successors('c', graph, {goIntoCompounds: true})[0], graph).name).to.equal('a')
     })
 
     it('Can connect from the root compound to an inner node', () => {
@@ -216,8 +216,8 @@ describe('Basic graph functions', () => {
         Graph.addNode({name: 'a', ports: [{port: 'in', kind: 'input', type: 'a'}]}),
         Graph.addEdge({from: '@in', to: 'a@in'})
       )(cmpd)
-      expect(Graph.successors(cmpd.id, graph, true)).to.have.length(1)
-      expect(Graph.node(Graph.successors(cmpd.id, graph, true)[0], graph).name).to.equal('a')
+      expect(Graph.successors(cmpd.id, graph, {goIntoCompounds: true})).to.have.length(1)
+      expect(Graph.node(Graph.successors(cmpd.id, graph, {goIntoCompounds: true})[0], graph).name).to.equal('a')
     })
 
     it('Fails if the connecting ports do not exist', () => {
@@ -249,8 +249,8 @@ describe('Basic graph functions', () => {
         Graph.addNode(cmpd),
         Graph.addEdge({from: '»c»a@out', to: '»c@out'})
       )()
-      expect(Graph.predecessors('c', graph, true)).to.have.length(1)
-      expect(Graph.node(Graph.predecessor('c', graph, true), graph).name).to.equal('a')
+      expect(Graph.predecessors('c', graph, {goIntoCompounds: true})).to.have.length(1)
+      expect(Graph.node(Graph.predecessor('c', graph, {goIntoCompounds: true}), graph).name).to.equal('a')
     })
 
     it('adds edges via a flow', () => {

@@ -48,11 +48,11 @@ describe('Basic graph functions', () => {
       var comp = Graph.addEdge({from: '@x', to: '@value'}, Graph.compound(graphJSON()))
       expect(comp).to.be.ok
 
-      expect(Graph.predecessors('', comp, true)).to.have.length(1)
-      expect(Graph.successors('', comp, true)).to.have.length(1)
+      expect(Graph.predecessors('', comp, {goIntoCompounds: true})).to.have.length(1)
+      expect(Graph.successors('', comp, {goIntoCompounds: true})).to.have.length(1)
       var graph = Graph.addNode(comp, Graph.empty())
-      expect(Graph.predecessors('c', graph, true)).to.have.length(1)
-      expect(Graph.successors('c', graph, true)).to.have.length(1)
+      expect(Graph.predecessors('c', graph, {goIntoCompounds: true})).to.have.length(1)
+      expect(Graph.successors('c', graph, {goIntoCompounds: true})).to.have.length(1)
     })
 
     it('Use addEdge @name notation', () => {
