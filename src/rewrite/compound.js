@@ -21,6 +21,18 @@ import * as Port from '../port'
 import {mergeNodes} from '../graph/internal'
 import {topologicalSort} from '../algorithm'
 import cuid from 'cuid'
+import {assertGraph} from '../assert'
+
+function uniquePortName (port) {
+  return port.port + port.node
+}
+
+
+const uniqify = (port) => {
+  const t = (port.type[0].toLowerCase() === port.type[0]) ? port.type + port.node : port.type
+  // const t = port.type
+  return Object.assign({}, port, {port: uniquePortName(port), type: t})
+}
 
 /**
  * @function
@@ -43,9 +55,6 @@ export const includePredecessor = curry((port, graph, ...cbs) => {
     throw new Error('Cannot include the predecessor of port: ' + JSON.stringify(port) + ' as it has multiple successors.')
   }
   */
-  const uniqify = (port) => {
-    return Object.assign({}, port, {port: port.port + port.node})
-  }
   var preInPorts = inIncidents(pred.node, graph)
   var affectedPorts = uniqBy((pair) => pair.compoundPort,
     flatten(Node.outputPorts(predNode).map((p) => successors(p, graph).map((s) => ({predecessorPort: p, compoundPort: s})))))
@@ -224,31 +233,23 @@ function blocked (nodes, graph) {
   return (node) => successorInSubset(node, nodes, graph) && predecessorInSubset(node, nodes, graph)
 }
 
-function prefixedPortName (port, prefix) {
-  return prefix + '→' + port.port
-}
-
-function prefixPort (port, prefix) {
-  return Object.assign(port, {port: prefixedPortName(port, prefix)})
-}
-
 function moveIntoCompound (node, cmpdId) {
   return (graph) => {
     var newComp = Graph.flow(
       Graph.Let(Graph.addNode(node), (newNode, graph) =>
         mergeNodes({id: node.id}, newNode, graph)),
-      Node.inputPorts(node).map((p) => Compound.addInputPort(prefixPort(p, node.id))),
-      Graph.flow(Node.inputPorts(node).map((p) => Graph.addEdge({from: '@' + prefixedPortName(p, node.id), to: node.id + '@' + p.port}))),
-      Node.outputPorts(node).map((p) => Compound.addOutputPort(prefixPort(p, node.id))),
-      Graph.flow(Node.outputPorts(node).map((p) => Graph.addEdge({from: node.id + '@' + p.port, to: '@' + prefixedPortName(p, node.id)})))
+      Node.inputPorts(node).map((p) => Compound.addInputPort(uniqify(p))),
+      Graph.flow(Node.inputPorts(node).map((p) => Graph.addEdge({from: '@' + uniquePortName(p), to: node.id + '@' + p.port}))),
+      Node.outputPorts(node).map((p) => Compound.addOutputPort(uniqify(p))),
+      Graph.flow(Node.outputPorts(node).map((p) => Graph.addEdge({from: node.id + '@' + p.port, to: '@' + uniquePortName(p)})))
     )(Graph.node(cmpdId, graph))
     const newInputs = Node.inputPorts(node).map((p) =>
         Graph.flow(Graph.inIncidents(p, graph)
-          .map((edge) => Graph.addEdge({from: edge.from, to: cmpdId.id + '@' + prefixedPortName(edge.to, node.id)}))))
+          .map((edge) => Graph.addEdge({from: edge.from, to: cmpdId.id + '@' + uniquePortName(edge.to)}))))
     const newOutputs = Node.outputPorts(node).map((p) =>
         Graph.flow(
           Graph.outIncidents(p, graph)
-          .map((edge) => Graph.addEdge({from: cmpdId.id + '@' + prefixedPortName(edge.from, node.id), to: edge.to}))))
+          .map((edge) => Graph.addEdge({from: cmpdId.id + '@' + uniquePortName(edge.from), to: edge.to}))))
     return Graph.flow(
       Graph.removeNode(node),
       Graph.replaceNode(cmpdId, newComp),
@@ -304,6 +305,7 @@ function moveSubsetIntoCompound (subset, cmpdId) {
  * @throws {Error} If it is not possible to combine the nodes in one compound.
 */
 export const compoundify = curry((parent, nodes, graph, ...cbs) => {
+  assertGraph(graph, 3, 'compoundify')
   const cb = Graph.flowCallback(cbs)
   const fn = cb
   if (nodes.length < 1) return fn([], graph)

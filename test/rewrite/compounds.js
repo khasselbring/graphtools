@@ -216,6 +216,8 @@ describe('Rewrite basic API', () => {
         expect(Graph.successors('pred1', pGraph)).to.have.length(1)
         expect(Graph.predecessors('C', pGraph)).to.have.length(1)
       })
+
+      it('merges ')
     })
 
     describe('Excluding inner nodes', () => {
@@ -335,6 +337,22 @@ describe('Rewrite basic API', () => {
         expect(Graph.node(Graph.successors('a', cmpd)[0], cmpd).atomic).to.be.false
         expect(Graph.predecessors('c', cmpd)).to.have.length(1)
         expect(Graph.node(Graph.predecessors('c', cmpd)[0], cmpd).atomic).to.be.false
+      })
+
+      it('Creates new generic type names for ports', () => {
+        var graph = Graph.flow(
+          Graph.addNode({name: 'a', ports: [{port: 'out', kind: 'output', type: 'g'}], atomic: true}),
+          Graph.addNode({name: 'b', ports: [{port: 'out', kind: 'output', type: 'g'}, {port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+          Graph.addNode({name: 'c', ports: [{port: 'in', kind: 'input', type: 'g'}], atomic: true}),
+          Graph.addEdge({from: 'a@out', to: 'b@in'}),
+          Graph.addEdge({from: 'b@out', to: 'c@in'})
+        )()
+        compoundify(graph, ['b'], graph, (c, g) => {
+          expect(c.ports.every((p) => p.type !== 'g')).to.be.true
+        })
+        compoundify(graph, ['c', 'b'], graph, (c, g) => {
+          expect(c.ports.every((p) => p.type !== 'g')).to.be.true
+        })
       })
 
       it('Can compoundify all nodes in a compound layer', () => {
