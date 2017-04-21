@@ -1,13 +1,12 @@
-
 import find from 'lodash/fp/find'
 import map from 'lodash/fp/map'
 import curry from 'lodash/fp/curry'
 import merge from 'lodash/fp/merge'
 import * as Edge from '../edge'
-import {edgesDeep} from './edge'
-import {query} from '../location'
-import {node, port, hasPort} from '../graph/node'
-import {kind} from '../port'
+import { edgesDeep } from './edge'
+import { query } from '../location'
+import { node, port, hasPort } from '../graph/node'
+import { kind } from '../port'
 
 /**
  * @function
@@ -97,9 +96,9 @@ export function predecessor (target, graph, config = { layers: ['dataflow'], goI
  * ingoing edges inside the compound.
  * @returns {Edge[]} An array of all ingoing (i.e. pointsTo(port)) incident edges.
  */
-export function inIncidents (target, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
-  return edgesDeep(graph).filter((e) => Edge.isBetweenPorts(e) && pointsTo(target, graph, e) &&
-    (config.goIntoCompounds || hasPort(target, graph) || kind(port(e.to, graph)) === 'input'))
+export function inIncidents (target, graph, { layers = ['dataflow'], goIntoCompounds = false } = {}) {
+  return edgesDeep(graph).filter((e) => layers.some(l => l === e.layer) && (Edge.isBetweenPorts(e) || e.layer !== 'dataflow') &&
+  pointsTo(target, graph, e) && (e.layer !== 'dataflow' || goIntoCompounds || hasPort(target, graph) || kind(port(e.to, graph)) === 'input'))
 }
 
 /**
@@ -128,9 +127,11 @@ export function inIncident (target, graph, config = { layers: ['dataflow'], goIn
  * outgoing edges inside the compound.
  * @returns {Edge[]} An array of all outgoing (i.e. isFrom(port)) incident edges.
  */
-export function outIncidents (source, graph, config = { layers: ['dataflow'], goIntoCompounds: false }) {
-  return edgesDeep(graph).filter((e) => Edge.isBetweenPorts(e) && isFrom(source, graph, e) &&
-    (config.goIntoCompounds || hasPort(source, graph) || kind(port(e.from, graph)) === 'output'))
+export function outIncidents (source, graph, { layers = ['dataflow'], goIntoCompounds = false } = {}) {
+  return edgesDeep(graph).filter((e) => {
+    return layers.some(l => l === e.layer) && (Edge.isBetweenPorts(e) || e.layer !== 'dataflow') && isFrom(source, graph, e) &&
+      (e.layer !== 'dataflow' || goIntoCompounds || hasPort(source, graph) || kind(port(e.from, graph)) === 'output')
+  })
 }
 
 /**
