@@ -149,15 +149,6 @@ const applyMerge = (refs, mergeValue) => {
   })
 }
 
-const applyInsert = (refs, insertValue) => {
-  _.each(refs, (r) => {
-    if (!Array.isArray(r)) {
-      throw new Error('Error while inserting, reference is no array' + JSON.stringify(r))
-    }
-    r.push(insertValue)
-  })
-}
-
 const applyRemove = (refs, removeFilter) => {
   const findFunc = (typeof (removeFilter) === 'function')
     ? removeFilter
@@ -232,6 +223,7 @@ const applyMergeByEdge = (graph, edge, value) => {
  */
 export function applyChangeSet (graph, changeSet) {
   var newGraph = _.cloneDeep(graph)
+  Object.defineProperty(newGraph, '__internal__', { value: graph.__internal__, enumerable: false })
   return applyChangeSetInplace(newGraph, changeSet)
 }
 
@@ -244,6 +236,7 @@ export function applyChangeSet (graph, changeSet) {
  */
 export function applyChangeSets (graph, changeSets) {
   var newGraph = _.cloneDeep(graph)
+  Object.defineProperty(newGraph, '__internal__', { value: graph.__internal__, enumerable: false })
   _.each(changeSets, (c) => applyChangeSetInplace(newGraph, c))
   return newGraph
 }
@@ -271,13 +264,25 @@ export function applyChangeSetInplace (graph, changeSet) {
     applyMergeByEdge(graph, changeSet.query, changeSet.value)
     return graph
   }
-  var refs = getReferences(graph, changeSet)
+  var refs = getReferences(graph, changeSet) // TODO delete
   switch (changeSet.operation) {
     case 'merge':
       applyMerge(refs, changeSet.value)
       break
     case 'insert':
-      applyInsert(refs, changeSet.value)
+      if (changeSet.query === 'nodes') {
+        var newNode = changeSet.value
+        graph.nodes.push(newNode)
+        graph.__internal__.idHashMap[changeSet.value.id] = newNode
+      }
+      if (changeSet.query === 'edges') {
+        var newEdge = changeSet.value
+        graph.edges.push(newEdge)
+      }
+      if (changeSet.query === 'components') {
+        var newComponent = changeSet.value
+        graph.components.push(newComponent)
+      }
       break
     case 'remove':
       applyRemove(refs, changeSet.filter)

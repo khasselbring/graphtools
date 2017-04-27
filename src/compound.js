@@ -71,7 +71,7 @@ const newID = (process.env.NODE_IDS) ? (() => { var cnt = 0; return () => 'comp_
  */
 export function create (node) {
   node = node || {}
-  return _.merge({
+  node = _.merge({
     nodes: [],
     metaInformation: {},
     edges: [],
@@ -81,6 +81,12 @@ export function create (node) {
     atomic: false,
     id: '#' + newID()
   }, node)
+  // add internal property for optimization
+  // Object.defineProperty(node, '__internal__', { value: {}, enumerable: false })
+  Object.defineProperty(node, '__internal__', { value: {}, enumerable: false })
+  // add idHashMap for faster access to nodes by id
+  node.__internal__.idHashMap = {}
+  return node
 }
 
 /**
