@@ -9,7 +9,7 @@ import * as changeSet from '../changeSet'
 import {assertGraph} from '../assert'
 import {flow, flowCallback, Let, sequential} from './flow'
 import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './internal'
-import {query, toString} from '../location'
+import {query, toString, location} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
 
@@ -88,6 +88,7 @@ export function nodeNames (graph) {
  * @throws {Error} If the queried node does not exist in the graph.
  */
 export const node = curry((loc, graph) => {
+  if (typeof loc === 'string' && loc.startsWith('#')) return graph.__internal__.idHashMap.loc
   try {
     var node = nodeBy(query(loc, graph), graph)
   } catch (err) {

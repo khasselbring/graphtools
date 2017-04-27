@@ -110,29 +110,14 @@ describe.skip('» Visualization', () => {
 
 describe.only('» Benchmark', () => {
   it('Can Benchmark adding nodes', () => {
-    const results = Runtime.executionTime(function () {
-      return Benchmarks.addNodes(10)
-    })
-    console.log(results.runtime)
+    Benchmarks.benchmarkAddNodes(100)
   })
 
   it('Can Benchmark finding nodes', () => {
-    const graph = Benchmarks.addNodes(100)
-    const nodes = Graph.nodes(graph)
-    const results = Runtime.executionTime(function () {
-      for (var i = 0; i < 100; i++) {
-        const node = nodes[Math.floor(Math.random() * nodes.length)]
-        return Graph.node(node.id, graph)
-      }
-    })
-    console.log(results.runtime)
+    Benchmarks.benchmarkFindNode(100, 1000000)
   })
 
-  it.skip('Can Benchmark adding edges', () => {
-    const graph = Benchmarks.addNodes(10)
-    const results = Runtime.executionTime(function () {
-      return Benchmarks.addEdges(10, graph)
-    })
-    console.log(results.runtime)
+  it('Can Benchmark adding edges', () => {
+    Benchmarks.benchmarkAddEdges(50, 40)
   })
 })
