@@ -11,7 +11,7 @@
       "protocol": "inspector",
       "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
       "cwd": "${workspaceRoot}",
-      "args": ["--recursive", "--compilers", "js:babel-register", "--timeout", "60000"],
+      "args": ["--recursive", "--compilers", "js:babel-register", "--timeout", "0"],
       "env": {
         "NODE_ENV": "development",
         "NODE_IDS": "yes"
