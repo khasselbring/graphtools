@@ -1,7 +1,53 @@
 import * as Graph from '../api'
 import * as Runtime from './runtime'
 
+// import CSV from 'csv-write-stream'
+// import FS from 'fs'
+
 const Node = Graph.Node
+
+/**
+ * Runs a benchmark function with multiple arguments
+ * @param {function} func A benchmark function to run with various arguments
+ * @param {string} logfile A filename of the file to store the results in
+ * @param {array} argsList An array of argument-arrays
+ */
+export function benchmark (func, logfile, header, variant, argsList) {
+  var csvWriter = require('csv-write-stream')
+  var fs = require('fs')
+  var writer = csvWriter({ headers: [header, 'runtime[ms]'] })
+  var mkdirp = require('mkdirp')
+  mkdirp('./benchmarkLogs/')
+  writer.pipe(fs.createWriteStream('./benchmarkLogs/' + logfile))
+  for (var ind in argsList) {
+    var runtime = func.apply(func, argsList[ind])
+    writer.write([argsList[ind][variant], runtime])
+  }
+  writer.end()
+}
+
+export function benchmarkRange (func, logfile, header, args, variant, from, to, steps) {
+  var argsList = []
+  for (var i = from; i <= to; i += (to - from) / steps) {
+    args.splice(variant, 1, Math.floor(i))
+    argsList.push(args.slice() /* copy array */)
+  }
+  benchmark(func, logfile, header, variant, argsList)
+}
+
+export function benchmarkSearchingHashtable (entries, searches) {
+  var obj = {}
+  for (var i = 0; i < entries; i++) {
+    obj[i] = i
+  }
+  var results = Runtime.executionTime(function () {
+    Runtime.times(searches, function () {
+      return obj[Math.floor(Math.random() * obj.length)]
+    })
+  })
+  console.log(results.runtime)
+  return results.runtime
+}
 
 function addNodes (n, graph = Graph.empty()) {
   graph = Runtime.timesIntermediate(n, function (graph) {
@@ -18,14 +64,13 @@ export function benchmarkAddNodes (n) {
   return results.runtime
 }
 
-function findNodes (n, graph = Graph.empty()) {
-  var nodes = Graph.nodes(graph)
-  if (nodes.length < 10) {
-    graph = addNodes(10 - nodes.length)
+function findNodes (n, graph = Graph.empty(), nodeList) {
+  if (nodeList.length < 10) {
+    graph = addNodes(10 - nodeList.length)
   }
 
   for (var i = 0; i < n; i++) {
-    var node = nodes[Math.floor(Math.random() * nodes.length)]
+    var node = nodeList[Math.floor(Math.random() * nodeList.length)]
     Graph.node(node.id, graph)
   }
   // TODO add return
@@ -33,8 +78,9 @@ function findNodes (n, graph = Graph.empty()) {
 
 export function benchmarkFindNodes (nodes, find) {
   const graph = addNodes(nodes)
+  var nodeList = Graph.nodes(graph)
   const results = Runtime.executionTime(function () {
-    findNodes(find, graph)
+    findNodes(find, graph, nodeList)
   })
   console.log('Finding a node in ' + nodes + '\t nodes ' + find + '\t times in ' + results.runtime + 'ms')
   return results.runtime
@@ -126,4 +172,5 @@ export function benchmarkCheckConnected (nodes, edges, times) {
     return checkConnected(times, graph, edgeMap)
   })
   console.log('Checking ' + times + '\t connections in ' + nodes + '\t nodes with ' + edges + '\t edges in ' + results.runtime + 'ms')
+  return results.runtime
 }

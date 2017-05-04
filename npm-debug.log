@@ -1,0 +1,45 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/nodejs', '/usr/bin/npm', 'run', 'benchmark' ]
+2 info using npm@3.10.10
+3 info using node@v6.10.2
+4 verbose run-script [ 'prebenchmark', 'benchmark', 'postbenchmark' ]
+5 info lifecycle @buggyorg/graphtools@0.4.0-pre.34~prebenchmark: @buggyorg/graphtools@0.4.0-pre.34
+6 silly lifecycle @buggyorg/graphtools@0.4.0-pre.34~prebenchmark: no script for prebenchmark, continuing
+7 info lifecycle @buggyorg/graphtools@0.4.0-pre.34~benchmark: @buggyorg/graphtools@0.4.0-pre.34
+8 verbose lifecycle @buggyorg/graphtools@0.4.0-pre.34~benchmark: unsafe-perm in lifecycle true
+9 verbose lifecycle @buggyorg/graphtools@0.4.0-pre.34~benchmark: PATH: /usr/lib/node_modules/npm/bin/node-gyp-bin:/home/gdv/khasselbring/Bachelorarbeit/repo/graphtools/node_modules/.bin:/home/gdv/khasselbring/bin:/home/gdv/khasselbring/.local/bin:/home/gdv/khasselbring/bin:/home/gdv/khasselbring/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+10 verbose lifecycle @buggyorg/graphtools@0.4.0-pre.34~benchmark: CWD: /home/gdv/khasselbring/Bachelorarbeit/repo/graphtools
+11 silly lifecycle @buggyorg/graphtools@0.4.0-pre.34~benchmark: Args: [ '-c', 'benchmarkLogs/plotAll.sh' ]
+12 silly lifecycle @buggyorg/graphtools@0.4.0-pre.34~benchmark: Returned: code: 1  signal: null
+13 info lifecycle @buggyorg/graphtools@0.4.0-pre.34~benchmark: Failed to exec benchmark script
+14 verbose stack Error: @buggyorg/graphtools@0.4.0-pre.34 benchmark: `benchmarkLogs/plotAll.sh`
+14 verbose stack Exit status 1
+14 verbose stack     at EventEmitter.<anonymous> (/usr/lib/node_modules/npm/lib/utils/lifecycle.js:255:16)
+14 verbose stack     at emitTwo (events.js:106:13)
+14 verbose stack     at EventEmitter.emit (events.js:191:7)
+14 verbose stack     at ChildProcess.<anonymous> (/usr/lib/node_modules/npm/lib/utils/spawn.js:40:14)
+14 verbose stack     at emitTwo (events.js:106:13)
+14 verbose stack     at ChildProcess.emit (events.js:191:7)
+14 verbose stack     at maybeClose (internal/child_process.js:886:16)
+14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:226:5)
+15 verbose pkgid @buggyorg/graphtools@0.4.0-pre.34
+16 verbose cwd /home/gdv/khasselbring/Bachelorarbeit/repo/graphtools
+17 error Linux 4.4.0-72-generic
+18 error argv "/usr/bin/nodejs" "/usr/bin/npm" "run" "benchmark"
+19 error node v6.10.2
+20 error npm  v3.10.10
+21 error code ELIFECYCLE
+22 error @buggyorg/graphtools@0.4.0-pre.34 benchmark: `benchmarkLogs/plotAll.sh`
+22 error Exit status 1
+23 error Failed at the @buggyorg/graphtools@0.4.0-pre.34 benchmark script 'benchmarkLogs/plotAll.sh'.
+23 error Make sure you have the latest version of node.js and npm installed.
+23 error If you do, this is most likely a problem with the @buggyorg/graphtools package,
+23 error not with npm itself.
+23 error Tell the author that this fails on your system:
+23 error     benchmarkLogs/plotAll.sh
+23 error You can get information on how to open an issue for this project with:
+23 error     npm bugs @buggyorg/graphtools
+23 error Or if that isn't available, you can get their info via:
+23 error     npm owner ls @buggyorg/graphtools
+23 error There is likely additional logging output above.
+24 verbose exit [ 1, true ]

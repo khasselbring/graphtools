@@ -108,7 +108,27 @@ describe.skip('» Visualization', () => {
   })
 })
 
-describe.only('» Benchmark', () => {
+describe('» Benchmark', () => {
+  it.only('can multibenchmark', () => {
+    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'add x nodes', [0], 0, 10, 200, 19)
+    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes1.csv', 'find x in 10', [10, 0], 1, 10000, 10000000, 19)
+    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes2.csv', 'find 1000000 in x', [0, 1000000], 0, 50, 500, 9)
+  })
+
+  it('has a runtime for searching a hashtable', () => {
+    Benchmarks.benchmarkSearchingHashtable(100, 10000)
+    Benchmarks.benchmarkSearchingHashtable(1000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(100000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(1000000, 10000)
+    console.log('==========================')
+    Benchmarks.benchmarkSearchingHashtable(10000, 1000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 100000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 1000000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 10000000)
+  })
+
   it('Can Benchmark adding nodes', () => {
     Benchmarks.benchmarkAddNodes(10)
     Benchmarks.benchmarkAddNodes(20)
@@ -118,9 +138,13 @@ describe.only('» Benchmark', () => {
   })
 
   it('Can Benchmark finding nodes', () => {
-    Benchmarks.benchmarkFindNodes(10, 10000)
+    Benchmarks.benchmarkFindNodes(10, 50000)
     Benchmarks.benchmarkFindNodes(10, 100000)
+    Benchmarks.benchmarkFindNodes(10, 500000)
     Benchmarks.benchmarkFindNodes(10, 1000000)
+    Benchmarks.benchmarkFindNodes(10, 2500000)
+    Benchmarks.benchmarkFindNodes(10, 5000000)
+    Benchmarks.benchmarkFindNodes(10, 7500000)
     Benchmarks.benchmarkFindNodes(10, 10000000)
     console.log('==========================')
     Benchmarks.benchmarkFindNodes(10, 1000000)
