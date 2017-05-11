@@ -110,7 +110,7 @@ describe.skip('» Visualization', () => {
 
 describe('» Benchmark', () => {
   it.only('can multibenchmark', () => {
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'add x nodes', [0], 0, 10, 200, 19)
+    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'add x nodes', [0], 0, 10, 500, 49)
     Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes1.csv', 'find x in 10', [10, 0], 1, 10000, 10000000, 19)
     Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes2.csv', 'find 1000000 in x', [0, 1000000], 0, 50, 500, 9)
   })
