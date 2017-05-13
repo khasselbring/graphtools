@@ -115,22 +115,8 @@ describe('» Benchmark', () => {
     Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes2.csv', 'find 1000000 in x', [0, 1000000], 0, 50, 500, 9)
   })
 
-  it('has a runtime for searching a hashtable', () => {
-    Benchmarks.benchmarkSearchingHashtable(100, 10000)
-    Benchmarks.benchmarkSearchingHashtable(1000, 10000)
-    Benchmarks.benchmarkSearchingHashtable(10000, 10000)
-    Benchmarks.benchmarkSearchingHashtable(100000, 10000)
-    Benchmarks.benchmarkSearchingHashtable(1000000, 10000)
-    console.log('==========================')
-    Benchmarks.benchmarkSearchingHashtable(10000, 1000)
-    Benchmarks.benchmarkSearchingHashtable(10000, 10000)
-    Benchmarks.benchmarkSearchingHashtable(10000, 100000)
-    Benchmarks.benchmarkSearchingHashtable(10000, 1000000)
-    Benchmarks.benchmarkSearchingHashtable(10000, 10000000)
-  })
-
   it('Can Benchmark adding nodes', () => {
-    // TODO change addNodes to keep up with compound structures
+    // TODO change addNodes to keep up with compound structures and deleteions
     Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'Adding x nodes', [0], 0, 1, 1000, 20)
   })
 
@@ -147,7 +133,7 @@ describe('» Benchmark', () => {
   })
 
   it.only('Can Benchmark checking connection', () => {
-    // TODO change addEdge to keep up with compound structures
+    // TODO change addEdge to keep up with compound structures and deletions
     Benchmarks.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected1.csv', 'Checking x connections in graph with 50 nodes, 50 edges', [50, 50, 0], 2, 100000, 1000000, 10)
     console.log('==========================')
     Benchmarks.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected2.csv', 'Checking 1000000 connections in graph with x nodes, 10 edges', [0, 10, 1000000], 0, 10, 100, 10)

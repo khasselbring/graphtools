@@ -264,17 +264,19 @@ export function applyChangeSetInplace (graph, changeSet) {
     applyMergeByEdge(graph, changeSet.query, changeSet.value)
     return graph
   }
-  var refs = getReferences(graph, changeSet) // TODO delete
+  var refs = getReferences(graph, changeSet)
   switch (changeSet.operation) {
     case 'merge':
       applyMerge(refs, changeSet.value)
       break
     case 'insert':
+      // insert node
       if (changeSet.query === 'nodes') {
         var newNode = changeSet.value
         graph.nodes.push(newNode)
         graph.__internal__.idHashMap[changeSet.value.id] = newNode
       }
+      // insert edge
       if (changeSet.query === 'edges') {
         var newEdge = changeSet.value
         graph.edges.push(newEdge)
@@ -291,12 +293,30 @@ export function applyChangeSetInplace (graph, changeSet) {
         }
         graph.__internal__.predecessors[changeSet.value.to.node].push(changeSet.value.from.node)
       }
+      // insert component
       if (changeSet.query === 'components') {
         var newComponent = changeSet.value
         graph.components.push(newComponent)
+
+        // TODO
       }
       break
     case 'remove':
+      if (changeSet.query === 'nodes') {
+        delete graph.__internal__.idHashMap[changeSet.value.id]
+      }
+      if (changeSet.query === 'edges') {
+        if (typeof graph.__internal__.ancestors[changeSet.value.from.node] !== 'undefined') {
+          graph.__internal__.ancestors[changeSet.value.from.node].splice(changeSet.value.to.node, 1)
+        }
+
+        if (typeof graph.__internal__.predecessors[changeSet.value.to.node] !== 'undefined') {
+          graph.__internal__.predecessors[changeSet.value.to.node].splice(changeSet.value.from.node, 1)
+        }
+      }
+      if (changeSet.query === 'components') {
+        // TODO
+      }
       applyRemove(refs, changeSet.filter)
       break
     case 'removeKey':
