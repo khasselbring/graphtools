@@ -109,6 +109,26 @@ describe.skip('» Visualization', () => {
 })
 
 describe('» Benchmark', () => {
+  it.only('can multibenchmark', () => {
+    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'add x nodes', [0], 0, 10, 500, 49)
+    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes1.csv', 'find x in 10', [10, 0], 1, 10000, 10000000, 19)
+    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes2.csv', 'find 1000000 in x', [0, 1000000], 0, 50, 500, 9)
+  })
+
+  it('has a runtime for searching a hashtable', () => {
+    Benchmarks.benchmarkSearchingHashtable(100, 10000)
+    Benchmarks.benchmarkSearchingHashtable(1000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(100000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(1000000, 10000)
+    console.log('==========================')
+    Benchmarks.benchmarkSearchingHashtable(10000, 1000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 10000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 100000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 1000000)
+    Benchmarks.benchmarkSearchingHashtable(10000, 10000000)
+  })
+
   it('Can Benchmark adding nodes', () => {
     // TODO change addNodes to keep up with compound structures
     Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'Adding x nodes', [0], 0, 1, 1000, 20)
