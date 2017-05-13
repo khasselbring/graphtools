@@ -278,6 +278,18 @@ export function applyChangeSetInplace (graph, changeSet) {
       if (changeSet.query === 'edges') {
         var newEdge = changeSet.value
         graph.edges.push(newEdge)
+
+        // add ancestors and predecessors to the corresponding lists in the graph
+
+        if (typeof graph.__internal__.ancestors[changeSet.value.from.node] === 'undefined') {
+          graph.__internal__.ancestors[changeSet.value.from.node] = []
+        }
+        graph.__internal__.ancestors[changeSet.value.from.node].push(changeSet.value.to.node)
+
+        if (typeof graph.__internal__.predecessors[changeSet.value.to.node] === 'undefined') {
+          graph.__internal__.predecessors[changeSet.value.to.node] = []
+        }
+        graph.__internal__.predecessors[changeSet.value.to.node].push(changeSet.value.from.node)
       }
       if (changeSet.query === 'components') {
         var newComponent = changeSet.value

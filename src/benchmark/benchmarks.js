@@ -10,22 +10,35 @@ const Node = Graph.Node
  * Runs a benchmark function with multiple arguments
  * @param {function} func A benchmark function to run with various arguments
  * @param {string} logfile A filename of the file to store the results in
+ * @param {string} header
+ * @param {number} variant
  * @param {array} argsList An array of argument-arrays
  */
 export function benchmark (func, logfile, header, variant, argsList) {
   var csvWriter = require('csv-write-stream')
   var fs = require('fs')
-  var writer = csvWriter({ headers: [header, 'runtime[ms]'] })
+  var writer = csvWriter({ headers: [header, 'runtime[ms]', 'ms / x'] })
   var mkdirp = require('mkdirp')
   mkdirp('./benchmarkLogs/')
   writer.pipe(fs.createWriteStream('./benchmarkLogs/' + logfile))
   for (var ind in argsList) {
     var runtime = func.apply(func, argsList[ind])
-    writer.write([argsList[ind][variant], runtime])
+    var x = argsList[ind][variant]
+    writer.write([x, runtime, runtime / x])
   }
   writer.end()
 }
 
+/**
+ * @param {function} func
+ * @param {string} logfile
+ * @param {string} header
+ * @param {array} args
+ * @param {number} variant
+ * @param {number} from
+ * @param {number} to
+ * @param {number} steps
+ */
 export function benchmarkRange (func, logfile, header, args, variant, from, to, steps) {
   var argsList = []
   for (var i = from; i <= to; i += (to - from) / steps) {
@@ -153,23 +166,26 @@ function createDefaultGraph (nodes, edges) {
   return graph
 }
 
-function checkConnected (n, graph, edgeMap) {
+function checkConnected (graph, edgeMap) {
+  var connected = []
   for (var e in edgeMap) {
-    if (edgeMap.hasOwnProperty(e)) {
-      graph = Graph.areConnected(e, edgeMap[e], graph)
-    }
+    connected.push(Graph.areConnected(e.key, e.value, graph))
   }
+  return connected
 }
 
 export function benchmarkCheckConnected (nodes, edges, times) {
   var graph = createDefaultGraph(nodes, edges)
   var nodeList = Graph.nodes(graph)
-  var edgeMap = {}
+  var edgeMap = []
   for (var i = 0; i < times; i++) {
-    edgeMap[nodeList[Math.floor(Math.random() * nodeList.length)].id] = nodeList[Math.floor(Math.random() * nodeList.length)].id
+    var entry = {}
+    entry.key = nodeList[Math.floor(Math.random() * nodeList.length)].id
+    entry.value = nodeList[Math.floor(Math.random() * nodeList.length)].id
+    edgeMap.push(entry)
   }
   const results = Runtime.executionTime(function () {
-    return checkConnected(times, graph, edgeMap)
+    return checkConnected(graph, edgeMap)
   })
   console.log('Checking ' + times + '\t connections in ' + nodes + '\t nodes with ' + edges + '\t edges in ' + results.runtime + 'ms')
   return results.runtime

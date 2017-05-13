@@ -9,7 +9,7 @@ import * as changeSet from '../changeSet'
 import {assertGraph} from '../assert'
 import {flow, flowCallback, Let, sequential} from './flow'
 import {nodeBy, mergeNodes, rePath, addNodeInternal, unID, nodesDeep} from './internal'
-import {query, toString, location} from '../location'
+import {query, toString} from '../location'
 import {incidents} from './connections'
 import {removeEdge, realizeEdgesForNode} from './edge'
 

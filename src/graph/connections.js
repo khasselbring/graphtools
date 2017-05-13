@@ -50,7 +50,12 @@ export const isFrom = curry((source, graph, edge) => {
  * @returns {boolean} True if the graph has an edge going from "nodeFrom" to "nodeTo".
  */
 export function areConnected (nodeFrom, nodeTo, graph) {
-  return !!find((e) => isFrom(nodeFrom, graph, e) && pointsTo(nodeTo, graph, e), edgesDeep(graph))
+  // TODO change predecessors function (below this one)
+  if (typeof graph.__internal__.predecessors !== 'undefined' && typeof graph.__internal__.predecessors[nodeFrom] !== 'undefined') {
+    return graph.__internal__.predecessors[nodeFrom].indexOf(nodeTo) !== -1
+  }
+  return false
+  // return !!find((e) => isFrom(nodeFrom, graph, e) && pointsTo(nodeTo, graph, e), edgesDeep(graph))
 }
 
 /**
