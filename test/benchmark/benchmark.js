@@ -1,12 +1,10 @@
 import * as Graph from '../../src/api'
 import * as Runtime from '../../src/benchmark/runtime'
-// import * as Visualize from '../../src/benchmark/visualize'
+import * as Benchmark from '../../src/benchmark/benchmark'
 import * as Benchmarks from '../../src/benchmark/benchmarks'
 import chai from 'chai'
 
 const expect = chai.expect
-
-const Location = require('../../src/location')
 
 describe('» Playground', () => {
   it('can add Nodes', () => {
@@ -108,36 +106,32 @@ describe.skip('» Visualization', () => {
   })
 })
 
-describe('» Benchmark', () => {
-  it.only('can multibenchmark', () => {
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'add x nodes', [0], 0, 10, 500, 49)
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes1.csv', 'find x in 10', [10, 0], 1, 10000, 10000000, 19)
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes2.csv', 'find 1000000 in x', [0, 1000000], 0, 50, 500, 9)
-  })
+describe.only('» Benchmark', () => {
+  const RESOLUTION = 100
 
   it('Can Benchmark adding nodes', () => {
     // TODO change addNodes to keep up with compound structures and deleteions
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'Adding x nodes', [0], 0, 1, 1000, 20)
+    Benchmark.benchmarkRange(Benchmarks.benchmarkAddNodes, 'addNodes.csv', 'Adding x nodes', [0], 0, 1, 1000, RESOLUTION)
   })
 
   it('Can Benchmark finding nodes', () => {
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes1.csv', 'Finding 1 of 100 nodes x times', [100, 0], 1, 500000, 5000000, 10)
+    Benchmark.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes1.csv', 'Finding 1 of 100 nodes x times', [100, 0], 1, 500000, 5000000, RESOLUTION)
     console.log('==========================')
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes2.csv', 'Finding 1 of x nodes 1000000 times', [0, 1000000], 0, 10, 100, 10)
+    Benchmark.benchmarkRange(Benchmarks.benchmarkFindNodes, 'findNodes2.csv', 'Finding 1 of x nodes 1000000 times', [0, 1000000], 0, 10, 100, RESOLUTION)
   })
 
   it('Can Benchmark adding edges', () => {
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddEdgesMapped, 'addEdges1.csv', 'Adding x nodes and 10 edges', [0, 10], 0, 10, 100, 10)
+    // TODO change addEdge to keep up with compound structures and deletions
+    Benchmark.benchmarkRange(Benchmarks.benchmarkAddEdgesMapped, 'addEdges1.csv', 'Adding x nodes and 10 edges', [0, 10], 0, 10, 100, RESOLUTION)
     console.log('==========================')
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkAddEdgesMapped, 'addEdges2.csv', 'Adding 100 nodes and x edges', [50, 0], 1, 5, 50, 10)
+    Benchmark.benchmarkRange(Benchmarks.benchmarkAddEdgesMapped, 'addEdges2.csv', 'Adding 100 nodes and x edges', [50, 0], 1, 5, 50, RESOLUTION)
   })
 
-  it.only('Can Benchmark checking connection', () => {
-    // TODO change addEdge to keep up with compound structures and deletions
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected1.csv', 'Checking x connections in graph with 50 nodes, 50 edges', [50, 50, 0], 2, 100000, 1000000, 10)
+  it('Can Benchmark checking connection', () => {
+    Benchmark.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected1.csv', 'Checking x connections in graph with 50 nodes, 50 edges', [50, 50, 0], 2, 100000, 1000000, RESOLUTION)
     console.log('==========================')
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected2.csv', 'Checking 1000000 connections in graph with x nodes, 10 edges', [0, 10, 1000000], 0, 10, 100, 10)
+    Benchmark.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected2.csv', 'Checking 1000000 connections in graph with x nodes, 10 edges', [0, 10, 1000000], 0, 10, 100, RESOLUTION)
     console.log('==========================')
-    Benchmarks.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected3.csv', 'Checking 1000000 connections in graph with 50 nodes, x edges', [100, 0, 1000000], 1, 10, 100, 10)
+    Benchmark.benchmarkRange(Benchmarks.benchmarkCheckConnected, 'checkConnected3.csv', 'Checking 1000000 connections in graph with 50 nodes, x edges', [100, 0, 1000000], 1, 10, 100, RESOLUTION)
   })
 })

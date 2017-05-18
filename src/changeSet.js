@@ -78,7 +78,7 @@ export function removeMetaInformation (key) {
 }
 
 export function empty () {
-  return {type: 'changeSet', opertaion: 'none'}
+  return {type: 'changeSet', operation: 'none'}
 }
 
 /**
@@ -252,73 +252,85 @@ export function applyChangeSetInplace (graph, changeSet) {
   if (!isChangeSet(changeSet)) {
     throw new Error('Cannot apply non-ChangeSet ' + JSON.stringify(changeSet))
   }
-  if (changeSet.operation === 'mergePath') {
-    applyMergeByPath(graph, changeSet.query, changeSet.value)
-    return graph
-  }
-  if (changeSet.operation === 'mergeComponent') {
-    applyMergeByComponent(graph, changeSet.query, changeSet.value)
-    return graph
-  }
-  if (changeSet.operation === 'mergeEdge') {
-    applyMergeByEdge(graph, changeSet.query, changeSet.value)
-    return graph
-  }
   var refs = getReferences(graph, changeSet)
   switch (changeSet.operation) {
-    case 'merge':
-      applyMerge(refs, changeSet.value)
-      break
+    // insert
     case 'insert':
-      // insert node
-      if (changeSet.query === 'nodes') {
-        var newNode = changeSet.value
-        graph.nodes.push(newNode)
-        graph.__internal__.idHashMap[changeSet.value.id] = newNode
-      }
-      // insert edge
-      if (changeSet.query === 'edges') {
-        var newEdge = changeSet.value
-        graph.edges.push(newEdge)
+      switch (changeSet.query) {
+        case 'nodes':
+          // insert node
+          var newNode = changeSet.value
+          graph.nodes.push(newNode)
+          graph.__internal__.idHashMap[changeSet.value.id] = newNode
+          break
+        case 'edges':
+          // insert edge
+          var newEdge = changeSet.value
+          graph.edges.push(newEdge)
 
-        // add ancestors and predecessors to the corresponding lists in the graph
+          // add ancestors and predecessors to the corresponding lists in the graph
 
-        if (typeof graph.__internal__.ancestors[changeSet.value.from.node] === 'undefined') {
-          graph.__internal__.ancestors[changeSet.value.from.node] = []
-        }
-        graph.__internal__.ancestors[changeSet.value.from.node].push(changeSet.value.to.node)
+          if (typeof graph.__internal__.ancestors[changeSet.value.from.node] === 'undefined') {
+            graph.__internal__.ancestors[changeSet.value.from.node] = []
+          }
+          graph.__internal__.ancestors[changeSet.value.from.node].push(changeSet.value.to.node)
 
-        if (typeof graph.__internal__.predecessors[changeSet.value.to.node] === 'undefined') {
-          graph.__internal__.predecessors[changeSet.value.to.node] = []
-        }
-        graph.__internal__.predecessors[changeSet.value.to.node].push(changeSet.value.from.node)
-      }
-      // insert component
-      if (changeSet.query === 'components') {
-        var newComponent = changeSet.value
-        graph.components.push(newComponent)
+          if (typeof graph.__internal__.predecessors[changeSet.value.to.node] === 'undefined') {
+            graph.__internal__.predecessors[changeSet.value.to.node] = []
+          }
+          graph.__internal__.predecessors[changeSet.value.to.node].push(changeSet.value.from.node)
+          break
+        case 'components':
+          // insert component
+          var newComponent = changeSet.value
+          graph.components.push(newComponent)
 
-        // TODO
+          graph.__internal__.idHashMap[changeSet.value.id] = newNode
+          break
       }
       break
+    // delete
     case 'remove':
-      if (changeSet.query === 'nodes') {
-        delete graph.__internal__.idHashMap[changeSet.value.id]
-      }
-      if (changeSet.query === 'edges') {
-        if (typeof graph.__internal__.ancestors[changeSet.value.from.node] !== 'undefined') {
-          graph.__internal__.ancestors[changeSet.value.from.node].splice(changeSet.value.to.node, 1)
-        }
+      switch (changeSet.query) {
+        case 'nodes':
+          // delete node
+          delete graph.__internal__.idHashMap[changeSet.value.id]
+          break
+        case 'edges':
+          // delete edge
+          if (typeof graph.__internal__.ancestors[changeSet.value.from.node] !== 'undefined') {
+            graph.__internal__.ancestors[changeSet.value.from.node].splice(changeSet.value.to.node, 1)
+          }
 
-        if (typeof graph.__internal__.predecessors[changeSet.value.to.node] !== 'undefined') {
-          graph.__internal__.predecessors[changeSet.value.to.node].splice(changeSet.value.from.node, 1)
-        }
-      }
-      if (changeSet.query === 'components') {
-        // TODO
+          if (typeof graph.__internal__.predecessors[changeSet.value.to.node] !== 'undefined') {
+            graph.__internal__.predecessors[changeSet.value.to.node].splice(changeSet.value.from.node, 1)
+          }
+          break
+        case 'components':
+          // delete component
+          delete graph.__internal__.idHashMap[changeSet.value.id]
+          break
       }
       applyRemove(refs, changeSet.filter)
       break
+    // update
+    case 'mergePath':
+      // update node
+      applyMergeByPath(graph, changeSet.query, changeSet.value)
+      return graph
+    case 'mergeComponent':
+      // update component
+      applyMergeByComponent(graph, changeSet.query, changeSet.value)
+      return graph
+    case 'mergeEdge':
+      // update edge
+      applyMergeByEdge(graph, changeSet.query, changeSet.value)
+      return graph
+    case 'merge':
+      // update ???
+      applyMerge(refs, changeSet.value)
+      break
+    // other
     case 'removeKey':
       applyRemoveKey(refs, changeSet.key)
       break

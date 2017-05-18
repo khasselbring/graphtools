@@ -176,6 +176,7 @@ export function createNode (reference, comp) {
       edges: (comp.edges || []).map(mapEdgeIDs(idMapping))
     })
   }
+  // TODO rekursiv hashMaps erstellen
   return _.merge({}, reference, comp)
 }
 

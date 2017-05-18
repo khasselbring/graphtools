@@ -81,6 +81,7 @@ export function create (node) {
     atomic: false,
     id: '#' + newID()
   }, node)
+
   // add internal property for optimization
   Object.defineProperty(node, '__internal__', { value: {}, enumerable: false })
   // add id hashmap for faster access to nodes by id
@@ -88,6 +89,7 @@ export function create (node) {
   // add predecessor and ancestors hashmap for faster access
   node.__internal__.ancestors = {}
   node.__internal__.predecessors = {}
+
   return node
 }
 
