@@ -86,6 +86,8 @@ export function create (node) {
   Object.defineProperty(node, '__internal__', { value: {}, enumerable: false })
   // add id hashmap for faster access to nodes by id
   node.__internal__.idHashMap = {}
+  // add parent for bottom-up recursion
+  node.__internal__.parent = null
   // add predecessor and ancestors hashmap for faster access
   node.__internal__.ancestors = {}
   node.__internal__.predecessors = {}

@@ -106,8 +106,8 @@ describe.skip('» Visualization', () => {
   })
 })
 
-describe.only('» Benchmark', () => {
-  const RESOLUTION = 100
+describe('» Benchmark', () => {
+  const RESOLUTION = 10
 
   it('Can Benchmark adding nodes', () => {
     // TODO change addNodes to keep up with compound structures and deleteions

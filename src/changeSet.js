@@ -25,7 +25,7 @@ const hasChildren = Node.hasChildren
  * @returns {ChangeSet} A change set containing the operation.
  */
 export function updateNode (nodePath, mergeValue) {
-  return {type: 'changeSet', operation: 'mergePath', query: nodePath, value: mergeValue}
+  return { type: 'changeSet', operation: 'mergePath', query: nodePath, value: mergeValue }
 }
 
 /**
@@ -34,11 +34,11 @@ export function updateNode (nodePath, mergeValue) {
  * @returns {ChangeSet} A change set containing the new node.
  */
 export function insertNode (value) {
-  return {type: 'changeSet', operation: 'insert', query: 'nodes', value}
+  return { type: 'changeSet', operation: 'insert', query: 'nodes', value }
 }
 
 export function removeNode (id) {
-  return {type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => Node.equal(n, id)}
+  return { type: 'changeSet', operation: 'remove', query: 'nodes', filter: (n) => Node.equal(n, id) }
 }
 
 /**
@@ -47,7 +47,7 @@ export function removeNode (id) {
  * @returns {ChangeSet} A change set containing the new component.
  */
 export function insertComponent (value) {
-  return {type: 'changeSet', operation: 'insert', query: 'components', value}
+  return { type: 'changeSet', operation: 'insert', query: 'components', value }
 }
 
 /**
@@ -58,27 +58,27 @@ export function insertComponent (value) {
  * @returns {ChangeSet} A change set containing the operation.
  */
 export function updateComponent (compId, mergeValue) {
-  return {type: 'changeSet', operation: 'mergeComponent', query: compId, value: mergeValue}
+  return { type: 'changeSet', operation: 'mergeComponent', query: compId, value: mergeValue }
 }
 
 export function removeComponent (id) {
-  return {type: 'changeSet', operation: 'remove', query: 'components', filter: (n) => Component.equal(n, id)}
+  return { type: 'changeSet', operation: 'remove', query: 'components', filter: (n) => Component.equal(n, id) }
 }
 
 export function addMetaInformation (key, value) {
-  return {type: 'changeSet', operation: 'setKey', query: 'metaInformation', key, value}
+  return { type: 'changeSet', operation: 'setKey', query: 'metaInformation', key, value }
 }
 
 export function setMetaInformation (meta) {
-  return {type: 'changeSet', operation: 'set', query: 'metaInformation', value: meta}
+  return { type: 'changeSet', operation: 'set', query: 'metaInformation', value: meta }
 }
 
 export function removeMetaInformation (key) {
-  return {type: 'changeSet', operation: 'removeKey', query: 'metaInformation', key}
+  return { type: 'changeSet', operation: 'removeKey', query: 'metaInformation', key }
 }
 
 export function empty () {
-  return {type: 'changeSet', operation: 'none'}
+  return { type: 'changeSet', operation: 'none' }
 }
 
 /**
@@ -87,7 +87,7 @@ export function empty () {
  * @returns {ChangeSet} A change set containing the insertion operation.
  */
 export function insertEdge (newEdge) {
-  return {type: 'changeSet', operation: 'insert', query: 'edges', value: newEdge}
+  return { type: 'changeSet', operation: 'insert', query: 'edges', value: newEdge }
 }
 
 /**
@@ -96,7 +96,7 @@ export function insertEdge (newEdge) {
  * @returns {ChangeSet} A change set containing the insertion operation.
  */
 export function updateEdge (edge, mergeEdge) {
-  return {type: 'changeSet', operation: 'mergeEdge', query: edge, value: mergeEdge}
+  return { type: 'changeSet', operation: 'mergeEdge', query: edge, value: mergeEdge }
 }
 
 /**
@@ -105,7 +105,7 @@ export function updateEdge (edge, mergeEdge) {
  * @returns {ChangeSet} The change set containing the deletion operation.
  */
 export function removeEdge (edge) {
-  return {type: 'changeSet', operation: 'remove', query: 'edges', filter: _.partial(Edge.equal, edge)}
+  return { type: 'changeSet', operation: 'remove', query: 'edges', filter: _.partial(Edge.equal, edge) }
 }
 
 /**
@@ -117,15 +117,15 @@ export function removeEdge (edge) {
 export function createConnection (stations, extraValue = {}) {
   return _.reduce(stations, (acc, cur) => {
     if (!acc) {
-      return {last: cur, edges: []}
+      return { last: cur, edges: [] }
     } else {
       var edgeCS = insertEdge({
         v: acc.last.node,
         w: cur.node,
-        value: _.merge({outPort: acc.last.port, inPort: cur.port}, extraValue),
+        value: _.merge({ outPort: acc.last.port, inPort: cur.port }, extraValue),
         name: acc.last.node + '@' + acc.last.port + '→' + cur.node + '@' + cur.port
       })
-      return {last: cur, edges: _.concat(acc.edges, [edgeCS])}
+      return { last: cur, edges: _.concat(acc.edges, [edgeCS]) }
     }
   }, null).edges
 }
@@ -182,7 +182,7 @@ const applyRemoveKey = (refs, key) => {
 }
 
 const getReferences = (graph, changeSet) => {
-  var refs = jq(changeSet.query, {data: graph})
+  var refs = jq(changeSet.query, { data: graph })
   if (refs.length === 0) {
     throw new Error('Cannot ' + changeSet.operation + ' in ' + changeSet.query + ' the value: ' + JSON.stringify(changeSet.value))
   }
@@ -261,15 +261,16 @@ export function applyChangeSetInplace (graph, changeSet) {
           // insert node
           var newNode = changeSet.value
           graph.nodes.push(newNode)
-          graph.__internal__.idHashMap[changeSet.value.id] = newNode
+          // recursively add new id to id-tables
+          for (var parent = graph; parent !== null; parent = parent.__internal__.parent) {
+            parent.__internal__.idHashMap[newNode.id] = newNode
+          }
           break
         case 'edges':
           // insert edge
           var newEdge = changeSet.value
           graph.edges.push(newEdge)
-
           // add ancestors and predecessors to the corresponding lists in the graph
-
           if (typeof graph.__internal__.ancestors[changeSet.value.from.node] === 'undefined') {
             graph.__internal__.ancestors[changeSet.value.from.node] = []
           }
@@ -284,17 +285,24 @@ export function applyChangeSetInplace (graph, changeSet) {
           // insert component
           var newComponent = changeSet.value
           graph.components.push(newComponent)
-
-          graph.__internal__.idHashMap[changeSet.value.id] = newNode
+          // set parent
+          newComponent.__internal__.parent = graph
+          // recursively add new id to id-tables
+          for (parent = graph; parent !== null; parent = parent.__internal__.parent) {
+            parent.__internal__.idHashMap[newComponent.id] = newComponent
+          }
           break
       }
       break
     // delete
     case 'remove':
+      // handles the internal changes that come with a remove
       switch (changeSet.query) {
         case 'nodes':
           // delete node
-          delete graph.__internal__.idHashMap[changeSet.value.id]
+          for (parent = graph; parent !== null; parent = parent.__internal__.parent) {
+            delete parent.__internal__.idHashMap[changeSet.value.id]
+          }
           break
         case 'edges':
           // delete edge
@@ -308,9 +316,12 @@ export function applyChangeSetInplace (graph, changeSet) {
           break
         case 'components':
           // delete component
-          delete graph.__internal__.idHashMap[changeSet.value.id]
+          for (parent = graph; parent !== null; parent = parent.__internal__.parent) {
+            delete parent.__internal__.idHashMap[changeSet.value.id]
+          }
           break
       }
+      // handles the actual remove
       applyRemove(refs, changeSet.filter)
       break
     // update
